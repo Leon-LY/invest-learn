@@ -13,6 +13,21 @@ const watchlist = ref<WatchlistItem[]>([])
 const news = ref<NewsArticle[]>([])
 const greeting = ref('')
 
+function formatTime(iso: string | undefined | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const now = Date.now()
+  const diff = now - d.getTime()
+  const m = Math.floor(diff / 60000)
+  const h = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+  if (m < 1) return '刚刚'
+  if (m < 60) return `${m}分钟前`
+  if (h < 24) return `${h}小时前`
+  if (days < 7) return `${days}天前`
+  return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
 onMounted(async () => {
   const hour = new Date().getHours()
   greeting.value = hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好'
@@ -29,8 +44,12 @@ async function fetchNews() { try { news.value = ((await newsApi.getList({ page: 
       <!-- Greeting -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ greeting }}，Leon 👋</h1>
-          <p class="text-xs text-gray-400 mt-0.5">基智学 · 你的基金投资学习助手</p>
+          <h1 class="text-xl font-bold text-gray-900 dark:text-white title-underline">{{ greeting }}，Leon 👋</h1>
+          <p class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+            <span>基智学 · 你的基金投资学习助手</span>
+            <span class="live-dot"></span>
+            <span class="text-[10px] text-gray-300 dark:text-gray-600">LIVE</span>
+          </p>
         </div>
       </div>
 
@@ -86,7 +105,7 @@ async function fetchNews() { try { news.value = ((await newsApi.getList({ page: 
           <div v-for="a in news" :key="a.id" @click="router.push(`/news/${a.id}`)" class="card p-3 cursor-pointer">
             <div class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 leading-snug">{{ a.title }}</div>
             <div class="flex items-center gap-2 mt-1.5 text-xs text-gray-400">
-              <span>{{ a.source }}</span><span>·</span><span>{{ a.published_at?.slice(0, 10) }}</span>
+              <span>{{ a.source }}</span><span>·</span><span>{{ formatTime(a.published_at) }}</span>
               <span v-if="a.sentiment === 'positive'" class="text-up font-medium">利好</span>
               <span v-else-if="a.sentiment === 'negative'" class="text-down font-medium">利空</span>
             </div>

@@ -1,6 +1,7 @@
 """
 FastAPI application entry point.
 """
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,29 +9,34 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.router import api_router
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: init DB pool, Redis, scheduler
+    # Startup: init DB pool
     from app.core.database import engine, Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables created")
 
-    # Start scheduler (skipped if no scheduler configured)
+    # Start scheduler
     try:
         from app.tasks.scheduler import start_scheduler
         start_scheduler()
-    except Exception:
-        pass
+        logger.info("Scheduler started successfully")
+    except Exception as e:
+        logger.error(f"Scheduler failed to start: {e}")
 
     yield
 
-    # Shutdown: dispose engine, close Redis
+    # Shutdown
     from app.tasks.scheduler import shutdown_scheduler
     try:
         shutdown_scheduler()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error(f"Scheduler shutdown error: {e}")
     await engine.dispose()
 
 

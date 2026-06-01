@@ -137,7 +137,7 @@ export function generateMockNews() {
   return newsTemplates.map((t, i) => ({
     id: i + 1,
     title: t.title,
-    summary: `${t.title.slice(0, 30)}...基金投资需关注长期价值与资产配置，建议投资者根据自身风险承受能力做出理性判断。`,
+    summary: `${t.title.slice(0, 35)}...基金投资需关注长期价值与资产配置，建议投资者根据自身风险承受能力做出理性判断。`,
     source: ['中国基金报', '证券时报', '天天基金网', '雪球基金', '华尔街见闻', 'Morningstar'][i % 6],
     sentiment: t.sentiment,
     categories: [t.cat],

@@ -224,7 +224,17 @@ export function setupMock(axios: AxiosInstance) {
       const params = (data as any)?.params || {}
       const all = generateMockNews()
       let filtered = all
-      if (params.category) filtered = filtered.filter(n => n.categories.includes(params.category))
+      if (params.category) {
+        // Same keyword matching as backend _classify_categories
+        const kwMap: Record<string, string[]> = {
+          "基金": ["基金", "ETF", "QDII", "FOF", "REIT", "定投", "净值", "基金经理", "公募", "私募"],
+          "行业": ["行业", "板块", "赛道", "科技", "消费", "医药", "新能源", "半导体", "白酒", "银行", "地产", "光伏", "锂电", "芯片", "AI"],
+          "大佬": ["经理", "张坤", "谢治宇", "葛兰", "侯昊", "刘格菘", "大佬", "牛散"],
+          "策略": ["策略", "配置", "仓位", "止损", "止盈", "轮动", "红利", "价值投资", "平衡", "定投", "回撤", "收益", "风险"],
+        }
+        const kws = kwMap[params.category] || [params.category]
+        filtered = all.filter(n => kws.some(kw => n.title.includes(kw)))
+      }
       return paginate(filtered, params.page || 1, params.size || 20)
     }
     if (/^news\/\d+$/.test(path)) {

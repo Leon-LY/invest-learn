@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onActivated, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { newsApi } from '@/api/news'
 import EmptyState from '@/components/common/EmptyState.vue'
 import type { NewsArticle } from '@/types/market'
+
+const SCROLL_KEY = 'news-list-scroll'
 
 const router = useRouter()
 const route = useRoute()
@@ -17,6 +19,25 @@ const page = ref(1)
 const total = ref(0)
 const hasMore = ref(false)
 const lastFetchTime = ref<Date | null>(null)
+
+// Save scroll position before leaving
+function saveScroll() {
+  sessionStorage.setItem(SCROLL_KEY, String(window.scrollY))
+}
+// Restore scroll position on return from detail
+function restoreScroll() {
+  const saved = sessionStorage.getItem(SCROLL_KEY)
+  if (saved) {
+    nextTick(() => window.scrollTo(0, parseInt(saved)))
+    sessionStorage.removeItem(SCROLL_KEY)
+  }
+}
+
+// Listen for clicks on news cards to save position
+function onCardClick(id: number) {
+  saveScroll()
+  router.push(`/news/${id}`)
+}
 
 /** Format ISO timestamp to friendly display */
 function formatTime(iso: string | undefined | null): string {
@@ -51,6 +72,7 @@ async function doRefresh() {
 onMounted(() => {
   fetchNews()
   lastFetchTime.value = new Date()
+  restoreScroll()
 })
 
 // Auto-refresh when navigating back to news list from detail page
@@ -128,7 +150,7 @@ function changeCategory(cat: string) {
       <div v-else class="space-y-2 animate-in">
         <div
           v-for="a in articles" :key="a.id"
-          @click="router.push(`/news/${a.id}`)"
+          @click="onCardClick(a.id)"
           class="card p-4 cursor-pointer hover:shadow-md transition-shadow"
         >
           <div class="font-medium text-sm dark:text-white line-clamp-2 leading-snug">{{ a.title }}</div>

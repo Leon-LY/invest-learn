@@ -247,21 +247,32 @@ body::before {
 * { -webkit-tap-highlight-color: transparent; }
 
 /* ── Dark mode contrast fixes ── */
-.dark .text-gray-400 { color: #9ca3af; }
-.dark .text-gray-500 { color: #a0aec0; }
-.dark .text-gray-600 { color: #c4c9d4; }
-.dark .bg-gray-100 { background: #1e1f36; }
-.dark .bg-gray-50 { background: #151628; }
-.dark .border-gray-200 { border-color: #2d2f45; }
-.dark .border-gray-100 { border-color: #2a2b40; }
+.dark .text-gray-400 { color: #9ca3af !important; }
+.dark .text-gray-500 { color: #a0aec0 !important; }
+.dark .text-gray-600 { color: #c4c9d4 !important; }
+.dark .text-gray-700 { color: #d1d5db !important; }
+.dark .text-gray-800 { color: #e5e7eb !important; }
+.dark .text-gray-900 { color: #f3f4f6 !important; }
+.dark .text-black { color: #e0e0e0 !important; }
+.dark .bg-gray-100 { background: #1e1f36 !important; }
+.dark .bg-gray-50 { background: #151628 !important; }
+.dark .bg-gray-200 { background: #252740 !important; }
+.dark .bg-white { background: #1a1b30 !important; }
+.dark .border-gray-200 { border-color: #2d2f45 !important; }
+.dark .border-gray-100 { border-color: #2a2b40 !important; }
+.dark .border-gray-300 { border-color: #3d3f55 !important; }
 .dark input, .dark select, .dark textarea {
-  background: #1a1b30;
-  color: #e0e0e0;
-  border-color: #3d3f55;
+  background: #1a1b30 !important;
+  color: #e0e0e0 !important;
+  border-color: #3d3f55 !important;
 }
-.dark input::placeholder { color: #6b6f85; }
-.dark .hover\:bg-gray-100:hover { background: #252740; }
-.dark .hover\:bg-gray-50:hover { background: #1c1e35; }
+.dark input::placeholder { color: #6b6f85 !important; }
+.dark .hover\:bg-gray-100:hover { background: #252740 !important; }
+.dark .hover\:bg-gray-50:hover { background: #1c1e35 !important; }
+/* Ensure all text in dark mode is readable */
+.dark body { color: #e0e0e0; }
+.dark [class*="text-gray-"] { color-scheme: dark; }
+.dark .animate-pulse > div { background: #2a2b40 !important; }
 
 /* ── Global animations ── */
 

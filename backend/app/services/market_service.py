@@ -259,67 +259,37 @@ class MarketService:
 
     @staticmethod
     def _fetch_fund_from_akshare(code: str) -> Optional[dict]:
-        """Use AKShare to get basic fund info by code. Tries multiple sources."""
-        import akshare as ak
+        """Get fund name from TianTian API (most reliable, no AKShare dependency)."""
         import logging
         log = logging.getLogger(__name__)
 
-        # Method 1: East Money fund info (most reliable, covers all public funds)
-        try:
-            df = ak.fund_open_fund_info_em(symbol=code, indicator="单位净值走势")
-            if df is not None and not df.empty:
-                name = str(df.iloc[0].get("基金简称", ""))
-                if name:
-                    log.info(f"Fund {code} found via East Money: {name}")
-                    return {"name": name[:100], "fund_type": "mixed", "company": ""}
-            else:
-                log.warning(f"Fund {code}: East Money returned empty")
-        except Exception as e:
-            log.warning(f"Fund {code}: East Money failed — {e}")
-
-        # Method 2: ETF fund info (for ETF/ETF-feeder funds)
-        try:
-            df = ak.fund_etf_fund_info_em(fund=code)
-            if df is not None and not df.empty:
-                name = str(df.iloc[0].get("基金简称", ""))
-                if name:
-                    log.info(f"Fund {code} found via ETF info: {name}")
-                    return {"name": name[:100], "fund_type": "指数型", "company": ""}
-        except Exception as e:
-            log.warning(f"Fund {code}: ETF info failed — {e}")
-
-        # Method 3: Xueqiu individual fund info
-        try:
-            info = ak.fund_individual_basic_info_xq(symbol=code)
-            if info is not None and not info.empty:
-                row = info.iloc[0]
-                name = str(row.get("基金全称", row.get("基金简称", "")))
-                if name:
-                    log.info(f"Fund {code} found via Xueqiu: {name}")
-                    return {
-                        "name": name[:100],
-                        "fund_type": str(row.get("基金类型", "mixed"))[:30],
-                        "company": str(row.get("基金管理人", ""))[:100],
-                    }
-        except Exception as e:
-            log.warning(f"Fund {code}: Xueqiu failed — {e}")
-
-        # Method 4: Direct TianTian fund API (no AKShare dependency)
+        # Primary: TianTian fund API (always works, no rate limit)
         try:
             import httpx, json, re
             url = f"http://fundgz.1234567.com.cn/js/{code}.js"
-            resp = httpx.get(url, timeout=(5, 10))
+            resp = httpx.get(url, timeout=(3, 8))
             if resp.status_code == 200:
-                # Parse JSONP: jsonpgz({...});
                 match = re.search(r'jsonpgz\((.+)\)', resp.text)
                 if match:
                     data = json.loads(match.group(1))
                     name = data.get("name", "")
                     if name:
-                        log.info(f"Fund {code} found via TianTian: {name}")
+                        log.info(f"Fund {code} → {name} (TianTian)")
                         return {"name": name[:100], "fund_type": "混合型", "company": ""}
         except Exception as e:
-            log.warning(f"Fund {code}: TianTian API failed — {e}")
+            log.warning(f"Fund {code}: TianTian failed — {e}")
+
+        # Fallback: East Money via AKShare
+        try:
+            import akshare as ak
+            df = ak.fund_open_fund_info_em(symbol=code, indicator="单位净值走势")
+            if df is not None and not df.empty:
+                name = str(df.iloc[0].get("基金简称", ""))
+                if name:
+                    log.info(f"Fund {code} → {name} (East Money)")
+                    return {"name": name[:100], "fund_type": "mixed", "company": ""}
+        except Exception as e:
+            log.warning(f"Fund {code}: East Money failed — {e}")
 
         log.error(f"Fund {code}: ALL sources failed")
         return None

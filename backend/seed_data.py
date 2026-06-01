@@ -8,7 +8,8 @@ from sqlalchemy import select
 from app.core.database import AsyncSessionLocal
 from app.models.learn import LearnCategory, LearnArticle, GlossaryTerm, InvestmentStrategy
 from app.models.user import User
-from app.models.news import NewsSource, NewsArticle
+from app.models.news import NewsSource, NewsArticle, NewsAnalysis
+from app.services.news_service import _build_ai_analysis
 
 
 CATEGORIES = [
@@ -759,6 +760,7 @@ async def seed():
             ("基金", "基金经理换了，我的基金要不要赎回？", "neutral", "基金经理变更是基金投资的常见风险。主动基金换经理需关注新经理风格是否匹配；指数基金换经理几乎没影响。"),
             ("基金", "北向资金连续净流入：外资在买什么基金？", "positive", "北向资金连续5周净流入。通过陆股通和QFII渠道，外资主要配置消费、金融和新能源板块的龙头基金。"),
         ]
+        analysis_count = 0
         for category, title, sentiment, summary in seed_news:
             exists = await db.execute(sel(NewsArticle).where(NewsArticle.title == title))
             if exists.scalar_one_or_none():
@@ -769,8 +771,24 @@ async def seed():
                 published_at=datetime.now(timezone.utc),
             )
             db.add(article)
+            await db.flush()  # Get article.id
+
+            # Generate AI analysis for this article
+            analysis_data = _build_ai_analysis(article)
+            analysis = NewsAnalysis(
+                news_id=article.id,
+                impact_score=analysis_data["impact_score"],
+                impact_level=analysis_data["impact_level"],
+                affected_funds=analysis_data["affected_funds"],
+                short_term=analysis_data["short_term"],
+                medium_term=analysis_data["medium_term"],
+                action_advice=analysis_data["action_advice"],
+                key_points=analysis_data["key_points"],
+            )
+            db.add(analysis)
+            analysis_count += 1
             news_count += 1
-        print(f"Seeded {news_count} news articles")
+        print(f"Seeded {news_count} news articles with {analysis_count} AI analyses")
 
         await db.commit()
         print("✅ Seed completed successfully!")

@@ -26,6 +26,74 @@ function paginate(items: any[], page = 1, size = 20) {
   return { items: items.slice(start, start + size), total: items.length, page, size }
 }
 
+function generateMockAnalysis(title: string, sentiment: string, id: number) {
+  const pos = sentiment === 'positive'
+  const neg = sentiment === 'negative'
+  const impactScore = pos ? 45 + Math.floor(Math.random() * 31) : neg ? -(25 + Math.floor(Math.random() * 41)) : Math.floor(Math.random() * 36) - 15
+  const impactLevel = impactScore >= 60 ? '重大利好' : impactScore >= 20 ? '利好' : impactScore <= -50 ? '重大利空' : impactScore <= -20 ? '利空' : '中性'
+
+  // Detect affected funds from title keywords
+  const funds: Array<{code: string, name: string, impact: string}> = []
+  if (/ETF|指数|沪深|科创|中证/.test(title)) {
+    funds.push({ code: '510300', name: '沪深300ETF', impact: '宽基ETF直接受益于市场整体变化' })
+  }
+  if (/债|债券|利率|MLF|降息/.test(title)) {
+    funds.push({ code: '110027', name: '易方达安心回报债券A', impact: '利率变化直接影响债券价格' })
+  }
+  if (/消费|白酒|茅台|五粮液/.test(title)) {
+    funds.push({ code: '005827', name: '易方达蓝筹精选混合', impact: '重仓消费蓝筹，与消费复苏高度相关' })
+  }
+  if (/医药|创新药|医疗|葛兰/.test(title)) {
+    funds.push({ code: '001475', name: '中欧医疗健康混合', impact: '医药主题基金，受行业政策影响大' })
+  }
+  if (/新能源|光伏|锂电|电池/.test(title)) {
+    funds.push({ code: '002939', name: '广发新能源精选混合', impact: '新能源赛道基金，景气度是关键驱动' })
+  }
+  if (/半导体|芯片|科技/.test(title)) {
+    funds.push({ code: '320007', name: '诺安成长混合', impact: '科技半导体主题，波动较大' })
+  }
+  if (/红利|高股息|分红/.test(title)) {
+    funds.push({ code: '510880', name: '红利ETF', impact: '红利策略直接受益于分红政策' })
+  }
+  if (/QDII|海外|港股|美股|全球/.test(title)) {
+    funds.push({ code: '513100', name: '纳指ETF', impact: '海外市场波动和汇率是主要影响因素' })
+  }
+  // Ensure at least 2
+  if (funds.length < 2) {
+    funds.push({ code: '510300', name: '沪深300ETF', impact: '核心宽基，受市场系统性影响' })
+    funds.push({ code: '110027', name: '易方达安心回报债', impact: '作为纯债基金受影响较小，可作为组合稳定器' })
+  }
+
+  const topic = title.slice(0, 30)
+  const shortTerm = pos
+    ? `「${topic}」这一利好消息预计在1-2周内提振市场情绪。相关基金净值有望小幅上涨1-3%，但短期追高需谨慎。`
+    : neg
+      ? `「${topic}」这一利空消息可能在1-2周内对市场形成压力。相关基金净值可能回调1-3%，但恐慌性赎回往往得不偿失。`
+      : `「${topic}」这一消息对短期市场影响偏中性。预计1-2周内相关基金维持震荡格局。`
+
+  const mediumTerm = pos
+    ? `未来1-3个月，如果利好逻辑持续兑现，相关基金有望获得3-5%的超额收益。建议通过定投方式逐步参与。`
+    : neg
+      ? `未来1-3个月，市场将逐步消化利空。历史上类似事件后，优质基金通常在3-6个月内收复失地。`
+      : '中期走势取决于宏观经济、流动性和行业基本面。建议保持灵活仓位，做好两手准备。'
+
+  const actionAdvice = pos
+    ? '继续定投，维持现有仓位。如果持有相关基金，让利润奔跑但不要追高加仓。'
+    : neg
+      ? '坚持定投不要停，下跌是积累份额的好机会。如果有闲置资金，可分批加仓优质基金。'
+      : '按原计划执行定投，不急于加仓或减仓。等待趋势明朗后再做调整。'
+
+  return {
+    impact_score: impactScore,
+    impact_level: impactLevel,
+    affected_funds: funds.slice(0, 4),
+    short_term: shortTerm,
+    medium_term: mediumTerm,
+    action_advice: actionAdvice,
+    key_points: [title.slice(0, 40), '关注后续市场反应和政策动态', '定投投资者无需过度反应', '做好仓位管理'],
+  }
+}
+
 function generateSimpleContent(title: string, sentiment: string): string {
   var pos = sentiment === 'positive'
   var neg = sentiment === 'negative'
@@ -162,6 +230,7 @@ export function setupMock(axios: AxiosInstance) {
       return {
         ...article,
         content: article.summary + '\n\n' + generateSimpleContent(article.title, article.sentiment),
+        ai_analysis: generateMockAnalysis(article.title, article.sentiment, id),
         related_news: all.filter(n => n.id !== id).slice(0, 3),
       }
     }

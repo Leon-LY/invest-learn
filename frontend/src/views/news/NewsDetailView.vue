@@ -4,8 +4,6 @@ import { useRoute } from 'vue-router'
 import { marked } from 'marked'
 import AppShell from '@/layouts/AppShell.vue'
 import { newsApi } from '@/api/news'
-import { newsImpactAnalyses } from '@/mock/experts'
-import type { NewsImpactAnalysis } from '@/mock/experts'
 
 // Configure marked for safe rendering
 marked.setOptions({ breaks: true, gfm: true })
@@ -13,11 +11,19 @@ marked.setOptions({ breaks: true, gfm: true })
 const route = useRoute()
 const article = ref<any>(null)
 const loading = ref(true)
-const aiAnalysis = ref<NewsImpactAnalysis | null>(null)
 
 const renderedContent = computed(() => {
   if (!article.value?.content) return ''
   return marked.parse(article.value.content) as string
+})
+
+/** Get AI analysis from API response, with minimal fallback */
+const aiAnalysis = computed(() => {
+  const a = article.value?.ai_analysis
+  if (a) return a
+  // Fallback: if API returns no analysis (should not happen in production)
+  if (!article.value) return null
+  return null
 })
 
 /** Format ISO timestamp to friendly display */
@@ -35,37 +41,9 @@ onMounted(async () => {
   try {
     const id = Number(route.params.id)
     article.value = await newsApi.getDetail(id)
-    // Generate AI analysis for every article
-    aiAnalysis.value = generateImpactAnalysis(id, article.value)
   } catch (e) { console.error(e) }
   finally { loading.value = false }
 })
-
-function generateImpactAnalysis(id: number, art: any): NewsImpactAnalysis {
-  const matched = newsImpactAnalyses.find(a => a.newsId === id)
-  if (matched) return matched
-
-  const sentiment = art.sentiment || 'neutral'
-  const title = art.title || ''
-  const pos = sentiment === 'positive'
-  const neg = sentiment === 'negative'
-  const impactScore = pos ? 55 : neg ? -35 : 10
-  const impactLevel = pos ? '利好' : neg ? '利空' : '中性'
-
-  return {
-    newsId: id, title: 'AI自动分析: ' + title.slice(0, 20),
-    newsTitle: title, impactScore, impactLevel,
-    affectedFunds: [
-      { code: '510300', name: '沪深300ETF', impact: pos ? '市场情绪改善利好核心资产' : neg ? '短期承压但长期价值不变' : '影响有限' },
-      { code: '005827', name: '易方达蓝筹精选', impact: pos ? '重仓蓝筹有望受益' : neg ? '重仓消费可能承压' : '维持中性' },
-      { code: '110027', name: '易方达安心回报债', impact: pos ? '风险偏好改善利好信用债' : neg ? '资金避险利好利率债' : '波动较小' },
-    ],
-    shortTerm: pos ? '预计1-2周内偏股基金有望小幅上涨1-2%，市场情绪改善将带动资金流入。' : neg ? '短期1-2周内市场可能承压，偏股基金或回调1-3%。不建议恐慌赎回。' : '短期市场维持震荡，方向不明朗，建议观望等待更明确信号。',
-    mediumTerm: pos ? '未来1-3个月，如果积极因素持续兑现，偏股基金有望获得3-5%的超额收益。重点关注消费和科技板块。' : neg ? '未来1-3个月市场将逐渐消化利空，估值合理的优质基金将率先企稳。可利用定投在低位积累份额。' : '中期方向取决于后续数据和政策，建议保持灵活仓位，做好两手准备。',
-    actionAdvice: pos ? '继续定投，但不要追高一次性加仓。保持现有仓位，让利润奔跑。' : neg ? '坚持定投不要停，下跌是积累份额的好机会。如果有闲置资金，可分批加仓。' : '按原计划执行定投，不急于加仓或减仓。等待趋势明朗后再调整。',
-    keyPoints: [title.slice(0, 30), '关注后续市场反应', '定投投资者无需过度反应', '做好仓位管理'],
-  }
-}
 
 const impactColors: Record<string, string> = {
   '重大利好': 'bg-up text-white',
@@ -107,15 +85,15 @@ const impactColors: Record<string, string> = {
 
           <div class="flex items-center gap-3 mb-4">
             <span class="text-sm text-gray-600 dark:text-gray-400">综合影响评估：</span>
-            <span class="text-sm px-3 py-1 rounded-full font-bold" :class="impactColors[aiAnalysis.impactLevel]">{{ aiAnalysis.impactLevel }}</span>
-            <span class="text-sm text-gray-400">评分 {{ aiAnalysis.impactScore }}/100</span>
+            <span class="text-sm px-3 py-1 rounded-full font-bold" :class="impactColors[aiAnalysis.impact_level]">{{ aiAnalysis.impact_level }}</span>
+            <span class="text-sm text-gray-400">评分 {{ aiAnalysis.impact_score }}/100</span>
           </div>
 
           <!-- Affected Funds -->
           <div class="mb-4">
             <h4 class="text-xs font-semibold text-gray-500 mb-2 uppercase">📊 受影响基金</h4>
             <div class="space-y-1.5">
-              <div v-for="f in aiAnalysis.affectedFunds" :key="f.code" class="flex items-center justify-between text-sm bg-white/60 dark:bg-gray-800/50 rounded-lg px-3 py-2">
+              <div v-for="f in aiAnalysis.affected_funds" :key="f.code" class="flex items-center justify-between text-sm bg-white/60 dark:bg-gray-800/50 rounded-lg px-3 py-2">
                 <div>
                   <span class="font-medium text-gray-800 dark:text-gray-200">{{ f.name }}</span>
                   <span class="text-xs text-gray-400 ml-2">{{ f.code }}</span>
@@ -129,11 +107,11 @@ const impactColors: Record<string, string> = {
           <div class="grid grid-cols-2 gap-3 mb-4">
             <div class="bg-white/60 dark:bg-gray-800/50 rounded-lg p-3">
               <h4 class="text-xs font-semibold text-gray-500 mb-1">⏱ 短期影响（1-2周）</h4>
-              <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{{ aiAnalysis.shortTerm }}</p>
+              <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{{ aiAnalysis.short_term }}</p>
             </div>
             <div class="bg-white/60 dark:bg-gray-800/50 rounded-lg p-3">
               <h4 class="text-xs font-semibold text-gray-500 mb-1">📅 中期影响（1-3月）</h4>
-              <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{{ aiAnalysis.mediumTerm }}</p>
+              <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{{ aiAnalysis.medium_term }}</p>
             </div>
           </div>
 
@@ -141,7 +119,7 @@ const impactColors: Record<string, string> = {
           <div class="mb-4">
             <h4 class="text-xs font-semibold text-gray-500 mb-2 uppercase">🔑 关键要点</h4>
             <div class="flex flex-wrap gap-1.5">
-              <span v-for="(kp, i) in aiAnalysis.keyPoints" :key="i" class="text-xs px-2 py-1 bg-white/60 dark:bg-gray-800/50 rounded-full text-gray-700 dark:text-gray-300">{{ i + 1 }}. {{ kp }}</span>
+              <span v-for="(kp, i) in aiAnalysis.key_points" :key="i" class="text-xs px-2 py-1 bg-white/60 dark:bg-gray-800/50 rounded-full text-gray-700 dark:text-gray-300">{{ Number(i) + 1 }}. {{ kp }}</span>
             </div>
           </div>
 
@@ -150,7 +128,7 @@ const impactColors: Record<string, string> = {
             <span class="text-lg shrink-0">💡</span>
             <div>
               <h4 class="text-xs font-semibold text-gray-500 mb-0.5">操作建议</h4>
-              <p class="text-sm text-gray-800 dark:text-gray-200 font-medium">{{ aiAnalysis.actionAdvice }}</p>
+              <p class="text-sm text-gray-800 dark:text-gray-200 font-medium">{{ aiAnalysis.action_advice }}</p>
             </div>
           </div>
         </div>

@@ -1,10 +1,12 @@
 """News service layer."""
 import logging
+import random
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
+from sqlalchemy.orm import selectinload
 
-from app.models.news import NewsSource, NewsArticle
+from app.models.news import NewsSource, NewsArticle, NewsAnalysis
 from app.core.cache import cache_get, cache_set
 
 logger = logging.getLogger(__name__)
@@ -82,7 +84,7 @@ class NewsService:
         return {"items": items, "total": total, "page": page, "size": size}
 
     async def get_article_detail(self, article_id: int) -> Optional[dict]:
-        """Get full article detail with source name."""
+        """Get full article detail with source name and AI analysis."""
         stmt = select(NewsArticle).where(NewsArticle.id == article_id)
         result = await self.db.execute(stmt)
         article = result.scalar_one_or_none()
@@ -100,6 +102,9 @@ class NewsService:
         if not content or len(content.strip()) < 100:
             content = _generate_article_content(article.title, article.sentiment or "neutral", article.published_at)
 
+        # Get or generate AI impact analysis
+        analysis = await self._get_or_generate_analysis(article)
+
         detail = {
             "id": article.id, "title": article.title, "summary": article.summary,
             "content": content, "source": src_name, "source_url": article.source_url,
@@ -108,6 +113,7 @@ class NewsService:
             "categories": article.categories or [], "tags": article.tags or [],
             "related_stocks": article.related_stocks or [],
             "published_at": article.published_at.isoformat() if article.published_at else None,
+            "ai_analysis": analysis,
             "related_news": [],
         }
 
@@ -139,6 +145,44 @@ class NewsService:
             "published_at": article.published_at.isoformat() if article.published_at else None,
         }
 
+    async def _get_or_generate_analysis(self, article) -> dict:
+        """Fetch existing AI analysis or generate + persist a new one."""
+        # Try to find existing analysis
+        stmt = select(NewsAnalysis).where(NewsAnalysis.news_id == article.id)
+        result = await self.db.execute(stmt)
+        existing = result.scalar_one_or_none()
+        if existing:
+            return self._analysis_to_dict(existing)
+
+        # Generate new analysis
+        analysis = _build_ai_analysis(article)
+        db_analysis = NewsAnalysis(
+            news_id=article.id,
+            impact_score=analysis["impact_score"],
+            impact_level=analysis["impact_level"],
+            affected_funds=analysis["affected_funds"],
+            short_term=analysis["short_term"],
+            medium_term=analysis["medium_term"],
+            action_advice=analysis["action_advice"],
+            key_points=analysis["key_points"],
+        )
+        self.db.add(db_analysis)
+        await self.db.commit()
+        await self.db.refresh(db_analysis)
+        return self._analysis_to_dict(db_analysis)
+
+    @staticmethod
+    def _analysis_to_dict(a: NewsAnalysis) -> dict:
+        return {
+            "impact_score": a.impact_score,
+            "impact_level": a.impact_level,
+            "affected_funds": a.affected_funds or [],
+            "short_term": a.short_term or "",
+            "medium_term": a.medium_term or "",
+            "action_advice": a.action_advice or "",
+            "key_points": a.key_points or [],
+        }
+
     async def get_sources(self) -> list[dict]:
         """Get all news sources with article count."""
         stmt = select(NewsSource).where(NewsSource.is_active == True)
@@ -166,6 +210,90 @@ class NewsService:
             else:
                 stats["neutral_count"] = count
         return stats
+
+
+def _build_ai_analysis(article) -> dict:
+    """Build AI impact analysis based on the actual article title and sentiment.
+    Uses keyword matching on the title to tailor the analysis content."""
+    title = article.title or ""
+    sentiment = article.sentiment or "neutral"
+
+    # Determine impact score and level from sentiment
+    pos = sentiment == "positive"
+    neg = sentiment == "negative"
+    if pos:
+        impact_score = random.randint(45, 75)
+        impact_level = "利好"
+    elif neg:
+        impact_score = random.randint(-65, -25)
+        impact_level = "利空"
+    else:
+        impact_score = random.randint(-15, 20)
+        impact_level = "中性"
+
+    # ── Detect affected fund types from title keywords ──
+    affected_funds = []
+
+    if any(kw in title for kw in ["ETF", "指数", "沪深300", "科创50", "中证500"]):
+        affected_funds.append({"code": "510300", "name": "沪深300ETF", "impact": "宽基ETF直接受益于市场整体变化"})
+        affected_funds.append({"code": "588000", "name": "科创50ETF", "impact": "科技属性ETF波动更大，需关注弹性"})
+    if any(kw in title for kw in ["债", "债券", "利率", "债基", "MLF", "降息"]):
+        affected_funds.append({"code": "110027", "name": "易方达安心回报债券A", "impact": "利率变化直接影响债券价格"})
+    if any(kw in title for kw in ["消费", "白酒", "茅台", "五粮液"]):
+        affected_funds.append({"code": "005827", "name": "易方达蓝筹精选混合", "impact": "重仓消费蓝筹，与消费复苏高度相关"})
+    if any(kw in title for kw in ["医药", "创新药", "医疗", "葛兰"]):
+        affected_funds.append({"code": "001475", "name": "中欧医疗健康混合", "impact": "医药主题基金，受行业政策影响大"})
+    if any(kw in title for kw in ["新能源", "光伏", "锂电", "电池"]):
+        affected_funds.append({"code": "002939", "name": "广发新能源精选混合", "impact": "新能源赛道基金，景气度是关键驱动"})
+    if any(kw in title for kw in ["半导体", "芯片", "科技"]):
+        affected_funds.append({"code": "320007", "name": "诺安成长混合", "impact": "科技半导体主题，波动较大"})
+    if any(kw in title for kw in ["红利", "高股息", "分红"]):
+        affected_funds.append({"code": "510880", "name": "红利ETF", "impact": "红利策略直接受益于分红政策"})
+    if any(kw in title for kw in ["QDII", "海外", "港股", "美股", "全球"]):
+        affected_funds.append({"code": "513100", "name": "纳指ETF", "impact": "海外市场波动和汇率是主要影响因素"})
+    if any(kw in title for kw in ["定投", "新手", "入门"]):
+        affected_funds.append({"code": "000311", "name": "景顺长城沪深300增强", "impact": "定投标的，长期持有收益稳健"})
+
+    # Fallback: ensure at least 2 funds
+    if len(affected_funds) < 2:
+        affected_funds.append({"code": "510300", "name": "沪深300ETF", "impact": "核心宽基，受市场系统性影响"})
+        affected_funds.append({"code": "110027", "name": "易方达安心回报债", "impact": "作为纯债基金受影响较小，可作为组合稳定器"})
+    if len(affected_funds) > 4:
+        affected_funds = affected_funds[:4]
+
+    # ── Generate tailored short/medium term analysis ──
+    topic_kw = title[:30]
+
+    if pos:
+        short_term = f"「{topic_kw}」这一利好消息预计在1-2周内提振市场情绪。相关基金净值有望小幅上涨1-3%，但短期追高需谨慎。"
+        medium_term = f"未来1-3个月，如果利好逻辑持续兑现（政策落地/数据改善/资金流入），相关基金有望获得3-5%的超额收益。建议通过定投方式逐步参与，避免一次性重仓。"
+        action_advice = "继续定投，维持现有仓位。如果持有相关基金，让利润奔跑但不要追高加仓。没上车的可以小额定投开始建仓。"
+    elif neg:
+        short_term = f"「{topic_kw}」这一利空消息可能在1-2周内对市场形成压力。相关基金净值可能回调1-3%，但恐慌性赎回往往得不偿失。"
+        medium_term = f"未来1-3个月，市场将逐步消化利空。历史上类似事件后，优质基金通常在3-6个月内收复失地。定投投资者应利用低位积累份额。"
+        action_advice = "坚持定投不要停，下跌是积累份额的好机会。如果有闲置资金，可分批加仓优质基金。短期不要恐慌赎回。"
+    else:
+        short_term = f"「{topic_kw}」这一消息对短期市场影响偏中性。预计1-2周内相关基金维持震荡格局，方向取决于后续数据和政策。"
+        medium_term = "中期走势取决于宏观经济、流动性和行业基本面。建议保持灵活仓位，做好两手准备——上涨有仓位，下跌有资金。"
+        action_advice = "按原计划执行定投，不急于加仓或减仓。等待趋势明朗后再做调整。保持适当的仓位弹性。"
+
+    # ── Extract key points from title ──
+    key_points = [
+        title[:40] + ("..." if len(title) > 40 else ""),
+        "关注后续市场反应和政策动态",
+        "定投投资者无需过度反应，按计划执行即可",
+        "做好仓位管理，避免单一赛道过度集中",
+    ]
+
+    return {
+        "impact_score": impact_score,
+        "impact_level": impact_level,
+        "affected_funds": affected_funds,
+        "short_term": short_term,
+        "medium_term": medium_term,
+        "action_advice": action_advice,
+        "key_points": key_points,
+    }
 
 
 def _generate_article_content(title: str, sentiment: str, published_at) -> str:

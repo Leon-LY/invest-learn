@@ -1,15 +1,35 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { marked } from 'marked'
 import AppShell from '@/layouts/AppShell.vue'
 import { newsApi } from '@/api/news'
 import { newsImpactAnalyses } from '@/mock/experts'
 import type { NewsImpactAnalysis } from '@/mock/experts'
 
+// Configure marked for safe rendering
+marked.setOptions({ breaks: true, gfm: true })
+
 const route = useRoute()
 const article = ref<any>(null)
 const loading = ref(true)
 const aiAnalysis = ref<NewsImpactAnalysis | null>(null)
+
+const renderedContent = computed(() => {
+  if (!article.value?.content) return ''
+  return marked.parse(article.value.content) as string
+})
+
+/** Format ISO timestamp to friendly display */
+function formatTime(iso: string | undefined | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mi = String(d.getMinutes()).padStart(2, '0')
+  return `${d.getFullYear()}-${mm}-${dd} ${hh}:${mi}`
+}
 
 onMounted(async () => {
   try {
@@ -69,16 +89,16 @@ const impactColors: Record<string, string> = {
         <div class="flex items-center gap-2 text-sm text-gray-400 mb-6">
           <span>{{ article.source || '财经媒体' }}</span>
           <span v-if="article.author">· {{ article.author }}</span>
-          <span>· {{ article.published_at?.slice(0, 16) || '' }}</span>
+          <span>· {{ formatTime(article.published_at) }}</span>
           <span v-if="article.sentiment === 'positive'" class="px-1.5 py-0.5 text-xs rounded-full bg-up-bg text-up font-medium">利好</span>
           <span v-else-if="article.sentiment === 'negative'" class="px-1.5 py-0.5 text-xs rounded-full bg-down-bg text-down font-medium">利空</span>
         </div>
-        <!-- Content -->
-        <div v-if="article.content" class="text-sm leading-relaxed dark:text-gray-300 whitespace-pre-wrap font-sans">{{ article.content }}</div>
+        <!-- Content (rendered from Markdown) -->
+        <div v-if="article.content" class="max-w-none dark:text-gray-300 markdown-body" v-html="renderedContent" />
         <div v-else class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{{ article.summary || '暂无内容详情' }}</div>
 
         <!-- 🤖 AI Impact Analysis -->
-        <div class="mt-6 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary-light to-purple-50 dark:from-primary/10 dark:to-purple-900/20 p-5">
+        <div v-if="aiAnalysis" class="mt-6 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary-light to-purple-50 dark:from-primary/10 dark:to-purple-900/20 p-5">
           <div class="flex items-center gap-2 mb-3">
             <span class="text-xl">🤖</span>
             <h3 class="font-bold text-sm text-gray-900 dark:text-white">AI 影响分析</h3>
@@ -148,3 +168,33 @@ const impactColors: Record<string, string> = {
     </div>
   </AppShell>
 </template>
+
+<style scoped>
+.markdown-body :deep(h2) { font-size: 1.15rem; font-weight: 700; margin: 1.2em 0 0.4em; color: #1a1a2e; }
+.markdown-body :deep(h3) { font-size: 1.05rem; font-weight: 600; margin: 1em 0 0.3em; color: #16213e; }
+.markdown-body :deep(h4) { font-size: 0.95rem; font-weight: 600; margin: 0.8em 0 0.2em; }
+.markdown-body :deep(p) { margin: 0.4em 0; line-height: 1.7; }
+.markdown-body :deep(strong) { font-weight: 600; color: #e67e22; }
+.markdown-body :deep(blockquote) {
+  border-left: 3px solid #e67e22; margin: 0.6em 0; padding: 0.4em 0.8em;
+  background: #fff8f0; border-radius: 0 6px 6px 0; color: #6b4226;
+}
+.markdown-body :deep(hr) { border: none; border-top: 1px dashed #e0e0e0; margin: 1em 0; }
+.markdown-body :deep(ul), .markdown-body :deep(ol) { padding-left: 1.3em; margin: 0.3em 0; }
+.markdown-body :deep(li) { margin: 0.15em 0; line-height: 1.6; }
+.markdown-body :deep(table) { width: 100%; border-collapse: collapse; margin: 0.6em 0; font-size: 0.85rem; }
+.markdown-body :deep(th) { background: #f5f5f5; padding: 6px 10px; text-align: left; font-weight: 600; border: 1px solid #e0e0e0; }
+.markdown-body :deep(td) { padding: 5px 10px; border: 1px solid #e0e0e0; }
+.markdown-body :deep(code) { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-size: 0.85em; }
+.markdown-body :deep(a) { color: #e67e22; text-decoration: underline; }
+
+.dark .markdown-body :deep(h2) { color: #e8e8e8; }
+.dark .markdown-body :deep(h3) { color: #d0d0d0; }
+.dark .markdown-body :deep(strong) { color: #f0a050; }
+.dark .markdown-body :deep(blockquote) { background: #1a1a2e; color: #c0a080; border-color: #f0a050; }
+.dark .markdown-body :deep(th) { background: #1e1e2e; border-color: #333; }
+.dark .markdown-body :deep(td) { border-color: #333; }
+.dark .markdown-body :deep(code) { background: #1e1e2e; }
+.dark .markdown-body :deep(hr) { border-color: #333; }
+.dark .markdown-body :deep(a) { color: #f0a050; }
+</style>

@@ -15,6 +15,27 @@ const page = ref(1)
 const total = ref(0)
 const hasMore = ref(false)
 
+/** Format ISO timestamp to friendly display */
+function formatTime(iso: string | undefined | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const now = Date.now()
+  const diff = now - d.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  if (days < 7) return `${days}天前`
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mi = String(d.getMinutes()).padStart(2, '0')
+  if (d.getFullYear() === new Date().getFullYear()) return `${mm}-${dd} ${hh}:${mi}`
+  return `${d.getFullYear()}-${mm}-${dd}`
+}
+
 onMounted(() => fetchNews())
 
 async function fetchNews() {
@@ -78,7 +99,7 @@ function changeCategory(cat: string) {
           <p v-if="a.summary" class="text-xs text-gray-400 mt-1.5 line-clamp-2">{{ a.summary }}</p>
           <div class="flex items-center gap-2 mt-2 text-xs text-gray-400">
             <span>{{ a.source || '基智学' }}</span><span>·</span>
-            <span>{{ a.published_at?.slice(0, 10) || '' }}</span>
+            <span>{{ formatTime(a.published_at) }}</span>
             <span v-if="a.sentiment === 'positive'" class="px-1.5 py-0.5 rounded text-xs bg-up-bg text-up font-medium">利好</span>
             <span v-else-if="a.sentiment === 'negative'" class="px-1.5 py-0.5 rounded text-xs bg-down-bg text-down font-medium">利空</span>
           </div>

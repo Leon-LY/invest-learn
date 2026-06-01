@@ -106,7 +106,7 @@ async function fetchNews() { try { news.value = ((await newsApi.getList({ page: 
         </div>
         <div class="space-y-2">
           <div v-for="a in news" :key="a.id" @click="router.push(`/news/${a.id}`)"
-            class="card card-glow p-3.5 cursor-pointer">
+            class="card p-3.5 cursor-pointer">
             <div class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 leading-snug">{{ a.title }}</div>
             <div class="flex items-center gap-1.5 mt-2 text-xs text-gray-400 flex-nowrap overflow-hidden">
               <span class="shrink-0">{{ a.source || '基智学' }}</span><span class="shrink-0">·</span>

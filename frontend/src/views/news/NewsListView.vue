@@ -106,16 +106,18 @@ function changeCategory(cat: string) {
         </button>
       </div>
 
-      <!-- Category tabs -->
-      <div class="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100/80 dark:bg-gray-800/50 overflow-x-auto no-scrollbar">
-        <button v-for="c in [{ v: '', l: '全部' }, { v: '基金', l: '基金' }, { v: '行业', l: '行业' }, { v: '大佬', l: '大佬' }, { v: '策略', l: '策略' }]" :key="c.v"
-          @click="changeCategory(c.v)"
-          class="px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-200"
-          :class="category === c.v
-            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
-        >{{ c.l }}</button>
-        <span class="text-xs text-gray-400 ml-auto pr-2 shrink-0">{{ total > 0 ? `共 ${total} 条` : '' }}</span>
+      <!-- Category tabs + total count -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100/80 dark:bg-gray-800/50 overflow-x-auto no-scrollbar flex-1 min-w-0">
+          <button v-for="c in [{ v: '', l: '全部' }, { v: '基金', l: '基金' }, { v: '行业', l: '行业' }, { v: '大佬', l: '大佬' }, { v: '策略', l: '策略' }]" :key="c.v"
+            @click="changeCategory(c.v)"
+            class="px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-200"
+            :class="category === c.v
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          >{{ c.l }}</button>
+        </div>
+        <span class="text-xs text-gray-400 shrink-0">{{ total > 0 ? `共 ${total} 条` : '' }}</span>
       </div>
 
       <!-- News list -->

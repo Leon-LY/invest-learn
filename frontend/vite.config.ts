@@ -10,6 +10,9 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
+  build: {
+    target: 'es2020',
+  },
   server: {
     port: 3000,
     proxy: {

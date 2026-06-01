@@ -200,7 +200,12 @@ export function setupMock(axios: AxiosInstance) {
     }
     if (path === 'market/search') {
       const params = data as any
-      return JSON.parse(JSON.stringify(mockSearch(params?.params?.q || '')))
+      const results = mockSearch(params?.params?.q || '')
+      if (results.length === 0) {
+        // Fall through to real API for codes not in mock
+        return originalGet(url, data)
+      }
+      return JSON.parse(JSON.stringify(results))
     }
     if (path === 'market/screener') {
       const all = getMockFundList()

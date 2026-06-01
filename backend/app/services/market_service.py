@@ -189,7 +189,10 @@ class MarketService:
         return [_kline_to_dict(k) for k in kline_result.scalars().all()]
 
     async def search_stocks(self, q: str, market: Optional[str] = None, limit: int = 20) -> list[dict]:
-        """Search stocks by code or name."""
+        """Search stocks AND funds by code or name."""
+        results = []
+
+        # Search stocks
         stmt = select(Stock).where(
             or_(
                 Stock.code.ilike(f"%{q}%"),
@@ -199,12 +202,29 @@ class MarketService:
         if market:
             stmt = stmt.where(Stock.market == market)
         stmt = stmt.limit(limit)
-        result = await self.db.execute(stmt)
-        stocks = result.scalars().all()
-        return [{
-            "code": s.code, "name": s.name, "market": s.market,
-            "security_type": s.security_type, "match_score": 1.0,
-        } for s in stocks]
+        r = await self.db.execute(stmt)
+        for s in r.scalars().all():
+            results.append({
+                "code": s.code, "name": s.name, "market": s.market,
+                "security_type": s.security_type, "match_score": 1.0,
+            })
+
+        # Search funds
+        from app.models.market import Fund
+        fund_stmt = select(Fund).where(
+            or_(
+                Fund.code.ilike(f"%{q}%"),
+                Fund.name.ilike(f"%{q}%"),
+            )
+        ).limit(limit - len(results))
+        fr = await self.db.execute(fund_stmt)
+        for f in fr.scalars().all():
+            results.append({
+                "code": f.code, "name": f.name, "market": "CN",
+                "security_type": "fund", "match_score": 1.0,
+            })
+
+        return results[:limit]
 
     # ─── Funds ──────────────────────────────────────────
 

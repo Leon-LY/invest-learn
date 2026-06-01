@@ -27,26 +27,47 @@ const fundDefs = [
   { code: '161725', name: '招商中证白酒指数(LOF)A', type: '指数型', category: '消费', company: '招商基金', manager: '侯昊', scale: 680, star: 4, risk: '高', inception: '2015-05-27' },
   { code: '110003', name: '易方达上证50指数A', type: '指数型', category: '宽基', company: '易方达基金', manager: '张胜记', scale: 230, star: 4, risk: '高', inception: '2004-03-22' },
   { code: '502010', name: '易方达沪深300ETF联接A', type: '指数型', category: '宽基', company: '易方达基金', manager: '余海燕', scale: 180, star: 5, risk: '中高', inception: '2012-03-22' },
-  { code: '000311', name: '华泰柏瑞沪深300ETF联接A', type: '指数型', category: '宽基', company: '华泰柏瑞基金', manager: '柳军', scale: 350, star: 5, risk: '中高', inception: '2012-05-04' },
-  // 混合型
+  { code: '000311', name: '景顺长城沪深300增强', type: '指数型', category: '宽基', company: '景顺长城基金', manager: '黎海威', scale: 350, star: 5, risk: '中高', inception: '2013-10-17' },
+  { code: '100038', name: '富国沪深300增强', type: '指数型', category: '宽基', company: '富国基金', manager: '李笑薇', scale: 280, star: 5, risk: '中高', inception: '2009-12-16' },
+  { code: '160706', name: '嘉实沪深300ETF联接', type: '指数型', category: '宽基', company: '嘉实基金', manager: '何如', scale: 220, star: 5, risk: '中高', inception: '2005-08-29' },
+  { code: '110026', name: '易方达创业板ETF联接A', type: '指数型', category: '宽基', company: '易方达基金', manager: '成曦', scale: 150, star: 4, risk: '高', inception: '2011-09-20' },
+  // 混合型-偏股
   { code: '005827', name: '易方达蓝筹精选混合', type: '混合型', category: '偏股', company: '易方达基金', manager: '张坤', scale: 450, star: 5, risk: '中高', inception: '2018-09-05' },
   { code: '163406', name: '兴全合润混合(LOF)', type: '混合型', category: '偏股', company: '兴证全球基金', manager: '谢治宇', scale: 280, star: 5, risk: '中高', inception: '2010-04-22' },
   { code: '002939', name: '广发创新升级混合', type: '混合型', category: '偏股', company: '广发基金', manager: '刘格菘', scale: 120, star: 4, risk: '高', inception: '2017-06-15' },
   { code: '001475', name: '易方达国防军工混合A', type: '混合型', category: '行业', company: '易方达基金', manager: '何崇恺', scale: 95, star: 4, risk: '高', inception: '2015-06-19' },
   { code: '320007', name: '诺安成长混合', type: '混合型', category: '行业', company: '诺安基金', manager: '蔡嵩松', scale: 180, star: 4, risk: '高', inception: '2009-03-10' },
+  { code: '519674', name: '银河创新成长混合A', type: '混合型', category: '行业', company: '银河基金', manager: '郑巍山', scale: 120, star: 4, risk: '高', inception: '2010-12-29' },
+  { code: '270005', name: '广发聚丰混合A', type: '混合型', category: '偏股', company: '广发基金', manager: '邱璟旻', scale: 100, star: 4, risk: '中高', inception: '2005-07-13' },
+  { code: '161005', name: '富国天惠成长混合A', type: '混合型', category: '偏股', company: '富国基金', manager: '朱少醒', scale: 350, star: 5, risk: '中高', inception: '2005-11-16' },
+  { code: '519736', name: '交银新成长混合', type: '混合型', category: '偏股', company: '交银施罗德基金', manager: '王崇', scale: 160, star: 5, risk: '中高', inception: '2014-10-24' },
+  { code: '001714', name: '工银文体产业股票A', type: '股票型', category: '消费', company: '工银瑞信基金', manager: '袁芳', scale: 180, star: 5, risk: '中高', inception: '2015-12-30' },
+  { code: '001632', name: '天弘中证食品饮料A', type: '指数型', category: '消费', company: '天弘基金', manager: '沙川', scale: 90, star: 4, risk: '高', inception: '2015-07-29' },
   // 债券型
   { code: '110027', name: '易方达安心回报债券A', type: '债券型', category: '混合债', company: '易方达基金', manager: '张清华', scale: 320, star: 5, risk: '中低', inception: '2011-06-21' },
   { code: '000290', name: '鹏华全球高收益债(QDII)', type: '债券型', category: 'QDII债', company: '鹏华基金', manager: '尤柏年', scale: 45, star: 4, risk: '中', inception: '2013-10-22' },
+  { code: '217022', name: '招商产业债券A', type: '债券型', category: '纯债', company: '招商基金', manager: '马龙', scale: 200, star: 5, risk: '低', inception: '2012-03-21' },
+  { code: '050027', name: '博时信用债纯债债券A', type: '债券型', category: '纯债', company: '博时基金', manager: '张李陵', scale: 130, star: 5, risk: '低', inception: '2012-09-07' },
   // 货币型
   { code: '000198', name: '天弘余额宝货币', type: '货币型', category: '货币', company: '天弘基金', manager: '王登峰', scale: 7500, star: 5, risk: '低', inception: '2013-05-29' },
+  { code: '000620', name: '易方达现金增利货币A', type: '货币型', category: '货币', company: '易方达基金', manager: '石大怿', scale: 2000, star: 5, risk: '低', inception: '2014-06-17' },
   // ETF
   { code: '510050', name: '华夏上证50ETF', type: 'ETF', category: '宽基', company: '华夏基金', manager: '张弘弢', scale: 550, star: 5, risk: '中高', inception: '2004-12-30' },
   { code: '510300', name: '华泰柏瑞沪深300ETF', type: 'ETF', category: '宽基', company: '华泰柏瑞基金', manager: '柳军', scale: 1200, star: 5, risk: '中高', inception: '2012-05-04' },
   { code: '159915', name: '易方达创业板ETF', type: 'ETF', category: '宽基', company: '易方达基金', manager: '成曦', scale: 350, star: 4, risk: '高', inception: '2011-09-20' },
   { code: '588000', name: '华夏科创50ETF', type: 'ETF', category: '宽基', company: '华夏基金', manager: '荣膺', scale: 680, star: 4, risk: '高', inception: '2020-09-28' },
+  { code: '512880', name: '国泰中证全指证券公司ETF', type: 'ETF', category: '行业', company: '国泰基金', manager: '艾小军', scale: 320, star: 4, risk: '高', inception: '2016-07-26' },
+  { code: '512170', name: '华宝中证医疗ETF', type: 'ETF', category: '行业', company: '华宝基金', manager: '胡洁', scale: 280, star: 4, risk: '高', inception: '2019-05-20' },
+  { code: '516160', name: '南方中证新能源ETF', type: 'ETF', category: '行业', company: '南方基金', manager: '龚涛', scale: 90, star: 4, risk: '高', inception: '2021-01-12' },
+  { code: '510880', name: '华泰柏瑞红利ETF', type: 'ETF', category: '策略', company: '华泰柏瑞基金', manager: '柳军', scale: 180, star: 5, risk: '中', inception: '2006-11-17' },
+  { code: '512100', name: '南方中证1000ETF', type: 'ETF', category: '宽基', company: '南方基金', manager: '崔蕾', scale: 150, star: 4, risk: '高', inception: '2016-09-26' },
   // QDII
   { code: '513100', name: '国泰纳斯达克100ETF', type: 'QDII', category: '海外', company: '国泰基金', manager: '吴向军', scale: 120, star: 5, risk: '中高', inception: '2013-05-15' },
   { code: '513500', name: '博时标普500ETF', type: 'QDII', category: '海外', company: '博时基金', manager: '万琼', scale: 85, star: 5, risk: '中高', inception: '2015-05-27' },
+  { code: '513050', name: '易方达中证海外互联ETF', type: 'QDII', category: '海外', company: '易方达基金', manager: '余海燕', scale: 380, star: 4, risk: '高', inception: '2017-01-04' },
+  { code: '164906', name: '交银中证海外中国互联网', type: 'QDII', category: '海外', company: '交银施罗德基金', manager: '蔡铮', scale: 60, star: 4, risk: '高', inception: '2015-05-27' },
+  // FOF
+  { code: '006880', name: '交银安享稳健养老一年', type: 'FOF', category: '养老', company: '交银施罗德基金', manager: '蔡铮', scale: 150, star: 4, risk: '中低', inception: '2019-05-30' },
 ]
 
 function generateFundDetail(f: typeof fundDefs[0]) {

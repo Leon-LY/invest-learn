@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { learnApi } from '@/api/learn'
@@ -9,8 +9,14 @@ const router = useRouter()
 const categories = ref<any[]>([])
 const articles = ref<any[]>([])
 const loading = ref(true)
+const selectedCategory = ref('')
 
 const difficultyLabels: Record<string, string> = { beginner: '入门', intermediate: '进阶', advanced: '高级' }
+
+const filteredArticles = computed(() => {
+  if (!selectedCategory.value) return articles.value
+  return articles.value.filter(a => a.category_id === selectedCategory.value || a.tags?.some((t: string) => categories.value.find(c => c.id === selectedCategory.value)?.name === t))
+})
 
 onMounted(async () => {
   try {
@@ -37,7 +43,11 @@ onMounted(async () => {
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div
           v-for="cat in categories" :key="cat.id"
-          class="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow cursor-pointer"
+          @click="selectedCategory = selectedCategory === cat.slug ? '' : cat.slug"
+          class="rounded-xl p-4 border transition-all cursor-pointer"
+          :class="selectedCategory === cat.slug
+            ? 'bg-primary/5 border-primary/30 shadow-sm dark:bg-primary/10 dark:border-primary/40'
+            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:shadow-md'"
         >
           <div class="text-2xl mb-2">
             {{ cat.icon === 'rocket' ? '🚀' : cat.icon === 'chart-bar' ? '📊' : cat.icon === 'trending-up' ? '📈' : cat.icon === 'wallet' ? '💰' : cat.icon === 'shield' ? '🛡️' : cat.icon === 'heart' ? '❤️' : '📚' }}
@@ -65,10 +75,10 @@ onMounted(async () => {
         <div v-if="loading" class="space-y-2">
           <div v-for="i in 5" :key="i" class="animate-pulse h-20 bg-gray-100 dark:bg-gray-800 rounded-xl" />
         </div>
-        <EmptyState v-else-if="!articles.length" message="暂无文章" />
+        <EmptyState v-else-if="!filteredArticles.length" message="暂无文章" />
         <div v-else class="space-y-2">
           <div
-            v-for="a in articles" :key="a.id"
+            v-for="a in filteredArticles" :key="a.id"
             @click="router.push(`/learn/${a.slug}`)"
             class="bg-white dark:bg-gray-900 rounded-xl px-4 py-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-sm transition-shadow"
           >

@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { marketApi } from '@/api/market'
 import { watchlistApi } from '@/api/watchlist'
-import type { WatchlistItem } from '@/types/market'
+import * as echarts from 'echarts'
 
 const route = useRoute()
 const router = useRouter()
+const navChart = ref<HTMLElement>()
+const annualChart = ref<HTMLElement>()
 const code = (route.params.code as string) || ''
 const searchQuery = ref(code)
 const fund = ref<any>(null)
@@ -23,7 +25,48 @@ async function loadFund(c: string) {
   finally { loading.value = false }
 }
 
+function renderNavChart() {
+  if (!navChart.value || !fund.value?.nav_history?.length) return
+  const c = echarts.init(navChart.value, undefined, { height: 200 })
+  const navs = fund.value.nav_history
+  c.setOption({
+    grid: { top: 10, right: 10, bottom: 20, left: 50 },
+    xAxis: { type: 'category', data: navs.map((n: any) => n.date?.slice(5) || ''), axisLabel: { fontSize: 10, color: '#999' }, axisLine: { show: false }, axisTick: { show: false } },
+    yAxis: { type: 'value', splitLine: { lineStyle: { color: '#f0f0f0' } }, axisLabel: { fontSize: 10, color: '#999' } },
+    series: [{
+      type: 'line', data: navs.map((n: any) => n.unit_nav), smooth: true,
+      lineStyle: { color: '#5B6CF0', width: 2 },
+      itemStyle: { color: '#5B6CF0' },
+      areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: 'rgba(91,108,240,0.25)'}, {offset: 1, color: 'rgba(91,108,240,0)'}]) },
+      symbol: 'none',
+    }],
+    tooltip: { trigger: 'axis', formatter: (p: any) => `${p[0].axisValue}<br/>净值: <b>${p[0].data}</b>` },
+  })
+}
+
+function renderAnnualChart() {
+  if (!annualChart.value || !fund.value?.performance?.annual_returns?.length) return
+  const c = echarts.init(annualChart.value, undefined, { height: 160 })
+  const ar = fund.value.performance.annual_returns
+  c.setOption({
+    grid: { top: 10, right: 10, bottom: 20, left: 50 },
+    xAxis: { type: 'category', data: ar.map((r: any) => String(r.year)), axisLabel: { fontSize: 10, color: '#999' }, axisLine: { show: false }, axisTick: { show: false } },
+    yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#999', formatter: '{v}%' }, splitLine: { lineStyle: { color: '#f0f0f0' } } },
+    series: [{
+      type: 'bar', data: ar.map((r: any) => r.return),
+      itemStyle: {
+        color: (p: any) => p.data >= 0 ? '#E03131' : '#099268',
+        borderRadius: [4, 4, 0, 0],
+      },
+      barWidth: '40%',
+    }],
+    tooltip: { trigger: 'axis', formatter: (p: any) => `${p[0].axisValue}年<br/>收益: <b>${p[0].data > 0 ? '+' : ''}${p[0].data}%</b>` },
+  })
+}
+
 onMounted(() => { if (code) loadFund(code) })
+// Render charts after fund data loads
+watch(fund, async () => { await nextTick(); renderNavChart(); renderAnnualChart() })
 watch(() => route.params.code, (c) => { if (c) { loadFund(c as string); searchQuery.value = c as string } })
 
 function search() {
@@ -124,18 +167,16 @@ const feeEstimate = computed(() => {
           </div>
         </div>
 
-        <!-- Performance -->
+        <!-- Performance summary -->
         <div class="card p-4">
-          <h3 class="text-sm font-semibold dark:text-white mb-3">📈 历史业绩</h3>
-          <div class="grid grid-cols-4 gap-3 text-center">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">📈 阶段涨幅</h3>
+          <div class="grid grid-cols-4 gap-2 text-center">
             <div v-for="p in [
-              { label: '日涨跌', key: 'd1' },
-              { label: '近1周', key: 'w1' },
-              { label: '近1月', key: 'm1' },
-              { label: '近3月', key: 'm3' },
-              { label: '近6月', key: 'm6' },
-              { label: '近1年', key: 'y1' },
-            ]" :key="p.key" class="p-2">
+              { label: '日涨跌', key: 'd1' }, { label: '近1周', key: 'w1' },
+              { label: '近1月', key: 'm1' }, { label: '近3月', key: 'm3' },
+              { label: '近6月', key: 'm6' }, { label: '近1年', key: 'y1' },
+              { label: '近3年', key: 'y3' },
+            ]" :key="p.key" class="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               <div class="text-xs text-gray-400 mb-0.5">{{ p.label }}</div>
               <div :class="perfClass(perf[p.key])" class="text-sm font-bold tabular-nums">
                 {{ perfSign(perf[p.key]) }}
@@ -144,26 +185,45 @@ const feeEstimate = computed(() => {
           </div>
         </div>
 
+        <!-- NAV trend chart -->
+        <div v-if="fund.nav_history?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-2">📉 净值走势</h3>
+          <div ref="navChart" class="w-full" style="height:200px"></div>
+        </div>
+
+        <!-- Risk metrics -->
+        <div class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">⚠️ 风险指标</h3>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="text-center p-3 rounded-lg bg-red-50 dark:bg-red-900/10">
+              <div class="text-xs text-gray-400 mb-1">最大回撤</div>
+              <div class="text-lg font-bold text-up tabular-nums">{{ perf.max_drawdown ?? '--' }}{{ perf.max_drawdown != null ? '%' : '' }}</div>
+            </div>
+            <div class="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10">
+              <div class="text-xs text-gray-400 mb-1">年化波动率</div>
+              <div class="text-lg font-bold text-blue-600 dark:text-blue-400 tabular-nums">{{ perf.volatility ?? '--' }}{{ perf.volatility != null ? '%' : '' }}</div>
+            </div>
+            <div class="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
+              <div class="text-xs text-gray-400 mb-1">夏普比率</div>
+              <div class="text-lg font-bold text-down tabular-nums">{{ perf.sharpe ?? '--' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Annual returns chart -->
+        <div v-if="perf.annual_returns?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-2">📊 年度收益</h3>
+          <div ref="annualChart" class="w-full" style="height:160px"></div>
+        </div>
+
         <!-- Fund Info -->
         <div class="card p-4">
           <h3 class="text-sm font-semibold dark:text-white mb-3">📋 基金资料</h3>
           <div class="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <span class="text-xs text-gray-400">基金公司</span>
-              <p class="dark:text-gray-200 font-medium">{{ info.company || '--' }}</p>
-            </div>
-            <div>
-              <span class="text-xs text-gray-400">基金类型</span>
-              <p class="dark:text-gray-200 font-medium">{{ info.fund_type || '--' }}</p>
-            </div>
-            <div>
-              <span class="text-xs text-gray-400">风险等级</span>
-              <p class="dark:text-gray-200 font-medium">{{ info.risk_level || '中' }}风险</p>
-            </div>
-            <div>
-              <span class="text-xs text-gray-400">成立日期</span>
-              <p class="dark:text-gray-200 font-medium">{{ info.inception_date || '--' }}</p>
-            </div>
+            <div><span class="text-xs text-gray-400">基金公司</span><p class="dark:text-gray-200 font-medium">{{ info.company || '--' }}</p></div>
+            <div><span class="text-xs text-gray-400">基金类型</span><p class="dark:text-gray-200 font-medium">{{ info.fund_type || '--' }}</p></div>
+            <div><span class="text-xs text-gray-400">风险等级</span><p class="dark:text-gray-200 font-medium">{{ info.risk_level || '中' }}风险</p></div>
+            <div><span class="text-xs text-gray-400">成立日期</span><p class="dark:text-gray-200 font-medium">{{ info.inception_date || '--' }}</p></div>
           </div>
         </div>
 
@@ -171,22 +231,10 @@ const feeEstimate = computed(() => {
         <div class="card p-4">
           <h3 class="text-sm font-semibold dark:text-white mb-3">💰 费率水平（估算）</h3>
           <div class="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <span class="text-xs text-gray-400">管理费</span>
-              <p class="dark:text-gray-200 font-medium">{{ feeEstimate.mgmt }}</p>
-            </div>
-            <div>
-              <span class="text-xs text-gray-400">托管费</span>
-              <p class="dark:text-gray-200 font-medium">{{ feeEstimate.cust }}</p>
-            </div>
-            <div>
-              <span class="text-xs text-gray-400">申购费</span>
-              <p class="dark:text-gray-200 font-medium">{{ feeEstimate.sub }}</p>
-            </div>
-            <div>
-              <span class="text-xs text-gray-400">年度合计</span>
-              <p class="dark:text-gray-200 font-bold">{{ feeEstimate.total }}</p>
-            </div>
+            <div><span class="text-xs text-gray-400">管理费</span><p class="dark:text-gray-200 font-medium">{{ feeEstimate.mgmt }}</p></div>
+            <div><span class="text-xs text-gray-400">托管费</span><p class="dark:text-gray-200 font-medium">{{ feeEstimate.cust }}</p></div>
+            <div><span class="text-xs text-gray-400">申购费</span><p class="dark:text-gray-200 font-medium">{{ feeEstimate.sub }}</p></div>
+            <div><span class="text-xs text-gray-400">年度合计</span><p class="dark:text-gray-200 font-bold">{{ feeEstimate.total }}</p></div>
           </div>
         </div>
 

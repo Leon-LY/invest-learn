@@ -380,8 +380,46 @@ class MarketService:
             "m3": calc_return(66),
             "m6": calc_return(132),
             "y1": calc_return(260),
-            "ytd": calc_return(260),  # approximate
+            "y3": calc_return(780) if len(navs_sorted) > 260 else None,
+            "ytd": calc_return(260),
         }
+
+        # Annual returns (approximate: group by year buckets)
+        nav_values = [(_to_float(n.unit_nav), n.nav_date) for n in navs_sorted if _to_float(n.unit_nav)]
+        annual_returns = []
+        if len(nav_values) > 260:
+            for yr_offset in range(3):  # last 3 years
+                year = date.today().year - yr_offset
+                yearly = [(v, d) for v, d in nav_values if d and d.year == year]
+                if len(yearly) >= 2:
+                    y0, y1 = yearly[0][0], yearly[-1][0]
+                    if y0 > 0:
+                        annual_returns.append({"year": year, "return": round(((y1/y0)-1)*100, 2)})
+        annual_returns.reverse()
+
+        # Max drawdown
+        max_dd = 0.0
+        if len(nav_values) > 20:
+            peak = nav_values[0][0]
+            for v, _ in nav_values:
+                if v > peak: peak = v
+                dd = (v - peak) / peak * 100 if peak > 0 else 0
+                if dd < max_dd: max_dd = dd
+            max_dd = round(max_dd, 2)
+
+        # Annualized volatility (from daily returns)
+        vol = None
+        daily_rets = [_to_float(n.daily_return) for n in navs_sorted[-260:] if _to_float(n.daily_return) is not None]
+        if len(daily_rets) > 60:
+            mean_r = sum(daily_rets) / len(daily_rets)
+            variance = sum((r - mean_r)**2 for r in daily_rets) / (len(daily_rets) - 1)
+            vol = round((variance ** 0.5) * (252 ** 0.5), 2)  # Annualize
+
+        # Sharpe ratio (assuming risk-free rate ~2%)
+        sharpe = None
+        if vol and vol > 0:
+            avg_return = sum(daily_rets) / len(daily_rets) * 252
+            sharpe = round((avg_return - 2.0) / vol, 2)
 
         # Get real-time quote from TianTian
         rt_quote = None
@@ -423,7 +461,13 @@ class MarketService:
                 "latest_return": estimated_return or latest_return,
                 "risk_level": risk_level,
             },
-            "performance": returns,
+            "performance": {
+                **returns,
+                "max_drawdown": max_dd,
+                "volatility": vol,
+                "sharpe": sharpe,
+                "annual_returns": annual_returns,
+            },
             "nav_history": [{
                 "date": n.nav_date.isoformat() if n.nav_date else None,
                 "unit_nav": _to_float(n.unit_nav),

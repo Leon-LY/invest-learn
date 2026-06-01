@@ -10,10 +10,10 @@ pydantic-settings==2.1.0
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
-akshare==1.14.0
-yfinance==0.2.36
-pandas==2.1.5
-numpy==1.26.3
+akshare>=1.18.0
+yfinance>=0.2.40
+pandas>=2.0.0
+numpy>=1.26.0
 httpx==0.26.0
 feedparser==6.0.11
 beautifulsoup4==4.12.3

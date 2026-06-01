@@ -177,6 +177,7 @@ class AStockSpotCrawler(BaseCrawler):
             return {"status": "skipped", "reason": "not a trading day"}
         return {"quotes_fetched": await self.fetch_spot()}
 
+    @retry_on_failure(max_retries=3, delay=3.0)
     async def fetch_spot(self) -> int:
         import akshare as ak
         try:

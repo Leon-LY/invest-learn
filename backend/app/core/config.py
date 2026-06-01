@@ -20,6 +20,21 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
 
+    # ── DeepSeek LLM (OpenAI-compatible API) ──
+    DEEPSEEK_API_KEY: str = ""
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com/v1"
+    DEEPSEEK_MODEL: str = "deepseek-chat"
+
+    # ── Crawler network ──
+    CRAWLER_HTTP_TIMEOUT: float = 30.0
+    CRAWLER_RETRY_MAX: int = 3
+    CRAWLER_RETRY_DELAY: float = 2.0
+    HTTP_PROXY: str = ""
+    HTTPS_PROXY: str = ""
+
+    # ── AI analysis ──
+    GENERATE_FAKE_CONTENT: bool = False  # no more template article content
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

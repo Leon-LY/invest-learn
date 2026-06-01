@@ -61,6 +61,7 @@ class NewsAnalysis(Base):
     medium_term: Mapped[Optional[str]] = mapped_column(Text)  # 中期影响（1-3月）
     action_advice: Mapped[Optional[str]] = mapped_column(Text)  # 操作建议
     key_points: Mapped[Optional[dict]] = mapped_column(JSONB, default=list)  # 关键要点
+    generated_by: Mapped[str] = mapped_column(String(20), default="template")  # 'template','deepseek'
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     # Relationship back to article

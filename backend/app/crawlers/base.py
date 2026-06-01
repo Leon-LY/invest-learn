@@ -1,9 +1,12 @@
 """Abstract base crawler with common utilities."""
+import asyncio
 import logging
-import time
+import socket
 from datetime import date, datetime
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +18,8 @@ class BaseCrawler:
 
     def __init__(self, db: AsyncSession):
         self.db = db
+        # Set socket timeout for AKShare/yfinance underlying requests
+        socket.setdefaulttimeout(settings.CRAWLER_HTTP_TIMEOUT)
 
     async def run(self) -> dict:
         """Run the crawler. Returns status dict."""
@@ -51,9 +56,23 @@ class BaseCrawler:
         except (ValueError, TypeError):
             return default
 
+    @staticmethod
+    def setup_proxy():
+        """Configure HTTP proxy for crawlers if configured."""
+        if settings.HTTP_PROXY:
+            import os
+            os.environ["HTTP_PROXY"] = settings.HTTP_PROXY
+            os.environ["HTTPS_PROXY"] = settings.HTTPS_PROXY or settings.HTTP_PROXY
+            os.environ["http_proxy"] = settings.HTTP_PROXY
+            os.environ["https_proxy"] = settings.HTTPS_PROXY or settings.HTTP_PROXY
+            logger.info(f"Proxy configured: {settings.HTTP_PROXY}")
 
-def retry_on_failure(max_retries: int = 3, delay: float = 2.0):
-    """Decorator to retry a function on failure."""
+
+def retry_on_failure(max_retries: int = None, delay: float = None):
+    """Decorator to retry an async function on failure with exponential backoff."""
+    max_retries = max_retries if max_retries is not None else settings.CRAWLER_RETRY_MAX
+    delay = delay if delay is not None else settings.CRAWLER_RETRY_DELAY
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             last_error = None
@@ -64,7 +83,7 @@ def retry_on_failure(max_retries: int = 3, delay: float = 2.0):
                     last_error = e
                     logger.warning(f"Attempt {attempt + 1}/{max_retries} failed: {e}")
                     if attempt < max_retries - 1:
-                        time.sleep(delay * (attempt + 1))
+                        await asyncio.sleep(delay * (attempt + 1))
             raise last_error
         return wrapper
     return decorator

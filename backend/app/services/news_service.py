@@ -4,10 +4,9 @@ import random
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
-from sqlalchemy.orm import selectinload
-
 from app.models.news import NewsSource, NewsArticle, NewsAnalysis
-from app.core.cache import cache_get, cache_set
+from app.core.config import settings
+from app.services.llm_service import llm_service
 
 logger = logging.getLogger(__name__)
 
@@ -97,10 +96,10 @@ class NewsService:
             src_result = await self.db.execute(src_stmt)
             src_name = src_result.scalar()
 
-        # Generate rich content if article has none
+        # Use summary as content if no full text (no more fake generation in production)
         content = article.content
-        if not content or len(content.strip()) < 100:
-            content = _generate_article_content(article.title, article.sentiment or "neutral", article.published_at)
+        if not content or len(content.strip()) < 80:
+            content = article.summary or ""
 
         # Get or generate AI impact analysis
         analysis = await self._get_or_generate_analysis(article)
@@ -146,7 +145,7 @@ class NewsService:
         }
 
     async def _get_or_generate_analysis(self, article) -> dict:
-        """Fetch existing AI analysis or generate + persist a new one."""
+        """Fetch existing AI analysis or generate + persist a new one via DeepSeek LLM."""
         # Try to find existing analysis
         stmt = select(NewsAnalysis).where(NewsAnalysis.news_id == article.id)
         result = await self.db.execute(stmt)
@@ -154,8 +153,22 @@ class NewsService:
         if existing:
             return self._analysis_to_dict(existing)
 
-        # Generate new analysis
-        analysis = _build_ai_analysis(article)
+        analysis = None
+        generated_by = "template"
+
+        # Try DeepSeek LLM first
+        llm_result = await llm_service.analyze_news(
+            title=article.title,
+            summary=article.summary,
+            sentiment=article.sentiment,
+        )
+        if llm_result:
+            analysis = llm_result
+            generated_by = "deepseek"
+        else:
+            # Fallback to template-based analysis
+            analysis = _build_ai_analysis(article)
+
         db_analysis = NewsAnalysis(
             news_id=article.id,
             impact_score=analysis["impact_score"],
@@ -165,6 +178,7 @@ class NewsService:
             medium_term=analysis["medium_term"],
             action_advice=analysis["action_advice"],
             key_points=analysis["key_points"],
+            generated_by=generated_by,
         )
         self.db.add(db_analysis)
         await self.db.commit()
@@ -181,6 +195,7 @@ class NewsService:
             "medium_term": a.medium_term or "",
             "action_advice": a.action_advice or "",
             "key_points": a.key_points or [],
+            "generated_by": a.generated_by or "template",
         }
 
     async def get_sources(self) -> list[dict]:

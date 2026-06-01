@@ -45,7 +45,11 @@ class FundCrawler(BaseCrawler):
         return result
 
     async def sync_fund_list(self) -> int:
-        """Sync popular fund list."""
+        """Sync popular fund list + update metadata for all active funds."""
+        import asyncio
+        import akshare as ak
+
+        # 1. Ensure popular funds exist
         count = 0
         for code, name in POPULAR_FUNDS:
             stmt = select(Fund).where(Fund.code == code)
@@ -57,7 +61,35 @@ class FundCrawler(BaseCrawler):
                 count += 1
         if count > 0:
             await self.db.commit()
-        logger.info(f"Synced {count} new funds")
+            logger.info(f"Added {count} new popular funds")
+
+        # 2. Update metadata for active funds missing company/type
+        stmt = select(Fund).where(
+            Fund.is_active == True,
+            Fund.company == None,  # Missing metadata
+        ).limit(5)
+        result = await self.db.execute(stmt)
+        funds_to_update = result.scalars().all()
+
+        for fund in funds_to_update:
+            try:
+                info = await asyncio.to_thread(
+                    ak.fund_individual_basic_info_xq, symbol=fund.code
+                )
+                if info is not None and not info.empty:
+                    row = info.iloc[0]
+                    fund.fund_type = str(row.get("基金类型", fund.fund_type or "mixed"))[:30]
+                    fund.company = str(row.get("基金管理人", ""))[:100]
+                    full_name = str(row.get("基金全称", ""))
+                    if full_name:
+                        fund.name = full_name[:100]
+                    logger.info(f"Updated metadata for {fund.code}")
+            except Exception as e:
+                logger.warning(f"Metadata update failed for {fund.code}: {e}")
+
+        if funds_to_update:
+            await self.db.commit()
+            logger.info(f"Updated metadata for {len(funds_to_update)} funds")
         return count
 
     @retry_on_failure(max_retries=2, delay=3.0)

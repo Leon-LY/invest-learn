@@ -2,14 +2,14 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%235B6CF0'/><stop offset='100%25' stop-color='%2306B6D4'/></linearGradient></defs><circle cx='50' cy='50' r='44' fill='none' stroke='url(%23g)' stroke-width='5'/><path d='M28 52 L42 38 L56 48 L74 28' fill='none' stroke='url(%23g)' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/><circle cx='74' cy='28' r='5' fill='url(%23g)'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#4F6EF7" />
-    <title>基智学 - 基金投资学习平台</title>
+    <meta name="theme-color" content="#5B6CF0" />
+    <title>远见 — 洞察趋势，智选未来</title>
     <style>
       body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #F5F6FA; }
-      #splash { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: #4F6EF7; }
-      #splash .loader { width: 40px; height: 40px; border: 3px solid #e0e0e0; border-top-color: #4F6EF7; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+      #splash { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: #5B6CF0; }
+      #splash .loader { width: 40px; height: 40px; border: 3px solid #e0e0e0; border-top-color: #5B6CF0; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
       @keyframes spin { to { transform: rotate(360deg); } }
       #app.error { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: #666; text-align: center; padding: 20px; }
     </style>
@@ -18,17 +18,16 @@
     <div id="app">
       <div id="splash">
         <div class="loader"></div>
-        <div style="font-weight:600;font-size:18px;">基智学</div>
-        <div style="color:#999;font-size:13px;margin-top:4px;">基金投资学习平台</div>
+        <div style="font-weight:700;font-size:20px;background:linear-gradient(135deg,#5B6CF0,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">远见</div>
+        <div style="color:#999;font-size:13px;margin-top:4px;">洞察趋势，智选未来</div>
       </div>
     </div>
     <script>
-      // Show splash until Vue mounts. If Vue fails, show error.
       window.addEventListener('error', function(e) {
         var app = document.getElementById('app');
         if (app && e.error) {
           app.className = 'error';
-          app.innerHTML = '<div style="font-size:48px;margin-bottom:16px;">😞</div><div style="font-weight:600;font-size:16px;margin-bottom:8px;">加载失败</div><div style="font-size:13px;color:#999;">请检查网络连接后刷新重试</div><button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;background:#4F6EF7;color:white;border:none;border-radius:8px;font-size:14px;">重新加载</button>';
+          app.innerHTML = '<div style="font-size:48px;margin-bottom:16px;">😞</div><div style="font-weight:600;font-size:16px;margin-bottom:8px;">加载失败</div><div style="font-size:13px;color:#999;">请检查网络连接后刷新重试</div><button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;background:#5B6CF0;color:white;border:none;border-radius:8px;font-size:14px;">重新加载</button>';
         }
       });
     </script>

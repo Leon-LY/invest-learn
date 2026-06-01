@@ -121,8 +121,8 @@ function resetToDefault() {
       <section class="card p-4">
         <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">关于</h2>
         <div class="text-sm dark:text-white space-y-1">
-          <p>基智学 v0.2.0</p>
-          <p class="text-xs text-gray-400">基金投资学习平台 · AI驱动的智能分析</p>
+          <p>远见 v0.3.0</p>
+          <p class="text-xs text-gray-400">洞察趋势，智选未来 · AI驱动的智能投资分析</p>
           <p class="text-xs text-gray-400 mt-1">开发者：Leon</p>
           <p class="text-xs text-gray-400 mt-2">📡 后端服务器: 49.232.49.175:8000</p>
           <p class="text-xs text-gray-400">⚠️ 所有数据仅供参考学习，不构成投资建议</p>

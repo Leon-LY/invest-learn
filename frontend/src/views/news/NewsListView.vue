@@ -156,7 +156,7 @@ function changeCategory(cat: string) {
           <div class="font-medium text-sm dark:text-white line-clamp-2 leading-snug">{{ a.title }}</div>
           <p v-if="a.summary" class="text-xs text-gray-400 mt-1.5 line-clamp-2">{{ a.summary }}</p>
           <div class="flex items-center gap-1.5 mt-2 text-xs text-gray-400 flex-nowrap overflow-hidden">
-            <span class="shrink-0">{{ a.source || '基智学' }}</span><span class="shrink-0">·</span>
+            <span class="shrink-0">{{ a.source || '远见财经' }}</span><span class="shrink-0">·</span>
             <span class="shrink-0">{{ formatTime(a.published_at) }}</span>
             <span v-if="a.sentiment === 'positive'" class="shrink-0 px-1.5 py-0.5 rounded-full text-xs bg-up-bg text-up font-medium">利好</span>
             <span v-else-if="a.sentiment === 'negative'" class="shrink-0 px-1.5 py-0.5 rounded-full text-xs bg-down-bg text-down font-medium">利空</span>

@@ -46,7 +46,7 @@ async function fetchNews() { try { news.value = ((await newsApi.getList({ page: 
         <div>
           <h1 class="text-xl font-bold text-gray-900 dark:text-white title-underline">{{ greeting }}，Leon 👋</h1>
           <p class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
-            <span>基智学 · 你的基金投资学习助手</span>
+            <span>远见 · 洞察趋势，智选未来</span>
             <span class="live-dot"></span>
             <span class="text-[10px] text-gray-300 dark:text-gray-600">LIVE</span>
           </p>
@@ -109,7 +109,7 @@ async function fetchNews() { try { news.value = ((await newsApi.getList({ page: 
             class="card p-3.5 cursor-pointer">
             <div class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 leading-snug">{{ a.title }}</div>
             <div class="flex items-center gap-1.5 mt-2 text-xs text-gray-400 flex-nowrap overflow-hidden">
-              <span class="shrink-0">{{ a.source || '基智学' }}</span><span class="shrink-0">·</span>
+              <span class="shrink-0">{{ a.source || '远见财经' }}</span><span class="shrink-0">·</span>
               <span class="shrink-0">{{ formatTime(a.published_at) }}</span>
               <span v-if="a.sentiment === 'positive'" class="shrink-0 px-1.5 py-0.5 rounded-full text-xs bg-up-bg text-up font-medium ml-auto">利好</span>
               <span v-else-if="a.sentiment === 'negative'" class="shrink-0 px-1.5 py-0.5 rounded-full text-xs bg-down-bg text-down font-medium ml-auto">利空</span>

@@ -41,9 +41,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="基智学 API",
-    description="基金投资学习平台 — by Leon",
-    version="0.2.0",
+    title="远见 API",
+    description="洞察趋势，智选未来 — 基金投资智能分析平台 · by Leon",
+    version="0.3.0",
     lifespan=lifespan,
 )
 

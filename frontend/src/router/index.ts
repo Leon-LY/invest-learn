@@ -138,7 +138,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  document.title = `${to.meta.title || 'InvestLearn'} - 投资学习平台`
+  document.title = `${to.meta.title || '远见'} — 洞察趋势，智选未来`
 })
 
 export default router

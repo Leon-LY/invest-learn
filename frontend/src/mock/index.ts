@@ -134,7 +134,7 @@ function generateSimpleContent(title: string, sentiment: string): string {
     '**一次性投资者:** ' + lump + '\n\n' +
     '> 免责声明: 以上分析仅供参考学习，不构成投资建议。\n\n' +
     '**总结:** ' + title + '。总的来说，' + summary + '\n\n' +
-    '---\n*由基智学AI分析引擎生成 | by Leon*'
+    '---\n*由远见AI分析引擎生成 | by Leon*'
 }
 
 export function setupMock(axios: AxiosInstance) {

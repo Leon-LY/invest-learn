@@ -260,28 +260,35 @@ class MarketService:
 
     @staticmethod
     def _fetch_fund_from_akshare(code: str) -> Optional[dict]:
-        """Use AKShare to get basic fund info by code."""
+        """Use AKShare to get basic fund info by code. Tries multiple sources."""
         import akshare as ak
+
+        # Method 1: East Money fund search (most reliable)
         try:
             df = ak.fund_open_fund_info_em(symbol=code, indicator="单位净值走势")
-            if df is None or df.empty:
-                return None
-            # Get fund name from the data (or use a different function)
-            # Try individual fund info for name/type/company
-            info = ak.fund_individual_basic_info_xq(symbol=code)
-            if info is None or info.empty:
-                return None
-            row = info.iloc[0] if not info.empty else None
-            name = str(row.get("基金全称", row.get("基金简称", ""))) if row is not None else ""
-            if not name:
-                return None
-            return {
-                "name": name[:100],
-                "fund_type": str(row.get("基金类型", "mixed"))[:30] if row is not None else "mixed",
-                "company": str(row.get("基金管理人", ""))[:100] if row is not None else "",
-            }
+            if df is not None and not df.empty:
+                name = str(df.iloc[0].get("基金简称", ""))
+                if name:
+                    return {"name": name[:100], "fund_type": "mixed", "company": ""}
         except Exception:
-            return None
+            pass
+
+        # Method 2: Xueqiu individual fund info
+        try:
+            info = ak.fund_individual_basic_info_xq(symbol=code)
+            if info is not None and not info.empty:
+                row = info.iloc[0]
+                name = str(row.get("基金全称", row.get("基金简称", "")))
+                if name:
+                    return {
+                        "name": name[:100],
+                        "fund_type": str(row.get("基金类型", "mixed"))[:30],
+                        "company": str(row.get("基金管理人", ""))[:100],
+                    }
+        except Exception:
+            pass
+
+        return None
 
     # ─── Funds ──────────────────────────────────────────
 

@@ -37,6 +37,12 @@ async def lifespan(app: FastAPI):
         shutdown_scheduler()
     except Exception as e:
         logger.error(f"Scheduler shutdown error: {e}")
+    from app.services.llm_service import llm_service
+    try:
+        await llm_service.close()
+        logger.info("LLM service closed")
+    except Exception as e:
+        logger.error(f"LLM close error: {e}")
     await engine.dispose()
 
 

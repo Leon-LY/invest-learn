@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { marketApi } from '@/api/market'
@@ -10,6 +10,8 @@ const route = useRoute()
 const router = useRouter()
 const navChart = ref<HTMLElement>()
 const annualChart = ref<HTMLElement>()
+let navChartInst: echarts.ECharts | null = null
+let annualChartInst: echarts.ECharts | null = null
 const code = (route.params.code as string) || ''
 const searchQuery = ref(code)
 const fund = ref<any>(null)
@@ -27,9 +29,10 @@ async function loadFund(c: string) {
 
 function renderNavChart() {
   if (!navChart.value || !fund.value?.nav_history?.length) return
-  const c = echarts.init(navChart.value, undefined, { height: 200 })
+  if (navChartInst) navChartInst.dispose()
+  navChartInst = echarts.init(navChart.value, undefined, { height: 200 })
   const navs = fund.value.nav_history
-  c.setOption({
+  navChartInst.setOption({
     grid: { top: 10, right: 10, bottom: 20, left: 50 },
     xAxis: { type: 'category', data: navs.map((n: any) => n.date?.slice(5) || ''), axisLabel: { fontSize: 10, color: '#999' }, axisLine: { show: false }, axisTick: { show: false } },
     yAxis: { type: 'value', splitLine: { lineStyle: { color: '#f0f0f0' } }, axisLabel: { fontSize: 10, color: '#999' } },
@@ -46,9 +49,10 @@ function renderNavChart() {
 
 function renderAnnualChart() {
   if (!annualChart.value || !fund.value?.performance?.annual_returns?.length) return
-  const c = echarts.init(annualChart.value, undefined, { height: 160 })
+  if (annualChartInst) annualChartInst.dispose()
+  annualChartInst = echarts.init(annualChart.value, undefined, { height: 160 })
   const ar = fund.value.performance.annual_returns
-  c.setOption({
+  annualChartInst.setOption({
     grid: { top: 10, right: 10, bottom: 20, left: 50 },
     xAxis: { type: 'category', data: ar.map((r: any) => String(r.year)), axisLabel: { fontSize: 10, color: '#999' }, axisLine: { show: false }, axisTick: { show: false } },
     yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#999', formatter: '{v}%' }, splitLine: { lineStyle: { color: '#f0f0f0' } } },
@@ -63,6 +67,12 @@ function renderAnnualChart() {
     tooltip: { trigger: 'axis', formatter: (p: any) => `${p[0].axisValue}年<br/>收益: <b>${p[0].data > 0 ? '+' : ''}${p[0].data}%</b>` },
   })
 }
+
+// Clean up ECharts on unmount
+onBeforeUnmount(() => {
+  if (navChartInst) { navChartInst.dispose(); navChartInst = null }
+  if (annualChartInst) { annualChartInst.dispose(); annualChartInst = null }
+})
 
 onMounted(() => { if (code) loadFund(code) })
 // Render charts after fund data loads

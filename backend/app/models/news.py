@@ -39,8 +39,8 @@ class NewsArticle(Base):
     tags: Mapped[Optional[dict]] = mapped_column(JSONB, default=list)
     related_stocks: Mapped[Optional[dict]] = mapped_column(JSONB, default=list)
 
-    # Relationship to AI analysis
-    analysis = relationship("NewsAnalysis", back_populates="article", uselist=False)
+    # Relationship to AI analysis (raise on lazy load to prevent N+1)
+    analysis = relationship("NewsAnalysis", back_populates="article", uselist=False, lazy="raise")
 
     __table_args__ = (
         UniqueConstraint("source_id", "title", "published_at", name="uq_news_article"),

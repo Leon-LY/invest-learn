@@ -89,6 +89,7 @@ export interface NewsArticle {
   id: number
   title: string
   summary: string | null
+  content?: string | null
   source: string | null
   source_url: string | null
   author: string | null
@@ -97,6 +98,17 @@ export interface NewsArticle {
   tags: string[]
   related_stocks: string[]
   published_at: string | null
+  ai_analysis?: {
+    impact_score: number
+    impact_level: string
+    affected_funds: Array<{ code: string; name: string; impact: string }>
+    short_term: string
+    medium_term: string
+    action_advice: string
+    key_points: string[]
+    generated_by: string
+  } | null
+  related_news?: NewsArticle[] | null
 }
 
 export interface SectorItem {

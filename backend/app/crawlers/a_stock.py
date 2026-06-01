@@ -3,10 +3,8 @@ A-share stock & index data crawler using AKShare.
 Fetches stock list, daily K-line, and index data from East Money via AKShare.
 """
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import pandas as pd
 

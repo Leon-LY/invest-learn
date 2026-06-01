@@ -1,8 +1,7 @@
 """Market data service layer — database queries with caching."""
 import logging
 from datetime import date, timedelta
-from decimal import Decimal
-from typing import Optional, List
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, or_, and_
 
@@ -439,14 +438,18 @@ class MarketService:
         estimated_return = float(rt_quote.get("gszzl", 0)) if rt_quote and rt_quote.get("gszzl") else None
         nav_date = rt_quote.get("jzrq") if rt_quote else None
 
-        # Basic risk assessment based on returns
+        # Risk assessment based on computed volatility + drawdown
         risk_level = "中"
-        if returns.get("m3") is not None:
-            v = abs(returns["m3"])
-            if v > 20: risk_level = "高"
-            elif v > 10: risk_level = "中高"
-            elif v < 3: risk_level = "低"
-            elif v < 6: risk_level = "中低"
+        if vol is not None:
+            if vol >= 25: risk_level = "高"
+            elif vol >= 18: risk_level = "中高"
+            elif vol >= 13: risk_level = "中"
+            elif vol >= 8: risk_level = "中低"
+            else: risk_level = "低"
+        elif max_dd is not None:
+            if max_dd <= -20: risk_level = "中高"
+            elif max_dd <= -10: risk_level = "中"
+            else: risk_level = "中低"
 
         return {
             "info": {

@@ -6,10 +6,8 @@ import logging
 import socket
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import feedparser
-import hashlib
 
 from .base import BaseCrawler, retry_on_failure
 from app.models.news import NewsSource, NewsArticle

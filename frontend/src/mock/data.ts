@@ -61,6 +61,7 @@ const fundDefs = [
   { code: '516160', name: '南方中证新能源ETF', type: 'ETF', category: '行业', company: '南方基金', manager: '龚涛', scale: 90, star: 4, risk: '高', inception: '2021-01-12' },
   { code: '510880', name: '华泰柏瑞红利ETF', type: 'ETF', category: '策略', company: '华泰柏瑞基金', manager: '柳军', scale: 180, star: 5, risk: '中', inception: '2006-11-17' },
   { code: '512100', name: '南方中证1000ETF', type: 'ETF', category: '宽基', company: '南方基金', manager: '崔蕾', scale: 150, star: 4, risk: '高', inception: '2016-09-26' },
+  { code: '006961', name: '易方达中证500ETF联接A', type: '指数型', category: '宽基', company: '易方达基金', manager: '张胜记', scale: 85, star: 4, risk: '中高', inception: '2019-03-20' },
   // QDII
   { code: '513100', name: '国泰纳斯达克100ETF', type: 'QDII', category: '海外', company: '国泰基金', manager: '吴向军', scale: 120, star: 5, risk: '中高', inception: '2013-05-15' },
   { code: '513500', name: '博时标普500ETF', type: 'QDII', category: '海外', company: '博时基金', manager: '万琼', scale: 85, star: 5, risk: '中高', inception: '2015-05-27' },

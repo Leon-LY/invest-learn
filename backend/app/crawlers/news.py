@@ -19,12 +19,6 @@ logger = logging.getLogger(__name__)
 
 NEWS_SOURCES = [
     {
-        "name": "华尔街见闻",
-        "feed_url": "https://wallstreetcn.com/news/global/rss",
-        "source_type": "rss",
-        "fetch_interval": 900,
-    },
-    {
         "name": "证券时报",
         "feed_url": "https://www.stcn.com/article/rss.html",
         "source_type": "rss",
@@ -37,14 +31,14 @@ NEWS_SOURCES = [
         "fetch_interval": 900,
     },
     {
-        "name": "36氪",
-        "feed_url": "https://36kr.com/feed",
+        "name": "东方财富-基金",
+        "feed_url": "https://fund.eastmoney.com/api/RSS.aspx",
         "source_type": "rss",
         "fetch_interval": 900,
     },
     {
-        "name": "东方财富-基金",
-        "feed_url": "https://fund.eastmoney.com/api/RSS.aspx",
+        "name": "华尔街见闻",
+        "feed_url": "https://wallstreetcn.com/news/global/rss",
         "source_type": "rss",
         "fetch_interval": 900,
     },
@@ -55,6 +49,29 @@ NEWS_SOURCES = [
         "fetch_interval": 900,
     },
 ]
+
+# Article title/summary must match at least one of these to be saved
+FINANCE_KEYWORDS = [
+    "基金", "股", "ETF", "指数", "债", "利率", "央行", "银行",
+    "保险", "投资", "理财", "分红", "A股", "港股", "美股",
+    "证券", "期货", "黄金", "原油", "汇率", "人民币", "美元",
+    "通胀", "GDP", "PMI", "CPI", "PPI", "降息", "加息",
+    "IPO", "REIT", "QDII", "FOF", "定投", "净值",
+    "上市公司", "茅台", "宁德", "科创", "创业板", "主板", "北交所",
+    "医药", "新能源", "光伏", "锂电", "半导体", "芯片", "AI",
+    "消费", "白酒", "地产", "基建", "煤炭", "钢铁",
+    "养老金", "社保", "险资", "北向", "外资",
+    "经理", "张坤", "谢治宇", "葛兰",
+    "策略", "配置", "仓位", "回撤", "收益",
+    "涨停", "跌停", "牛", "熊", "市值", "营收", "利润",
+    "宏观", "数据", "政策", "监管", "改革", "国九条",
+]
+
+
+def _is_finance_article(title: str, summary: str) -> bool:
+    """Check if an article is finance-related by keyword matching."""
+    text = title + " " + (summary or "")
+    return any(kw in text for kw in FINANCE_KEYWORDS)
 
 
 class NewsCrawler(BaseCrawler):
@@ -160,6 +177,19 @@ class NewsCrawler(BaseCrawler):
             if not title:
                 continue
 
+            # Strip HTML from summary
+            raw_summary = entry.get("summary", "") or ""
+            try:
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(raw_summary, "lxml")
+                summary = soup.get_text()[:500]
+            except Exception:
+                summary = raw_summary[:500]
+
+            # Filter: only keep finance-related articles
+            if not _is_finance_article(title, summary):
+                continue
+
             # Check if exists
             stmt = select(NewsArticle).where(
                 NewsArticle.source_id == source.id,
@@ -168,15 +198,6 @@ class NewsCrawler(BaseCrawler):
             result = await self.db.execute(stmt)
             if result.scalar_one_or_none():
                 continue
-
-            # Strip HTML from summary
-            summary = entry.get("summary", "") or ""
-            try:
-                from bs4 import BeautifulSoup
-                soup = BeautifulSoup(summary, "lxml")
-                summary = soup.get_text()[:500]
-            except Exception:
-                summary = summary[:500]
 
             article = NewsArticle(
                 source_id=source.id,

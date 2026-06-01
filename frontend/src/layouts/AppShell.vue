@@ -62,9 +62,7 @@ const showBottomNav = computed(() => navItems.some(item =>
       <slot />
     </main>
 
-    <Transition name="bottom-nav">
-      <BottomNav v-if="showBottomNav" :items="navItems" />
-    </Transition>
+    <BottomNav :items="navItems" :class="showBottomNav ? '' : 'translate-y-full opacity-0 pointer-events-none'" class="transition-all duration-150" />
     <SearchOverlay ref="searchRef" />
   </div>
 </template>

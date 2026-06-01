@@ -172,6 +172,16 @@ class NewsService:
             # Fallback to template-based analysis
             analysis = _build_ai_analysis(article)
 
+        # Sync sentiment back to article based on AI analysis
+        level = analysis["impact_level"]
+        if "利好" in level:
+            article.sentiment = "positive"
+        elif "利空" in level:
+            article.sentiment = "negative"
+        else:
+            article.sentiment = "neutral"
+        self.db.add(article)
+
         db_analysis = NewsAnalysis(
             news_id=article.id,
             impact_score=analysis["impact_score"],

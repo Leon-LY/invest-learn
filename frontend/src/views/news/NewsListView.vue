@@ -94,25 +94,28 @@ function changeCategory(cat: string) {
 <template>
   <AppShell>
     <div class="max-w-4xl mx-auto px-4 py-4 space-y-4">
-      <div class="flex items-center justify-between">
-        <h1 class="text-xl font-bold dark:text-white">基金资讯</h1>
-        <button @click="doRefresh" :disabled="refreshing"
-          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-          title="刷新">
-          <svg class="w-4 h-4 text-gray-500" :class="{ 'animate-spin': refreshing }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-          </svg>
-        </button>
-      </div>
+      <!-- Tech header card -->
+      <div class="card card-glow p-4 tech-corners">
+        <div class="flex items-center justify-between mb-3">
+          <h1 class="text-xl font-bold dark:text-white title-underline">基金资讯</h1>
+          <button @click="doRefresh" :disabled="refreshing"
+            class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+            title="刷新">
+            <svg class="w-4 h-4 text-gray-500" :class="{ 'animate-spin': refreshing }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </button>
+        </div>
 
-      <!-- Category tabs -->
-      <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-        <button v-for="c in [{ v: '', l: '全部' }, { v: '基金', l: '基金' }, { v: '行业', l: '行业' }, { v: '大佬', l: '大佬' }, { v: '策略', l: '策略' }]" :key="c.v"
-          @click="changeCategory(c.v)"
-          class="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors"
-          :class="category === c.v ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
-        >{{ c.l }}</button>
-        <span class="text-xs text-gray-400 self-center ml-2">共 {{ total }} 条</span>
+        <!-- Category tabs -->
+        <div class="flex gap-2 overflow-x-auto no-scrollbar">
+          <button v-for="c in [{ v: '', l: '全部' }, { v: '基金', l: '基金' }, { v: '行业', l: '行业' }, { v: '大佬', l: '大佬' }, { v: '策略', l: '策略' }]" :key="c.v"
+            @click="changeCategory(c.v)"
+            class="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200"
+            :class="category === c.v ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+          >{{ c.l }}</button>
+          <span class="text-xs text-gray-400 self-center ml-auto">共 {{ total }} 条</span>
+        </div>
       </div>
 
       <!-- News list -->

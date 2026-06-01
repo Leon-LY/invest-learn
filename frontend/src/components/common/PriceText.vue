@@ -39,7 +39,7 @@ const sizeClass = computed(() => ({
 </script>
 
 <template>
-  <span :class="[colorClass, sizeClass]" class="tabular-nums font-mono">
+  <span :class="[colorClass, sizeClass, props.value && props.value > 0 ? 'price-up' : props.value && props.value < 0 ? 'price-down' : '']" class="tabular-nums font-mono">
     {{ displayValue }}
   </span>
 </template>

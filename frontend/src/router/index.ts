@@ -86,6 +86,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '对比分析', layout: 'default' },
   },
   {
+    path: '/analysis',
+    name: 'Analysis',
+    component: () => import('@/views/analysis/AnalysisView.vue'),
+    meta: { title: '智能分析', layout: 'default' },
+  },
+  {
+    path: '/analysis/expert/:id',
+    name: 'ExpertDetail',
+    component: () => import('@/views/analysis/ExpertDetailView.vue'),
+    meta: { title: '大佬详情', layout: 'default' },
+  },
+  {
     path: '/screener',
     name: 'Screener',
     component: () => import('@/views/analysis/ScreenerView.vue'),

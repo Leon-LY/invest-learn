@@ -141,8 +141,8 @@ const hotFunds = ['005827', '163406', '510300', '161725']
       <section>
         <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">快捷工具</h2>
         <div class="grid grid-cols-4 gap-3">
+          <button @click="router.push('/analysis')" class="card p-3 text-center border-primary/20"><div class="text-2xl mb-1">🤖</div><div class="text-xs font-medium text-gray-700 dark:text-gray-300">AI分析</div></button>
           <button @click="router.push('/learn')" class="card p-3 text-center"><div class="text-2xl mb-1">📚</div><div class="text-xs font-medium text-gray-700 dark:text-gray-300">知识库</div></button>
-          <button @click="router.push('/learn/glossary')" class="card p-3 text-center"><div class="text-2xl mb-1">📖</div><div class="text-xs font-medium text-gray-700 dark:text-gray-300">术语</div></button>
           <button @click="router.push('/compare')" class="card p-3 text-center"><div class="text-2xl mb-1">⚖️</div><div class="text-xs font-medium text-gray-700 dark:text-gray-300">对比</div></button>
           <button @click="router.push('/journal')" class="card p-3 text-center"><div class="text-2xl mb-1">📝</div><div class="text-xs font-medium text-gray-700 dark:text-gray-300">笔记</div></button>
         </div>

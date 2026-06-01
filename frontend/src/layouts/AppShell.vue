@@ -14,9 +14,9 @@ const searchRef = ref<InstanceType<typeof SearchOverlay>>()
 const navItems = [
   { path: '/', label: '发现', icon: 'dashboard' },
   { path: '/watchlist', label: '自选', icon: 'star' },
+  { path: '/analysis', label: '分析', icon: 'chart' },
   { path: '/news', label: '资讯', icon: 'news' },
   { path: '/learn', label: '学习', icon: 'book' },
-  { path: '/settings', label: '我的', icon: 'user' },
 ]
 
 function goBack() { router.back() }
@@ -44,6 +44,9 @@ const showBottomNav = computed(() => navItems.some(item =>
       <button @click="openSearch" class="flex items-center gap-1.5 px-3 py-1.5 mr-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full text-xs text-gray-500 dark:text-gray-400 transition-colors">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         <span class="hidden sm:inline">搜基金</span>
+      </button>
+      <button @click="router.push('/settings')" class="p-1.5 mr-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400" title="设置">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
       </button>
       <button @click="appStore.toggleTheme()" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400">
         <svg v-if="appStore.isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>

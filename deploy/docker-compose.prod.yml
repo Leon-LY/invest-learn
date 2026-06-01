@@ -29,7 +29,9 @@ services:
       retries: 5
 
   backend:
-    build: ./backend
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
     container_name: investlearn-backend
     restart: always
     ports:

@@ -305,6 +305,23 @@ class MarketService:
         except Exception as e:
             log.warning(f"Fund {code}: Xueqiu failed — {e}")
 
+        # Method 4: Direct TianTian fund API (no AKShare dependency)
+        try:
+            import httpx, json, re
+            url = f"http://fundgz.1234567.com.cn/js/{code}.js"
+            resp = httpx.get(url, timeout=(5, 10))
+            if resp.status_code == 200:
+                # Parse JSONP: jsonpgz({...});
+                match = re.search(r'jsonpgz\((.+)\)', resp.text)
+                if match:
+                    data = json.loads(match.group(1))
+                    name = data.get("name", "")
+                    if name:
+                        log.info(f"Fund {code} found via TianTian: {name}")
+                        return {"name": name[:100], "fund_type": "混合型", "company": ""}
+        except Exception as e:
+            log.warning(f"Fund {code}: TianTian API failed — {e}")
+
         log.error(f"Fund {code}: ALL sources failed")
         return None
 

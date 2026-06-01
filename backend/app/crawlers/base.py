@@ -10,6 +10,40 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+_patched = False
+
+
+def _patch_requests_session():
+    """Configure requests with browser-like headers to avoid East Money blocking."""
+    global _patched
+    if _patched:
+        return
+    try:
+        import requests
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+
+        # Monkey-patch requests.Session to add proper headers
+        original_request = requests.Session.request
+        def patched_request(self, method, url, *args, **kwargs):
+            if 'headers' not in kwargs:
+                kwargs['headers'] = {}
+            kwargs['headers'].setdefault('User-Agent',
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125.0.0.0 Safari/537.36')
+            kwargs['headers'].setdefault('Accept',
+                'text/html,application/json,application/xhtml+xml,*/*')
+            kwargs['headers'].setdefault('Accept-Language', 'zh-CN,zh;q=0.9')
+            kwargs['headers'].setdefault('Accept-Encoding', 'gzip, deflate')
+            kwargs['headers'].setdefault('Connection', 'keep-alive')
+            if 'timeout' not in kwargs:
+                kwargs['timeout'] = (10, 30)  # (connect, read)
+            return original_request(self, method, url, *args, **kwargs)
+        requests.Session.request = patched_request
+        _patched = True
+        logger.info("Requests session patched with browser headers")
+    except ImportError:
+        pass
+
 
 class BaseCrawler:
     """Base class for all data crawlers."""
@@ -18,8 +52,8 @@ class BaseCrawler:
 
     def __init__(self, db: AsyncSession):
         self.db = db
-        # Set socket timeout for AKShare/yfinance underlying requests
         socket.setdefaulttimeout(settings.CRAWLER_HTTP_TIMEOUT)
+        _patch_requests_session()
 
     async def run(self) -> dict:
         """Run the crawler. Returns status dict."""

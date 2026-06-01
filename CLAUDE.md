@@ -87,11 +87,11 @@ cd /opt/invest-learn && git pull origin master
 # 方法2：镜像克隆（推荐）
 cd /opt/invest-learn && git clone https://ghfast.top/https://github.com/Leon-LY/invest-learn.git /tmp/inv && cp -r /tmp/inv/.[!.]* /tmp/inv/* /opt/invest-learn/ 2>/dev/null && rm -rf /tmp/inv
 
-# 构建前端
-npm --prefix /opt/invest-learn/frontend run build
-
-# 重建并重启容器
+# 重建并重启所有容器（含前端构建）
 docker compose -f /opt/invest-learn/deploy/docker-compose.prod.yml up -d --build
+
+# 导入种子数据（含 AI 分析）
+docker compose -f /opt/invest-learn/deploy/docker-compose.prod.yml exec backend python seed_data.py
 
 # 仅重启（不改代码时）
 docker compose -f /opt/invest-learn/deploy/docker-compose.prod.yml restart
@@ -237,13 +237,13 @@ Vue 组件 → axios → Nginx(:8080) → FastAPI(:8000) → PostgreSQL/Redis
 ## 备份和更新流程
 
 ```bash
-# 完整更新（改代码后）
+# 完整更新（改代码后）— 前端会自动在 Docker 内构建
 cd /opt/invest-learn
 git clone https://ghfast.top/https://github.com/Leon-LY/invest-learn.git /tmp/inv
 cp -r /tmp/inv/.[!.]* /tmp/inv/* /opt/invest-learn/ 2>/dev/null
 rm -rf /tmp/inv
-npm --prefix /opt/invest-learn/frontend run build
 docker compose -f deploy/docker-compose.prod.yml up -d --build
+docker compose -f deploy/docker-compose.prod.yml exec backend python seed_data.py
 
 # 重启（服务挂了）
 docker compose -f /opt/invest-learn/deploy/docker-compose.prod.yml restart

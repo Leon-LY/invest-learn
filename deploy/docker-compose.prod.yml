@@ -34,8 +34,6 @@ services:
       dockerfile: backend/Dockerfile
     container_name: investlearn-backend
     restart: always
-    ports:
-      - "8000:8000"
     environment:
       DATABASE_URL: postgresql+asyncpg://investlearn:${DB_PASSWORD:-investlearn123}@db:5432/investlearn
       REDIS_URL: redis://redis:6379/0
@@ -49,6 +47,17 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    container_name: investlearn-frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
 
 volumes:
   pgdata:

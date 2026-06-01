@@ -1,8 +1,16 @@
 import axios from 'axios'
 import { setupMock } from '@/mock'
 
+// Allow overriding API base URL via localStorage
+// e.g. localStorage.setItem('api-url', 'http://49.232.49.175:8000/api/v1')
+function getBaseURL(): string {
+  const custom = localStorage.getItem('api-url')
+  if (custom) return custom
+  return '/api/v1'
+}
+
 const client = axios.create({
-  baseURL: '/api/v1',
+  baseURL: getBaseURL(),
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 })
@@ -21,7 +29,6 @@ client.interceptors.response.use(
 )
 
 // Always setup mock — handler will check isMockEnabled() at runtime.
-// When mock is disabled (localStorage.mock-api = "false"), requests forward to real API.
 setupMock(client)
 
 export default client

@@ -13,10 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --default-timeout=300 --retries 5 -r requirements.txt
 
-COPY . .
+COPY backend/ .
 
 EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

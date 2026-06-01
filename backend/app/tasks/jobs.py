@@ -4,7 +4,7 @@ import logging
 from app.core.database import AsyncSessionLocal
 from app.crawlers.a_stock import AStockCrawler, AStockSpotCrawler
 from app.crawlers.global_stock import GlobalStockCrawler
-from app.crawlers.a_fund import FundCrawler
+from app.crawlers.a_fund import FundCrawler, ETFCrawler
 from app.crawlers.news import NewsCrawler
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,11 @@ async def crawl_global_stocks():
 async def crawl_funds():
     """Daily: sync fund NAV data."""
     await _run_crawler(FundCrawler, "Funds")
+
+
+async def crawl_etf():
+    """Daily: sync ETF list."""
+    await _run_crawler(ETFCrawler, "ETF")
 
 
 async def crawl_news():

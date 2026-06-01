@@ -18,6 +18,7 @@ def start_scheduler():
         crawl_funds,
         crawl_news,
         auto_analyze_news,
+        crawl_etf,
     )
 
     # Daily: sync stock list and historical data (off-hours)
@@ -28,10 +29,10 @@ def start_scheduler():
         replace_existing=True,
     )
 
-    # Trading hours: spot prices every 60 seconds
+    # Trading hours: spot prices every 3 minutes (reduced from 60s to avoid rate limits)
     scheduler.add_job(
         crawl_a_stock_spot,
-        IntervalTrigger(seconds=60),
+        IntervalTrigger(minutes=3),
         id="crawl_a_stock_spot",
         replace_existing=True,
     )
@@ -60,6 +61,14 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    # Daily: ETF list
+    scheduler.add_job(
+        crawl_etf,
+        CronTrigger(hour=8, minute=0),
+        id="crawl_etf",
+        replace_existing=True,
+    )
+
     # Every 5 min: auto AI analysis for unanalyzed articles
     scheduler.add_job(
         auto_analyze_news,
@@ -71,16 +80,27 @@ def start_scheduler():
     scheduler.start()
     logger.info("Scheduler started with %d jobs", len(scheduler.get_jobs()))
 
-    # Fire initial crawl immediately (don't wait 15 min for first run)
+    # Fire all crawlers immediately at startup
     import asyncio
     async def initial_crawl():
         await asyncio.sleep(10)  # Let server fully start
-        logger.info("Running initial news crawl...")
-        try:
-            await crawl_news()
-        except Exception as e:
-            logger.error(f"Initial crawl failed: {e}")
-        logger.info("Running initial AI analysis...")
+        jobs = [
+            ("A-Stock List", crawl_a_stock_list),
+            ("ETF", crawl_etf),
+            ("Global Stocks", crawl_global_stocks),
+            ("Funds", crawl_funds),
+            ("News", crawl_news),
+        ]
+        for name, job in jobs:
+            logger.info(f"Initial crawl: {name}...")
+            try:
+                await job()
+                logger.info(f"Initial crawl: {name} ✓")
+            except Exception as e:
+                logger.error(f"Initial crawl: {name} ✗ — {e}")
+            await asyncio.sleep(3)  # Stagger to avoid rate limits
+
+        logger.info("Initial AI analysis...")
         try:
             await auto_analyze_news()
         except Exception as e:

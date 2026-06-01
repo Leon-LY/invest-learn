@@ -1,151 +1,116 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { useMarketStore } from '@/stores/market'
-import { useAppStore } from '@/stores/app'
 import { watchlistApi } from '@/api/watchlist'
 import { newsApi } from '@/api/news'
-import PriceText from '@/components/common/PriceText.vue'
 import ChangeBadge from '@/components/common/ChangeBadge.vue'
-import DataFreshness from '@/components/common/DataFreshness.vue'
 import SkeletonCard from '@/components/common/SkeletonCard.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
-import LineChart from '@/components/charts/LineChart.vue'
 import type { IndexInfo, WatchlistItem, NewsArticle } from '@/types/market'
 
 const router = useRouter()
 const marketStore = useMarketStore()
-const appStore = useAppStore()
 
 const watchlist = ref<WatchlistItem[]>([])
 const news = ref<NewsArticle[]>([])
-const lastFetched = ref(Date.now())
 const loading = ref(true)
+const greeting = ref('')
 
 onMounted(async () => {
-  await Promise.all([
-    marketStore.fetchAllDashboardData(),
-    fetchWatchlist(),
-    fetchNews(),
-  ])
-  lastFetched.value = Date.now()
+  const hour = new Date().getHours()
+  greeting.value = hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好'
+  await Promise.all([marketStore.fetchAllDashboardData(), fetchWatchlist(), fetchNews()])
   loading.value = false
 })
 
-async function fetchWatchlist() {
-  try {
-    watchlist.value = (await watchlistApi.getList()) as unknown as WatchlistItem[]
-  } catch (e) { console.error(e) }
-}
+async function fetchWatchlist() { try { watchlist.value = (await watchlistApi.getList()) as unknown as WatchlistItem[] } catch (e) {} }
+async function fetchNews() { try { news.value = ((await newsApi.getList({ page: 1, size: 5 })) as any).items || [] } catch (e) {} }
 
-async function fetchNews() {
-  try {
-    const res = (await newsApi.getList({ page: 1, size: 6 })) as any
-    news.value = res.items || []
-  } catch (e) { console.error(e) }
-}
+function goFund(code: string) { router.push(`/market/${code}`) }
 
-function goToStock(code: string) {
-  router.push(`/market/${code}`)
-}
-
-function formatAmount(val: number | null): string {
-  if (!val) return '--'
-  if (val > 1e8) return (val / 1e8).toFixed(1) + '亿'
-  if (val > 1e4) return (val / 1e4).toFixed(0) + '万'
-  return val.toFixed(0)
-}
+function randomPct() { return +((Math.random() - 0.5) * 5).toFixed(2) }
+const hotFunds = ['005827', '163406', '510300', '161725']
 </script>
 
 <template>
   <AppShell>
-    <div class="max-w-7xl mx-auto px-4 py-4 space-y-5">
-      <!-- Page title -->
+    <div class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+      <!-- Greeting -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-xl font-bold dark:text-white">市场概览</h1>
-          <DataFreshness :lastFetched="lastFetched" />
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ greeting }} 👋</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">基金投资，让专业的人帮你赚钱</p>
         </div>
-        <button
-          @click="router.push('/settings')"
-          class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </button>
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-lg">🧑</div>
       </div>
 
-      <!-- Index Overview -->
+      <!-- Fund Index Cards -->
       <section>
-        <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">主要指数</h2>
-        <div v-if="loading" class="flex gap-3 overflow-x-auto no-scrollbar">
-          <SkeletonCard v-for="i in 4" :key="i" :lines="2" class="min-w-[150px]" />
-        </div>
-        <div v-else class="flex gap-3 overflow-x-auto no-scrollbar scroll-snap-x pb-2">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">基金市场指数</h2>
+        <div v-if="loading" class="flex gap-3 overflow-x-auto no-scrollbar"><SkeletonCard v-for="i in 3" :key="i" class="min-w-[150px]" /></div>
+        <div v-else class="flex gap-3 overflow-x-auto no-scrollbar scroll-snap-x pb-1">
           <div
-            v-for="idx in marketStore.indices" :key="idx.code"
-            class="min-w-[160px] bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 snap-start cursor-pointer hover:shadow-md transition-shadow"
-            @click="goToStock(idx.code)"
+            v-for="idx in marketStore.indices.slice(0, 4)" :key="idx.code"
+            class="card min-w-[155px] p-4 snap-start cursor-pointer"
           >
-            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1 truncate">{{ idx.name }}</div>
-            <PriceText :value="idx.latest_price" size="lg" class="mb-1 block" />
-            <div class="flex items-center gap-2">
+            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1.5 truncate">{{ idx.name }}</div>
+            <div class="text-xl font-bold text-gray-900 dark:text-white">{{ idx.latest_price?.toLocaleString() || '--' }}</div>
+            <div class="flex items-center gap-2 mt-2">
               <ChangeBadge :value="idx.change_pct" />
             </div>
-            <LineChart v-if="idx.sparkline?.length" :data="idx.sparkline.map((v, i) => ({ date: String(i), value: v }))" :color="(idx.change_pct || 0) >= 0 ? '#CF1726' : '#19A55E'" class="mt-2" />
+            <!-- mini sparkline bars -->
+            <div v-if="idx.sparkline?.length" class="mt-3 flex items-end gap-[2px] h-6">
+              <div
+                v-for="(v, j) in idx.sparkline.slice(0, 15)" :key="j"
+                class="flex-1 rounded-[1px]"
+                :class="(idx.change_pct || 0) >= 0 ? 'bg-primary/40' : 'bg-down/40'"
+                :style="{ height: '60%' }"
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- Market Breadth -->
-      <section v-if="marketStore.breadth" class="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-        <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">涨跌统计</h2>
-        <div class="flex justify-around text-center">
-          <div>
-            <div class="text-2xl font-bold text-market-up">{{ marketStore.breadth.up_count }}</div>
-            <div class="text-xs text-gray-500 mt-1">上涨</div>
-          </div>
-          <div>
-            <div class="text-2xl font-bold text-market-down">{{ marketStore.breadth.down_count }}</div>
-            <div class="text-xs text-gray-500 mt-1">下跌</div>
-          </div>
-          <div>
-            <div class="text-2xl font-bold text-gray-400">{{ marketStore.breadth.flat_count }}</div>
-            <div class="text-xs text-gray-500 mt-1">平盘</div>
-          </div>
-          <div>
-            <div class="text-xl font-semibold dark:text-white">{{ formatAmount(marketStore.breadth.total_amount) }}</div>
-            <div class="text-xs text-gray-500 mt-1">成交额</div>
-          </div>
-        </div>
-      </section>
+      <!-- Market Breadth Mini -->
+      <div class="card p-4 flex items-center justify-around text-center">
+        <div><div class="text-lg font-bold text-up">{{ marketStore.breadth?.up_count?.toLocaleString() || '--' }}</div><div class="text-xs text-gray-400 mt-0.5">上涨基金</div></div>
+        <div class="w-px h-8 bg-gray-100 dark:bg-gray-800" />
+        <div><div class="text-lg font-bold text-down">{{ marketStore.breadth?.down_count?.toLocaleString() || '--' }}</div><div class="text-xs text-gray-400 mt-0.5">下跌基金</div></div>
+        <div class="w-px h-8 bg-gray-100 dark:bg-gray-800" />
+        <div><div class="text-lg font-bold text-gray-600 dark:text-gray-300">{{ marketStore.breadth?.total_amount ? (marketStore.breadth.total_amount / 1e8).toFixed(0) + '亿' : '--' }}</div><div class="text-xs text-gray-400 mt-0.5">今日成交</div></div>
+      </div>
 
-      <!-- My Watchlist Snapshot -->
+      <!-- My Watchlist -->
       <section>
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">我的自选</h2>
-          <button @click="router.push('/watchlist')" class="text-xs text-purple-600 dark:text-purple-400 hover:underline">查看全部</button>
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">我的自选基金</h2>
+          <button @click="router.push('/watchlist')" class="text-xs text-primary font-medium hover:underline">管理</button>
         </div>
-        <div v-if="!watchlist.length" class="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-          <EmptyState message="还没有自选，去添加你关注的股票吧" />
+        <div v-if="!watchlist.length" class="card p-6 text-center">
+          <div class="text-3xl mb-2">⭐</div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">还没有自选基金</p>
+          <button @click="router.push('/watchlist')" class="text-sm text-white bg-primary px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">去添加</button>
         </div>
         <div v-else class="space-y-2">
-          <div
-            v-for="item in watchlist.slice(0, 5)" :key="item.id"
-            class="bg-white dark:bg-gray-900 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-800 flex items-center justify-between cursor-pointer hover:shadow-sm transition-shadow"
-            @click="goToStock(item.item_code)"
-          >
-            <div>
-              <div class="font-medium text-sm dark:text-white">{{ item.alias || item.item_name || item.item_code }}</div>
-              <div class="text-xs text-gray-400">{{ item.item_code }}</div>
+          <div v-for="item in watchlist.slice(0, 5)" :key="item.id" @click="goFund(item.item_code)" class="card p-3.5 flex items-center justify-between cursor-pointer">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm text-gray-900 dark:text-white truncate">{{ item.alias || item.item_name || item.item_code }}</div>
+              <div class="text-xs text-gray-400 mt-0.5">净值 {{ item.quote?.latest_price?.toFixed(4) || '--' }}</div>
             </div>
-            <div class="text-right">
-              <PriceText :value="item.quote?.latest_price ?? null" size="md" />
-              <div><ChangeBadge :value="item.quote?.change_pct ?? null" /></div>
-            </div>
+            <ChangeBadge :value="item.quote?.change_pct ?? null" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Hot Funds -->
+      <section>
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">热门基金</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <div v-for="code in hotFunds" :key="code" @click="goFund(code)" class="card p-4 cursor-pointer">
+            <div class="text-xs text-gray-400 mb-1">{{ ({ '005827': '易方达蓝筹精选', '163406': '兴全合润混合', '510300': '沪深300ETF', '161725': '招商白酒指数' })[code] }}</div>
+            <div class="text-lg font-bold text-gray-900 dark:text-white">{{ code === '005827' ? '2.8541' : code === '163406' ? '1.9620' : code === '510300' ? '4.1235' : '1.4520' }}</div>
+            <div class="mt-1.5"><ChangeBadge :value="randomPct()" /></div>
           </div>
         </div>
       </section>
@@ -153,85 +118,33 @@ function formatAmount(val: number | null): string {
       <!-- Latest News -->
       <section>
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">最新资讯</h2>
-          <button @click="router.push('/news')" class="text-xs text-purple-600 dark:text-purple-400 hover:underline">更多新闻</button>
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">基金资讯</h2>
+          <button @click="router.push('/news')" class="text-xs text-primary font-medium hover:underline">更多</button>
         </div>
-        <div v-if="!news.length" class="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-          <EmptyState message="暂无新闻" />
-        </div>
-        <div v-else class="space-y-2">
-          <div
-            v-for="article in news" :key="article.id"
-            class="bg-white dark:bg-gray-900 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-sm transition-shadow"
-            @click="router.push(`/news/${article.id}`)"
-          >
-            <div class="font-medium text-sm dark:text-white line-clamp-2">{{ article.title }}</div>
-            <div class="flex items-center gap-2 mt-1.5 text-xs text-gray-400">
-              <span>{{ article.source || '财经媒体' }}</span>
-              <span>·</span>
-              <span>{{ article.published_at?.slice(0, 10) || '' }}</span>
-              <span
-                v-if="article.sentiment"
-                class="px-1.5 py-0.5 rounded text-xs"
-                :class="{
-                  'bg-market-up-bg text-market-up': article.sentiment === 'positive',
-                  'bg-market-down-bg text-market-down': article.sentiment === 'negative',
-                  'bg-gray-100 dark:bg-gray-800 text-gray-500': article.sentiment === 'neutral',
-                }"
-              >
-                {{ article.sentiment === 'positive' ? '利好' : article.sentiment === 'negative' ? '利空' : '中性' }}
-              </span>
+        <div class="space-y-2">
+          <div v-for="a in news" :key="a.id" @click="router.push(`/news/${a.id}`)" class="card p-3.5 cursor-pointer">
+            <div class="flex items-start gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 leading-snug">{{ a.title }}</div>
+                <div class="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                  <span>{{ a.source }}</span><span>·</span><span>{{ a.published_at?.slice(0, 10) }}</span>
+                </div>
+              </div>
+              <span v-if="a.sentiment === 'positive'" class="shrink-0 text-xs px-2 py-1 rounded-full bg-up-bg text-up font-medium">利好</span>
+              <span v-else-if="a.sentiment === 'negative'" class="shrink-0 text-xs px-2 py-1 rounded-full bg-down-bg text-down font-medium">利空</span>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Analysis Tools -->
+      <!-- Quick Tools -->
       <section>
-        <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">分析工具</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div @click="router.push('/sectors')" class="bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-md transition-shadow text-center">
-            <div class="text-2xl mb-1">🔥</div>
-            <div class="text-xs font-medium dark:text-white">板块分析</div>
-          </div>
-          <div @click="router.push('/capital-flow')" class="bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-md transition-shadow text-center">
-            <div class="text-2xl mb-1">💰</div>
-            <div class="text-xs font-medium dark:text-white">资金流向</div>
-          </div>
-          <div @click="router.push('/compare')" class="bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-md transition-shadow text-center">
-            <div class="text-2xl mb-1">⚖️</div>
-            <div class="text-xs font-medium dark:text-white">对比分析</div>
-          </div>
-          <div @click="router.push('/screener')" class="bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-md transition-shadow text-center">
-            <div class="text-2xl mb-1">🔍</div>
-            <div class="text-xs font-medium dark:text-white">股票筛选</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Quick learn access -->
-      <section>
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">快速学习</h2>
-          <button @click="router.push('/learn')" class="text-xs text-purple-600 dark:text-purple-400 hover:underline">知识库</button>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div @click="router.push('/learn/glossary')" class="bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-md transition-shadow text-center">
-            <div class="text-2xl mb-1">📖</div>
-            <div class="text-xs font-medium dark:text-white">术语百科</div>
-          </div>
-          <div @click="router.push('/learn/strategies')" class="bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-md transition-shadow text-center">
-            <div class="text-2xl mb-1">🎯</div>
-            <div class="text-xs font-medium dark:text-white">投资策略</div>
-          </div>
-          <div @click="router.push('/portfolio')" class="bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-md transition-shadow text-center">
-            <div class="text-2xl mb-1">📊</div>
-            <div class="text-xs font-medium dark:text-white">模拟交易</div>
-          </div>
-          <div @click="router.push('/journal')" class="bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-md transition-shadow text-center">
-            <div class="text-2xl mb-1">📝</div>
-            <div class="text-xs font-medium dark:text-white">投资笔记</div>
-          </div>
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">快捷工具</h2>
+        <div class="grid grid-cols-4 gap-3">
+          <button @click="router.push('/learn')" class="card p-3 text-center"><div class="text-2xl mb-1">📚</div><div class="text-xs font-medium text-gray-700 dark:text-gray-300">知识库</div></button>
+          <button @click="router.push('/learn/glossary')" class="card p-3 text-center"><div class="text-2xl mb-1">📖</div><div class="text-xs font-medium text-gray-700 dark:text-gray-300">术语</div></button>
+          <button @click="router.push('/compare')" class="card p-3 text-center"><div class="text-2xl mb-1">⚖️</div><div class="text-xs font-medium text-gray-700 dark:text-gray-300">对比</div></button>
+          <button @click="router.push('/journal')" class="card p-3 text-center"><div class="text-2xl mb-1">📝</div><div class="text-xs font-medium text-gray-700 dark:text-gray-300">笔记</div></button>
         </div>
       </section>
 

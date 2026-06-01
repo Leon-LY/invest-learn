@@ -1,14 +1,27 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-market-up: #CF1726;
-  --color-market-up-bg: #FDEAEC;
-  --color-market-down: #19A55E;
-  --color-market-down-bg: #E6F7EE;
-  --color-market-flat: #909399;
-  --color-sidebar: #1a1a2e;
-  --color-sidebar-hover: #252542;
-  --color-sidebar-active: #3a3a5c;
+  /* Primary palette - warm blue/gold for fund platform */
+  --color-primary: #4F6EF7;
+  --color-primary-light: #EEF0FF;
+  --color-primary-dark: #3B54D4;
+  --color-accent: #F59E0B;
+  --color-accent-light: #FFFBEB;
+
+  /* Market colors (Chinese convention: red=up, green=down) */
+  --color-up: #E03131;
+  --color-up-bg: #FFF0F0;
+  --color-down: #099268;
+  --color-down-bg: #ECFDF5;
+  --color-flat: #868E96;
+
+  /* Surface colors */
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F8F9FA;
+  --color-surface-dark: #1A1B2E;
+  --color-surface-dark-hover: #252742;
+  --color-border: #F0F1F3;
+  --color-border-dark: #2D2F45;
 }
 
 /* Base styles */
@@ -16,57 +29,57 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #F5F6FA;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 2px;
-}
-.dark ::-webkit-scrollbar-thumb {
-  background: #4b5563;
+.dark body {
+  background: #111320;
 }
 
-/* Horizontal scroll for mobile cards */
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #DEE2E6; border-radius: 2px; }
+.dark ::-webkit-scrollbar-thumb { background: #3D4055; }
+
+/* Card */
+.card {
+  background: var(--color-surface);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.dark .card {
+  background: var(--color-surface-dark);
+  border-color: var(--color-border-dark);
+}
+.card:active { transform: scale(0.99); }
+
+/* Horizontal scroll */
 .scroll-snap-x {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 }
-.scroll-snap-x > * {
-  scroll-snap-align: start;
-}
+.scroll-snap-x > * { scroll-snap-align: start; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Hide scrollbar for horizontal scroll on mobile */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+/* Safe area */
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
-/* iPhone safe area */
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* Responsive table wrapper */
-.table-responsive {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Touch-friendly minimum tap target */
+/* Touch targets */
 @media (pointer: coarse) {
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
-  }
+  .touch-target { min-height: 44px; min-width: 44px; }
 }
+
+/* Page transitions */
+.page-enter-active, .page-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.page-enter-from { opacity: 0; transform: translateY(8px); }
+.page-leave-to { opacity: 0; transform: translateY(-8px); }
+
+/* Fund card sparkline gradient */
+.fund-up-gradient { background: linear-gradient(135deg, #EEF0FF, #F8F9FF); }
+.dark .fund-up-gradient { background: linear-gradient(135deg, #1E2040, #252845); }
+
+/* Smooth tap highlight */
+* { -webkit-tap-highlight-color: transparent; }

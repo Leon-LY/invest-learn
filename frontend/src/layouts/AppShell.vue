@@ -5,66 +5,57 @@ import { useAppStore } from '@/stores/app'
 import BottomNav from '@/components/common/BottomNav.vue'
 import SearchOverlay from '@/components/market/SearchOverlay.vue'
 
-const props = defineProps<{ showBack?: boolean }>()
+defineProps<{ showBack?: boolean }>()
 const router = useRouter()
 const route = useRoute()
 const appStore = useAppStore()
 const searchRef = ref<InstanceType<typeof SearchOverlay>>()
 
 const navItems = [
-  { path: '/', label: '概览', icon: 'dashboard' },
+  { path: '/', label: '发现', icon: 'dashboard' },
   { path: '/watchlist', label: '自选', icon: 'star' },
-  { path: '/news', label: '新闻', icon: 'news' },
+  { path: '/news', label: '资讯', icon: 'news' },
   { path: '/learn', label: '学习', icon: 'book' },
-  { path: '/portfolio', label: '模拟', icon: 'chart' },
+  { path: '/settings', label: '我的', icon: 'user' },
 ]
 
-function goBack() {
-  router.back()
-}
+function goBack() { router.back() }
+function openSearch() { searchRef.value?.open() }
 
-function openSearch() {
-  searchRef.value?.open()
-}
-
-const showBottomNav = computed(() => navItems.some(item => route.path === item.path || route.path.startsWith(item.path + '/')))
+const showBottomNav = computed(() => navItems.some(item =>
+  route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path))
+))
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
-    <!-- Top header bar -->
-    <header class="h-12 bg-sidebar text-white flex items-center px-4 shrink-0 z-30">
-      <button v-if="showBack" @click="goBack" class="mr-3 p-1 hover:bg-white/10 rounded">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+  <div class="min-h-screen flex flex-col bg-[#F5F6FA] dark:bg-[#111320]">
+    <!-- Header -->
+    <header class="h-12 bg-white dark:bg-[#1A1B2E] border-b border-gray-100 dark:border-gray-800 flex items-center px-4 shrink-0 z-30 sticky top-0">
+      <button v-if="showBack" @click="goBack" class="mr-2 p-1.5 -ml-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <div class="flex items-center gap-2 font-semibold text-sm">
-        <svg class="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 00.707-1.707l-9-9a.999.999 0 00-1.414 0l-9 9A1 1 0 003 13zm7 7v-5h4v5h-4zm2-15.586l6 6V20h-3v-6H9v6H6v-8.586l6-6z"/></svg>
-        <span class="hidden sm:inline">InvestLearn</span>
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"/></svg>
+        </div>
+        <span class="font-bold text-base text-gray-900 dark:text-white">基智学</span>
       </div>
       <div class="flex-1" />
-      <button @click="openSearch" class="hidden sm:flex items-center gap-1.5 px-3 py-1 mr-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs text-gray-300 transition-colors">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-        <span>搜索</span>
-        <kbd class="px-1 text-xs bg-white/20 rounded">⌘K</kbd>
+      <button @click="openSearch" class="flex items-center gap-1.5 px-3 py-1.5 mr-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full text-xs text-gray-500 dark:text-gray-400 transition-colors">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <span class="hidden sm:inline">搜基金</span>
       </button>
-      <button @click="openSearch" class="sm:hidden p-1.5 mr-1 hover:bg-white/10 rounded text-gray-300">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-      </button>
-      <button @click="appStore.toggleTheme()" class="p-1.5 hover:bg-white/10 rounded text-gray-300">
+      <button @click="appStore.toggleTheme()" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400">
         <svg v-if="appStore.isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
       </button>
     </header>
 
-    <!-- Main content -->
-    <main class="flex-1 overflow-y-auto pb-14 md:pb-0">
+    <main class="flex-1 overflow-y-auto pb-16 md:pb-0">
       <slot />
     </main>
 
-    <!-- Bottom nav (mobile) -->
     <BottomNav v-if="showBottomNav" :items="navItems" />
-
-    <!-- Global search overlay -->
     <SearchOverlay ref="searchRef" />
   </div>
 </template>

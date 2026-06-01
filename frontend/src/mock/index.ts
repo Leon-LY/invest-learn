@@ -5,7 +5,7 @@
  */
 import type { AxiosInstance } from 'axios'
 import {
-  mockIndices, mockStocks, mockFunds, mockSectors, mockCapitalFlow,
+  mockIndices, mockFunds, mockSectors, mockCapitalFlow, getMockFundList,
   mockBreadth, generateMockNews, mockSearch, mockWatchlist, mockAddWatchlist, mockRemoveWatchlist,
   mockCategories, mockArticles, mockArticleDetail, mockGlossary, mockStrategies,
 } from './data'
@@ -59,23 +59,27 @@ export function setupMock(axios: AxiosInstance) {
       if (!idx) return { info: null, klines: [] }
       return { info: idx, klines: [] }
     }
-    if (path.startsWith('market/stocks/') && path.endsWith('/kline')) {
-      const code = path.split('/')[2]
-      const stock = mockStocks[code]
-      return stock ? { klines: stock.klines || [] } : { klines: [] }
-    }
-    if (path.startsWith('market/stocks/')) {
-      const code = path.split('/')[2]
-      const stock = mockStocks[code]
-      return stock ? JSON.parse(JSON.stringify(stock)) : null
-    }
-    if (path.startsWith('market/funds/')) {
+    // Fund detail - treat stocks/{code} as fund lookup too (for watchlist navigation)
+    if (path.startsWith('market/stocks/') || path.startsWith('market/funds/')) {
       const code = path.split('/')[2]
       const fund = mockFunds[code]
-      return fund ? JSON.parse(JSON.stringify(fund)) : null
+      if (!fund) return null
+      // Return fund data in stock-compatible format for StockDetailView
+      return JSON.parse(JSON.stringify({
+        info: { code: fund.info.code, name: fund.info.name, market: 'CN', security_type: 'fund', sector: fund.info.category, industry: fund.info.fund_type },
+        quote: { code: fund.info.code, name: fund.info.name, market: 'CN', latest_price: fund.info.latest_nav, change_pct: fund.info.latest_return, turnover_rate: null, pe_ratio: null, pb_ratio: null, total_mv: fund.info.scale },
+        fundamentals: { fund_type: fund.info.fund_type, manager: fund.info.manager, company: fund.info.company, star: fund.info.star, risk: fund.info.risk_level },
+        klines: [],
+      }))
     }
     if (path === 'market/sectors') {
-      return JSON.parse(JSON.stringify(mockSectors))
+      return JSON.parse(JSON.stringify(mockSectors.map(s => ({
+        sector_name: s.name,
+        change_pct: s.avg_return,
+        net_inflow: s.inflow * 1e8,
+        top_stock: null,
+        top_stock_pct: null,
+      }))))
     }
     if (path.startsWith('market/capital-flow')) {
       return JSON.parse(JSON.stringify(mockCapitalFlow))
@@ -88,17 +92,15 @@ export function setupMock(axios: AxiosInstance) {
       return JSON.parse(JSON.stringify(mockSearch(params?.params?.q || '')))
     }
     if (path === 'market/screener') {
-      const all = Object.values(mockStocks).slice(0, 10)
-      return {
-        items: all.map((s: any) => ({
-          code: s.info.code, name: s.info.name, market: s.info.market, sector: s.info.sector,
-          latest_price: s.quote.latest_price, pe_ratio: s.quote.pe_ratio, pb_ratio: s.quote.pb_ratio,
-          change_pct: s.quote.change_pct, total_mv: s.quote.total_mv,
-        })), total: all.length, page: 1, size: 20,
-      }
+      const all = getMockFundList()
+      return { items: all.slice(0, 15).map((f: any) => ({
+        code: f.code, name: f.name, market: f.market, sector: f.type,
+        latest_price: f.latest_nav, change_pct: f.latest_return,
+        pe_ratio: null, pb_ratio: null, total_mv: f.scale,
+      })), total: all.length, page: 1, size: 15 }
     }
     if (path === 'market/etfs') {
-      return [{ code: '159915', name: '创业板ETF', market: 'A' }, { code: '510050', name: '上证50ETF', market: 'A' }, { code: '510300', name: '沪深300ETF', market: 'A' }]
+      return getMockFundList().filter((f: any) => f.type === 'ETF').slice(0, 10)
     }
 
     // ===== NEWS =====
@@ -118,9 +120,9 @@ export function setupMock(axios: AxiosInstance) {
     }
     if (path === 'news/sources/list') {
       return [
-        { id: 1, name: '东方财富', source_type: 'rss', last_fetched: new Date().toISOString() },
-        { id: 2, name: '雪球', source_type: 'rss', last_fetched: new Date().toISOString() },
-        { id: 3, name: '华尔街见闻', source_type: 'rss', last_fetched: new Date().toISOString() },
+        { id: 1, name: '中国基金报', source_type: 'rss', last_fetched: new Date().toISOString() },
+        { id: 2, name: '天天基金网', source_type: 'rss', last_fetched: new Date().toISOString() },
+        { id: 3, name: 'Morningstar晨星', source_type: 'rss', last_fetched: new Date().toISOString() },
       ]
     }
     if (path === 'news/sentiment/stats') {

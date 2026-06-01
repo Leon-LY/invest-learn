@@ -199,13 +199,16 @@ class NewsCrawler(BaseCrawler):
             if not title:
                 continue
 
-            # Strip HTML from summary
+            # Strip HTML from summary (only if it looks like HTML)
             raw_summary = entry.get("summary", "") or ""
-            try:
-                from bs4 import BeautifulSoup
-                soup = BeautifulSoup(raw_summary, "lxml")
-                summary = soup.get_text()[:500]
-            except Exception:
+            if raw_summary.strip().startswith("<"):
+                try:
+                    from bs4 import BeautifulSoup
+                    soup = BeautifulSoup(raw_summary, "lxml")
+                    summary = soup.get_text()[:500]
+                except Exception:
+                    summary = raw_summary[:500]
+            else:
                 summary = raw_summary[:500]
 
             # Filter: only keep finance-related articles

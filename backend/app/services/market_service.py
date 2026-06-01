@@ -189,7 +189,7 @@ class MarketService:
         return [_kline_to_dict(k) for k in kline_result.scalars().all()]
 
     async def search_stocks(self, q: str, market: Optional[str] = None, limit: int = 20) -> list[dict]:
-        """Search stocks AND funds by code or name."""
+        """Search stocks AND funds by code or name. Auto-fetches unknown funds from AKShare."""
         results = []
 
         # Search stocks
@@ -209,8 +209,7 @@ class MarketService:
                 "security_type": s.security_type, "match_score": 1.0,
             })
 
-        # Search funds
-        from app.models.market import Fund
+        # Search funds (with auto-fetch for 6-digit codes)
         fund_stmt = select(Fund).where(
             or_(
                 Fund.code.ilike(f"%{q}%"),
@@ -218,13 +217,71 @@ class MarketService:
             )
         ).limit(limit - len(results))
         fr = await self.db.execute(fund_stmt)
-        for f in fr.scalars().all():
+        funds = fr.scalars().all()
+
+        # If no fund found and query looks like a fund code (6 digits), auto-fetch from AKShare
+        if not funds and q.strip().isdigit() and len(q.strip()) == 6:
+            fetched = await self._fetch_and_save_fund(q.strip())
+            if fetched:
+                funds = [fetched]
+
+        for f in funds:
             results.append({
                 "code": f.code, "name": f.name, "market": "CN",
                 "security_type": "fund", "match_score": 1.0,
             })
 
         return results[:limit]
+
+    async def _fetch_and_save_fund(self, code: str):
+        """Fetch fund info from AKShare and save to DB. Returns Fund or None."""
+        import asyncio
+        try:
+            fund_info = await asyncio.to_thread(self._fetch_fund_from_akshare, code)
+            if not fund_info:
+                return None
+
+            fund = Fund(
+                code=code,
+                name=fund_info["name"],
+                fund_type=fund_info.get("fund_type", "mixed"),
+                company=fund_info.get("company"),
+                is_active=True,
+            )
+            self.db.add(fund)
+            await self.db.commit()
+            await self.db.refresh(fund)
+            logger.info(f"Auto-fetched fund: {code} {fund_info['name']}")
+            return fund
+        except Exception as e:
+            logger.warning(f"Auto-fetch fund {code} failed: {e}")
+            await self.db.rollback()
+            return None
+
+    @staticmethod
+    def _fetch_fund_from_akshare(code: str) -> Optional[dict]:
+        """Use AKShare to get basic fund info by code."""
+        import akshare as ak
+        try:
+            df = ak.fund_open_fund_info_em(symbol=code, indicator="单位净值走势")
+            if df is None or df.empty:
+                return None
+            # Get fund name from the data (or use a different function)
+            # Try individual fund info for name/type/company
+            info = ak.fund_individual_basic_info_xq(symbol=code)
+            if info is None or info.empty:
+                return None
+            row = info.iloc[0] if not info.empty else None
+            name = str(row.get("基金全称", row.get("基金简称", ""))) if row is not None else ""
+            if not name:
+                return None
+            return {
+                "name": name[:100],
+                "fund_type": str(row.get("基金类型", "mixed"))[:30] if row is not None else "mixed",
+                "company": str(row.get("基金管理人", ""))[:100] if row is not None else "",
+            }
+        except Exception:
+            return None
 
     # ─── Funds ──────────────────────────────────────────
 

@@ -15,7 +15,7 @@ let annualChartInst: echarts.ECharts | null = null
 const code = (route.params.code as string) || ''
 const searchQuery = ref(code)
 const fund = ref<any>(null)
-const loading = ref(true)
+const loading = ref(false)
 const error = ref('')
 
 async function loadFund(c: string) {

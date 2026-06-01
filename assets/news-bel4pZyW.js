@@ -1,0 +1,1 @@
+import{r as e}from"./AppShell-BsdHXloB.js";var t={getList(t){return e.get(`/news`,{params:t})},getDetail(t){return e.get(`/news/${t}`)},getSources(){return e.get(`/news/sources/list`)},getSentimentStats(t=7){return e.get(`/news/sentiment/stats`,{params:{days:t}})}};export{t};

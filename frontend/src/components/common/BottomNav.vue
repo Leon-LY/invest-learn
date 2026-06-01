@@ -28,15 +28,22 @@ function navigate(path: string) {
 </script>
 
 <template>
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-40 safe-area-bottom">
-    <div class="flex justify-around h-14">
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/85 dark:bg-gray-900/85 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 z-40 safe-area-bottom">
+    <div class="flex justify-around h-14 relative">
+      <!-- Active indicator glow bar -->
+      <div class="absolute top-0 h-0.5 rounded-full bg-gradient-to-r from-primary via-purple-400 to-cyan-400 transition-all duration-300 ease-out"
+        :style="{
+          width: `${100 / items.length}%`,
+          left: `${(100 / items.length) * items.findIndex(i => isActive(i.path))}%`,
+          opacity: items.some(i => isActive(i.path)) ? 1 : 0
+        }" />
       <button
         v-for="item in items" :key="item.path"
         @click="navigate(item.path)"
-        class="flex flex-col items-center justify-center flex-1 min-w-0 text-xs transition-colors"
-        :class="isActive(item.path) ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'"
+        class="flex flex-col items-center justify-center flex-1 min-w-0 text-xs transition-all duration-200 relative"
+        :class="isActive(item.path) ? 'text-primary dark:text-indigo-400 scale-105' : 'text-gray-400 dark:text-gray-500'"
       >
-        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 mb-0.5 transition-transform duration-200" :class="{ 'drop-shadow-[0_0_6px_rgba(91,108,240,0.4)]': isActive(item.path) }" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" :d="iconMap[item.icon]"/>
         </svg>
         <span>{{ item.label }}</span>

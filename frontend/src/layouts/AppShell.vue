@@ -58,7 +58,9 @@ const showBottomNav = computed(() => navItems.some(item =>
       <slot />
     </main>
 
-    <BottomNav v-if="showBottomNav" :items="navItems" />
+    <Transition name="bottom-nav">
+      <BottomNav v-if="showBottomNav" :items="navItems" />
+    </Transition>
     <SearchOverlay ref="searchRef" />
   </div>
 </template>

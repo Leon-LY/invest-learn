@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { newsApi } from '@/api/news'
 import EmptyState from '@/components/common/EmptyState.vue'
 import type { NewsArticle } from '@/types/market'
 
 const router = useRouter()
+const route = useRoute()
 const articles = ref<NewsArticle[]>([])
 const loading = ref(true)
+const refreshing = ref(false)
 const loadingMore = ref(false)
 const category = ref('')
 const page = ref(1)
 const total = ref(0)
 const hasMore = ref(false)
+const lastFetchTime = ref<Date | null>(null)
 
 /** Format ISO timestamp to friendly display */
 function formatTime(iso: string | undefined | null): string {
@@ -36,7 +39,26 @@ function formatTime(iso: string | undefined | null): string {
   return `${d.getFullYear()}-${mm}-${dd}`
 }
 
-onMounted(() => fetchNews())
+async function doRefresh() {
+  if (refreshing.value) return
+  refreshing.value = true
+  page.value = 1
+  await fetchNews()
+  refreshing.value = false
+  lastFetchTime.value = new Date()
+}
+
+onMounted(() => {
+  fetchNews()
+  lastFetchTime.value = new Date()
+})
+
+// Auto-refresh when navigating back to news list from detail page
+watch(() => route.path, (to, from) => {
+  if (to === '/news' && from?.startsWith('/news/')) {
+    doRefresh()
+  }
+})
 
 async function fetchNews() {
   loading.value = true
@@ -72,7 +94,16 @@ function changeCategory(cat: string) {
 <template>
   <AppShell>
     <div class="max-w-4xl mx-auto px-4 py-4 space-y-4">
-      <h1 class="text-xl font-bold dark:text-white">基金资讯</h1>
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold dark:text-white">基金资讯</h1>
+        <button @click="doRefresh" :disabled="refreshing"
+          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+          title="刷新">
+          <svg class="w-4 h-4 text-gray-500" :class="{ 'animate-spin': refreshing }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </button>
+      </div>
 
       <!-- Category tabs -->
       <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -89,7 +120,7 @@ function changeCategory(cat: string) {
         <div v-for="i in 6" :key="i" class="animate-pulse card p-4"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2" /><div class="h-3 bg-gray-100 dark:bg-gray-800 rounded w-1/2" /></div>
       </div>
       <EmptyState v-else-if="!articles.length" message="暂无该分类新闻" />
-      <div v-else class="space-y-2">
+      <div v-else class="space-y-2 animate-in">
         <div
           v-for="a in articles" :key="a.id"
           @click="router.push(`/news/${a.id}`)"

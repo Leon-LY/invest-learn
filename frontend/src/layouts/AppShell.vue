@@ -21,12 +21,24 @@ function openSearch() { searchRef.value?.open() }
         <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <div class="flex items-center gap-2">
-        <!-- Logo: geometric compass + trend -->
-        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-primary via-indigo-500 to-cyan-400 flex items-center justify-center glow-ring shadow-lg shadow-primary/20">
-          <svg class="w-[18px] h-[18px] text-white" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="9" />
-            <polyline points="7 13 10.5 9 13.5 11.5 17 7" />
-            <circle cx="17" cy="7" r="1.5" fill="currentColor" stroke="none" />
+        <!-- Logo: geometric radar/crosshair — symbolizing foresight & precision -->
+        <div class="relative w-8 h-8 rounded-xl bg-gradient-to-br from-[#1a1a3e] via-[#2d3a8c] to-[#0f172a] flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
+          <!-- Outer ring -->
+          <svg class="w-7 h-7" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="logoSvg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#818CF8"/>
+                <stop offset="50%" stop-color="#06B6D4"/>
+                <stop offset="100%" stop-color="#F59E0B"/>
+              </linearGradient>
+            </defs>
+            <!-- Concentric circles (radar/target) -->
+            <circle cx="14" cy="14" r="11" stroke="url(#logoSvg)" stroke-width="1.8" fill="none" opacity="0.9"/>
+            <circle cx="14" cy="14" r="6" stroke="url(#logoSvg)" stroke-width="1.2" fill="none" opacity="0.5"/>
+            <!-- Rising trend line -->
+            <polyline points="6,18 11,13 15,15 22,8" stroke="url(#logoSvg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Focal point -->
+            <circle cx="22" cy="8" r="2.5" fill="#F59E0B" stroke="#fff" stroke-width="0.8"/>
           </svg>
         </div>
         <span class="font-bold text-base text-gray-900 dark:text-white tracking-wide">远见</span>

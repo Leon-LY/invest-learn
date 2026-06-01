@@ -17,6 +17,7 @@ def start_scheduler():
         crawl_global_stocks,
         crawl_funds,
         crawl_news,
+        auto_analyze_news,
     )
 
     # Daily: sync stock list and historical data (off-hours)
@@ -59,8 +60,32 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    # Every 5 min: auto AI analysis for unanalyzed articles
+    scheduler.add_job(
+        auto_analyze_news,
+        IntervalTrigger(minutes=5),
+        id="auto_analyze_news",
+        replace_existing=True,
+    )
+
     scheduler.start()
     logger.info("Scheduler started with %d jobs", len(scheduler.get_jobs()))
+
+    # Fire initial crawl immediately (don't wait 15 min for first run)
+    import asyncio
+    async def initial_crawl():
+        await asyncio.sleep(10)  # Let server fully start
+        logger.info("Running initial news crawl...")
+        try:
+            await crawl_news()
+        except Exception as e:
+            logger.error(f"Initial crawl failed: {e}")
+        logger.info("Running initial AI analysis...")
+        try:
+            await auto_analyze_news()
+        except Exception as e:
+            logger.error(f"Initial analysis failed: {e}")
+    asyncio.create_task(initial_crawl())
 
 
 def shutdown_scheduler():

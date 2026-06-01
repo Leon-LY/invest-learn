@@ -328,34 +328,108 @@ class MarketService:
     # ─── Funds ──────────────────────────────────────────
 
     async def get_fund_detail(self, code: str) -> Optional[dict]:
-        """Get fund detail with NAV history."""
+        """Get comprehensive fund detail with NAV history + real-time data."""
+        import asyncio
+
         stmt = select(Fund).where(Fund.code == code)
         result = await self.db.execute(stmt)
         fund = result.scalar_one_or_none()
+
+        # Auto-fetch if not in DB
+        if not fund:
+            fund = await self._fetch_and_save_fund(code)
         if not fund:
             return None
 
+        # Get NAV history from DB
         nav_stmt = select(FundNAV).where(
             FundNAV.fund_id == fund.id
-        ).order_by(FundNAV.nav_date.desc()).limit(90)
+        ).order_by(FundNAV.nav_date.desc()).limit(120)
         nav_result = await self.db.execute(nav_stmt)
-        navs = nav_result.scalars().all()
+        navs = list(nav_result.scalars().all())
 
-        latest_nav = _to_float(navs[0].unit_nav) if navs else None
-        latest_return = _to_float(navs[0].daily_return) if navs else None
+        # If no NAV data, try to fetch it now
+        if not navs:
+            try:
+                from app.crawlers.a_fund import FundCrawler
+                crawler = FundCrawler(self.db)
+                await crawler.fetch_fund_nav()
+                nav_result2 = await self.db.execute(nav_stmt)
+                navs = list(nav_result2.scalars().all())
+            except Exception as e:
+                logger.warning(f"Failed to fetch NAV for {code}: {e}")
+
+        navs_sorted = list(reversed(navs))  # oldest first
+        latest_nav = _to_float(navs_sorted[-1].unit_nav) if navs_sorted else None
+
+        # Calculate performance
+        def calc_return(days: int) -> Optional[float]:
+            if len(navs_sorted) < max(2, days):
+                return None
+            idx = max(0, len(navs_sorted) - 1 - min(days, len(navs_sorted) - 1))
+            old_nav = _to_float(navs_sorted[idx].unit_nav)
+            new_nav = _to_float(navs_sorted[-1].unit_nav)
+            if old_nav and new_nav and old_nav > 0:
+                return round(((new_nav / old_nav) - 1) * 100, 2)
+            return None
+
+        returns = {
+            "d1": _to_float(navs_sorted[-1].daily_return) if navs_sorted else None,
+            "w1": calc_return(5),
+            "m1": calc_return(22),
+            "m3": calc_return(66),
+            "m6": calc_return(132),
+            "y1": calc_return(260),
+            "ytd": calc_return(260),  # approximate
+        }
+
+        # Get real-time quote from TianTian
+        rt_quote = None
+        try:
+            import httpx, json, re
+            url = f"http://fundgz.1234567.com.cn/js/{code}.js"
+            resp = httpx.get(url, timeout=(3, 8))
+            if resp.status_code == 200:
+                match = re.search(r'jsonpgz\((.+)\)', resp.text)
+                if match:
+                    rt_quote = json.loads(match.group(1))
+        except Exception:
+            pass
+
+        latest_return = returns.get("d1")
+        estimated_nav = rt_quote.get("gsz") if rt_quote else None
+        estimated_return = float(rt_quote.get("gszzl", 0)) if rt_quote and rt_quote.get("gszzl") else None
+        nav_date = rt_quote.get("jzrq") if rt_quote else None
+
+        # Basic risk assessment based on returns
+        risk_level = "中"
+        if returns.get("m3") is not None:
+            v = abs(returns["m3"])
+            if v > 20: risk_level = "高"
+            elif v > 10: risk_level = "中高"
+            elif v < 3: risk_level = "低"
+            elif v < 6: risk_level = "中低"
 
         return {
             "info": {
-                "code": fund.code, "name": fund.name, "fund_type": fund.fund_type,
-                "company": fund.company, "inception_date": fund.inception_date.isoformat() if fund.inception_date else None,
-                "aum": _to_float(fund.aum), "latest_nav": latest_nav, "latest_return": latest_return,
+                "code": fund.code,
+                "name": fund.name,
+                "fund_type": fund.fund_type or "混合型",
+                "company": fund.company or "",
+                "inception_date": fund.inception_date.isoformat() if fund.inception_date else None,
+                "aum": _to_float(fund.aum),
+                "latest_nav": estimated_nav or latest_nav,
+                "nav_date": nav_date,
+                "latest_return": estimated_return or latest_return,
+                "risk_level": risk_level,
             },
+            "performance": returns,
             "nav_history": [{
                 "date": n.nav_date.isoformat() if n.nav_date else None,
                 "unit_nav": _to_float(n.unit_nav),
                 "acc_nav": _to_float(n.acc_nav),
                 "daily_return": _to_float(n.daily_return),
-            } for n in reversed(navs)],
+            } for n in navs_sorted[-90:]],  # last 90 days
         }
 
     # ─── Sectors & Capital Flow ─────────────────────────

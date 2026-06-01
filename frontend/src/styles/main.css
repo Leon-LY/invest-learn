@@ -246,6 +246,27 @@ body::before {
 /* Smooth tap highlight */
 * { -webkit-tap-highlight-color: transparent; }
 
+/* ── Dark mode contrast fixes ── */
+.dark .card {
+  background: rgba(22, 23, 40, 0.85);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+.dark .text-gray-400 { color: #9ca3af; }
+.dark .text-gray-500 { color: #a0aec0; }
+.dark .text-gray-600 { color: #c4c9d4; }
+.dark .bg-gray-100 { background: #1e1f36; }
+.dark .bg-gray-50 { background: #151628; }
+.dark .border-gray-200 { border-color: #2d2f45; }
+.dark .border-gray-100 { border-color: #2a2b40; }
+.dark input, .dark select, .dark textarea {
+  background: #1a1b30;
+  color: #e0e0e0;
+  border-color: #3d3f55;
+}
+.dark input::placeholder { color: #6b6f85; }
+.dark .hover\:bg-gray-100:hover { background: #252740; }
+.dark .hover\:bg-gray-50:hover { background: #1c1e35; }
+
 /* ── Global animations ── */
 
 /* Card hover lift */

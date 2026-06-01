@@ -98,16 +98,23 @@ async function fetchNews() { try { news.value = ((await newsApi.getList({ page: 
       <!-- News -->
       <section>
         <div class="flex items-center justify-between mb-2">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400">📰 基金资讯</h2>
-          <button @click="router.push('/news')" class="text-xs text-primary font-medium">更多</button>
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+            <span class="text-base">📰</span> 基金资讯
+            <span class="live-dot ml-1"></span>
+          </h2>
+          <button @click="router.push('/news')" class="text-xs text-primary font-medium hover:underline">更多 →</button>
         </div>
-        <div class="space-y-1.5">
-          <div v-for="a in news" :key="a.id" @click="router.push(`/news/${a.id}`)" class="card p-3 cursor-pointer">
+        <div class="space-y-2">
+          <div v-for="a in news" :key="a.id" @click="router.push(`/news/${a.id}`)"
+            class="card card-glow p-3.5 cursor-pointer">
             <div class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 leading-snug">{{ a.title }}</div>
-            <div class="flex items-center gap-2 mt-1.5 text-xs text-gray-400">
-              <span>{{ a.source }}</span><span>·</span><span>{{ formatTime(a.published_at) }}</span>
-              <span v-if="a.sentiment === 'positive'" class="text-up font-medium">利好</span>
-              <span v-else-if="a.sentiment === 'negative'" class="text-down font-medium">利空</span>
+            <div class="flex items-center gap-1.5 mt-2 text-xs text-gray-400 flex-nowrap overflow-hidden">
+              <span class="shrink-0">{{ a.source || '基智学' }}</span><span class="shrink-0">·</span>
+              <span class="shrink-0">{{ formatTime(a.published_at) }}</span>
+              <span v-if="a.sentiment === 'positive'" class="shrink-0 px-1.5 py-0.5 rounded-full text-xs bg-up-bg text-up font-medium ml-auto">利好</span>
+              <span v-else-if="a.sentiment === 'negative'" class="shrink-0 px-1.5 py-0.5 rounded-full text-xs bg-down-bg text-down font-medium ml-auto">利空</span>
+              <span v-else-if="a.sentiment === 'neutral'" class="shrink-0 px-1.5 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 font-medium ml-auto">中性</span>
+              <span v-else class="shrink-0 px-1.5 py-0.5 rounded-full text-xs bg-amber-50 text-amber-500 dark:bg-amber-900/30 dark:text-amber-400 font-medium ml-auto">待分析</span>
             </div>
           </div>
         </div>

@@ -1,30 +1,16 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
-import BottomNav from '@/components/common/BottomNav.vue'
 import SearchOverlay from '@/components/market/SearchOverlay.vue'
 
 defineProps<{ showBack?: boolean }>()
 const router = useRouter()
-const route = useRoute()
 const appStore = useAppStore()
 const searchRef = ref<InstanceType<typeof SearchOverlay>>()
 
-const navItems = [
-  { path: '/', label: '发现', icon: 'dashboard' },
-  { path: '/watchlist', label: '自选', icon: 'star' },
-  { path: '/analysis', label: '分析', icon: 'chart' },
-  { path: '/news', label: '资讯', icon: 'news' },
-  { path: '/learn', label: '学习', icon: 'book' },
-]
-
 function goBack() { router.back() }
 function openSearch() { searchRef.value?.open() }
-
-const showBottomNav = computed(() => navItems.some(item =>
-  route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path))
-))
 </script>
 
 <template>
@@ -58,11 +44,10 @@ const showBottomNav = computed(() => navItems.some(item =>
       </button>
     </header>
 
-    <main class="flex-1 overflow-y-auto pb-16 md:pb-0">
+    <main class="flex-1 overflow-y-auto pb-[4.5rem] md:pb-0">
       <slot />
     </main>
 
-    <BottomNav :items="navItems" :class="showBottomNav ? '' : 'translate-y-full opacity-0 pointer-events-none'" class="transition-all duration-150" />
     <SearchOverlay ref="searchRef" />
   </div>
 </template>

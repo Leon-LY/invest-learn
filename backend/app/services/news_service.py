@@ -20,40 +20,58 @@ class NewsService:
                             source_id: Optional[int] = None,
                             sentiment: Optional[str] = None,
                             page: int = 1, size: int = 20) -> dict:
-        """Get paginated news feed with optional filters."""
-        cache_key = f"news:list:{category}:{source_id}:{sentiment}:{page}:{size}"
-        if page == 1:
-            cached = await cache_get(cache_key)
-            if cached:
-                return cached
+        """Get paginated news feed with optional filters. Categories are auto-detected from titles."""
+        # Base query for total
+        from sqlalchemy import or_
+        count_query = select(func.count()).select_from(NewsArticle)
 
-        query = select(NewsArticle)
-        # Join source name
         if category:
-            query = query.where(NewsArticle.categories.contains([category]))
+            # Match by keywords in title for Chinese categories
+            kw_map = {
+                "基金": ["基金", "ETF", "QDII", "FOF", "REITs", "定投", "净值", "基金经理", "公募", "私募"],
+                "行业": ["行业", "板块", "赛道", "科技", "消费", "医药", "新能源", "半导体", "白酒", "银行", "地产"],
+                "大佬": ["张坤", "谢治宇", "葛兰", "侯昊", "刘格菘", "经理", "大佬", "牛散"],
+                "策略": ["策略", "定投", "配置", "仓位", "止损", "止盈", "轮动", "红利", "价值投资", "平衡"],
+            }
+            keywords = kw_map.get(category, [category])
+            conditions = []
+            for kw in keywords:
+                conditions.append(NewsArticle.title.ilike(f"%{kw}%"))
+            count_query = count_query.where(or_(*conditions))
+
+        if source_id:
+            count_query = count_query.where(NewsArticle.source_id == source_id)
+        if sentiment:
+            count_query = count_query.where(NewsArticle.sentiment == sentiment)
+
+        total = await self.db.scalar(count_query) or 0
+
+        # Items query
+        query = select(NewsArticle)
+        if category:
+            kw_map = {
+                "基金": ["基金", "ETF", "QDII", "FOF", "REITs", "定投", "净值", "基金经理", "公募", "私募"],
+                "行业": ["行业", "板块", "赛道", "科技", "消费", "医药", "新能源", "半导体", "白酒", "银行", "地产"],
+                "大佬": ["张坤", "谢治宇", "葛兰", "侯昊", "刘格菘", "经理", "大佬", "牛散"],
+                "策略": ["策略", "定投", "配置", "仓位", "止损", "止盈", "轮动", "红利", "价值投资", "平衡"],
+            }
+            keywords = kw_map.get(category, [category])
+            conditions = []
+            for kw in keywords:
+                conditions.append(NewsArticle.title.ilike(f"%{kw}%"))
+            query = query.where(or_(*conditions))
+
         if source_id:
             query = query.where(NewsArticle.source_id == source_id)
         if sentiment:
             query = query.where(NewsArticle.sentiment == sentiment)
 
-        # Total
-        count_query = select(func.count()).select_from(NewsArticle)
-        if category:
-            count_query = count_query.where(NewsArticle.categories.contains([category]))
-        if source_id:
-            count_query = count_query.where(NewsArticle.source_id == source_id)
-        if sentiment:
-            count_query = count_query.where(NewsArticle.sentiment == sentiment)
-        total = await self.db.scalar(count_query) or 0
-
-        # Items
         query = query.order_by(desc(NewsArticle.published_at)).offset((page - 1) * size).limit(size)
         result = await self.db.execute(query)
         articles = result.scalars().all()
 
         items = []
         for a in articles:
-            # Get source name
             src_name = None
             if a.source_id:
                 src_stmt = select(NewsSource.name).where(NewsSource.id == a.source_id)
@@ -61,10 +79,7 @@ class NewsService:
                 src_name = src_result.scalar()
             items.append(self._to_item(a, src_name))
 
-        output = {"items": items, "total": total, "page": page, "size": size}
-        if page == 1:
-            await cache_set(cache_key, output, ttl=300)
-        return output
+        return {"items": items, "total": total, "page": page, "size": size}
 
     async def get_article_detail(self, article_id: int) -> Optional[dict]:
         """Get full article detail with source name."""

@@ -47,7 +47,7 @@ async function onInput() {
 
 function goTo(code: string) {
   close()
-  router.push(`/market/${code}`)
+  router.push(`/diagnosis/${code}`)
 }
 
 onMounted(() => { window.addEventListener('keydown', onKeydown) })

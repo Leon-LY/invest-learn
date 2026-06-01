@@ -8,6 +8,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '市场概览', layout: 'dashboard' },
   },
   {
+    path: '/diagnosis',
+    name: 'FundDiagnosis',
+    component: () => import('@/views/market/FundDiagnosisView.vue'),
+    meta: { title: '基金诊断', layout: 'default' },
+  },
+  {
+    path: '/diagnosis/:code',
+    name: 'FundDiagnosisCode',
+    component: () => import('@/views/market/FundDiagnosisView.vue'),
+    meta: { title: '基金诊断', layout: 'default' },
+  },
+  {
     path: '/market/:code',
     name: 'StockDetail',
     component: () => import('@/views/market/StockDetailView.vue'),

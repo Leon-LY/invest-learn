@@ -96,7 +96,7 @@ function resetFilters() {
           <tbody>
             <tr
               v-for="s in results" :key="s.code"
-              @click="router.push(`/market/${s.code}`)"
+              @click="router.push(`/diagnosis/${s.code}`)"
               class="border-t border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
             >
               <td class="px-3 py-2.5">

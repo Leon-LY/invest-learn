@@ -123,7 +123,7 @@ const metrics = [
             <tr class="border-b border-gray-100 dark:border-gray-800">
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-400">指标</th>
               <th v-for="s in compareData" :key="s.info.code" class="px-4 py-3 text-center text-xs font-medium text-gray-400">
-                <div class="cursor-pointer hover:text-purple-500" @click="router.push(`/market/${s.info.code}`)">
+                <div class="cursor-pointer hover:text-purple-500" @click="router.push(`/diagnosis/${s.info.code}`)">
                   {{ s.info.name }}
                 </div>
                 <div class="text-gray-500">{{ s.info.code }}</div>

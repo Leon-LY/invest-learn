@@ -34,7 +34,7 @@ const actionBadge: Record<string, string> = {
 
 const directionColor = (d: string) => d === '看多' ? 'text-up bg-up-bg' : d === '看空' ? 'text-down bg-down-bg' : 'text-yellow-600 bg-yellow-50'
 
-function goFund(code: string) { router.push(`/market/${code}`) }
+function goFund(code: string) { router.push(`/diagnosis/${code}`) }
 </script>
 
 <template>

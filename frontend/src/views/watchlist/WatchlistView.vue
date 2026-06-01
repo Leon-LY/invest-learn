@@ -117,7 +117,7 @@ const downCount = computed(() => items.value.filter(i => (i.quote?.change_pct ||
           v-for="item in items" :key="item.id"
           class="bg-white dark:bg-gray-900 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-800 flex items-center gap-3"
         >
-          <div class="flex-1 cursor-pointer" @click="router.push(`/market/${item.item_code}`)">
+          <div class="flex-1 cursor-pointer" @click="router.push(`/diagnosis/${item.item_code}`)">
             <div class="flex items-center gap-2">
               <span class="font-medium text-sm dark:text-white">{{ item.alias || item.item_name || item.item_code }}</span>
               <span v-if="item.tags?.length" class="text-xs text-gray-400">{{ item.tags.join('·') }}</span>

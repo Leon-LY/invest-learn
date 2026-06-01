@@ -30,7 +30,7 @@ function getHeatColor(pct: number | null): string {
 }
 
 function goToStock(code: string) {
-  router.push(`/market/${code}`)
+  router.push(`/diagnosis/${code}`)
 }
 </script>
 

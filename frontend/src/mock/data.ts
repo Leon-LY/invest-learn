@@ -265,3 +265,87 @@ export const mockStrategies = [
   { id: 4, name: '全天候策略', slug: 'all-weather', summary: '桥水基金达利欧的经典策略，将资金分配到股票、债券、黄金、商品等不同资产。', difficulty: 'advanced', risk_level: 'medium', suitable_for: '有一定资金量，希望穿越牛熊的投资者', key_metrics: ['资产种类', '配比', '再平衡'] },
   { id: 5, name: '红利再投资策略', slug: 'dividend-reinvestment', summary: '选择高分红基金，分红持续再投资，利用复利效应积累更多份额。', difficulty: 'beginner', risk_level: 'low', suitable_for: '追求长期复利增长的稳健投资者', key_metrics: ['分红频率', '红利收益率'] },
 ]
+
+// ─── Fund Diagnosis ───
+export interface DiagnosisItem {
+  label: string; score: number; maxScore: number; comment: string; icon: string
+}
+export interface FundDiagnosis {
+  code: string; name: string; overallScore: number; verdict: string; verdictColor: string
+  summary: string; items: DiagnosisItem[]; pros: string[]; cons: string[]; suggestion: string
+}
+export const mockDiagnoses: Record<string, FundDiagnosis> = {
+  '005827': { code: '005827', name: '易方达蓝筹精选混合', overallScore: 78, verdict: '推荐定投', verdictColor: 'text-green-600',
+    summary: '整体表现优秀的偏股混合基金。基金经理张坤是国内顶级价值投资者，长期业绩出色。当前估值合理，适合长期定投。',
+    items: [
+      { label: '历史业绩', score: 42, maxScore: 50, comment: '近5年收益45.8%，大幅跑赢同类平均和沪深300', icon: '📈' },
+      { label: '风险控制', score: 12, maxScore: 20, comment: '最大回撤曾达-35%，波动较大，适合能承受波动的投资者', icon: '📉' },
+      { label: '基金经理', score: 14, maxScore: 15, comment: '张坤从业15年，管理规模890亿，经历过牛熊考验', icon: '👤' },
+      { label: '费率水平', score: 5, maxScore: 10, comment: '管理费1.5%+托管费0.25%，在主动基金中属于正常水平', icon: '💰' },
+      { label: '当前时机', score: 5, maxScore: 5, comment: '重仓股估值处于历史中低位，适合逐步建仓', icon: '⏰' },
+    ],
+    pros: ['顶级基金经理，历史业绩优秀', '重仓优质蓝筹，长期确定性高', '当前估值合理，建仓时机较好'], cons: ['波动较大，短期可能亏损', '集中持仓白酒+互联网，行业风险集中', '规模890亿偏大，灵活度下降'],
+    suggestion: '建议每月定投，投入金额不超过月收入的15%。持有3年以上，短期波动不用担心。',
+  },
+  '163406': { code: '163406', name: '兴全合润混合(LOF)', overallScore: 82, verdict: '强烈推荐', verdictColor: 'text-green-600',
+    summary: '均衡配置的标杆之作。谢治宇以稳健著称，牛市跟涨、熊市抗跌，非常适合新手入门。',
+    items: [
+      { label: '历史业绩', score: 45, maxScore: 50, comment: '近5年收益62.3%，在同类中持续排名前20%', icon: '📈' },
+      { label: '风险控制', score: 15, maxScore: 20, comment: '最大回撤-22%，明显优于同类平均的-30%', icon: '📉' },
+      { label: '基金经理', score: 14, maxScore: 15, comment: '谢治宇从业17年，风格稳定，不追热点不赌赛道', icon: '👤' },
+      { label: '费率水平', score: 5, maxScore: 10, comment: '管理费1.5%+托管费0.25%，主动基金标准费率', icon: '💰' },
+      { label: '当前时机', score: 3, maxScore: 5, comment: '均衡配置不择时，任何时间买入都可以', icon: '⏰' },
+    ],
+    pros: ['均衡配置，单一赛道风险低', '谢治宇风格稳定，持有体验好', '长期业绩持续优秀'], cons: ['费率在同类中偏高', '规模偏大', '牛市弹性不如赛道型基金'],
+    suggestion: '非常适合作为核心持仓（占仓位的40-50%），定投或一次性买入均可，长期持有。',
+  },
+  '000198': { code: '000198', name: '天弘余额宝货币', overallScore: 65, verdict: '闲钱存放', verdictColor: 'text-blue-600',
+    summary: '国民级货币基金，适合存放短期闲置资金。流动性极好，但长期收益跑不赢通胀。',
+    items: [
+      { label: '历史业绩', score: 20, maxScore: 50, comment: '年化约1.5-2%，比活期高但跑不赢通胀', icon: '📈' },
+      { label: '风险控制', score: 20, maxScore: 20, comment: '几乎无风险，国内货币基金从未出现亏损', icon: '📉' },
+      { label: '基金经理', score: 10, maxScore: 15, comment: '天弘基金固收团队管理，规模效应明显', icon: '👤' },
+      { label: '费率水平', score: 10, maxScore: 10, comment: '零申购费、零赎回费，管理费仅0.3%', icon: '💰' },
+      { label: '当前时机', score: 5, maxScore: 5, comment: '随时可买，不影响收益', icon: '⏰' },
+    ],
+    pros: ['绝对安全，本金不会亏损', '流动性极好，随时可取', '零费率，使用方便'], cons: ['长期收益跑输通胀', '不适合长期投资', '收益持续走低'],
+    suggestion: '适合放3-6个月的应急资金。长期投资请转向债券基金或混合基金。',
+  },
+  '510300': { code: '510300', name: '华泰柏瑞沪深300ETF', overallScore: 85, verdict: '强烈推荐', verdictColor: 'text-green-600',
+    summary: 'A股核心资产的"篮子"。费率极低，一键买入中国最大的300家公司。巴菲特推荐普通人买指数基金，这就是首选。',
+    items: [
+      { label: '历史业绩', score: 40, maxScore: 50, comment: '长期年化约8-10%，跟上中国经济增长', icon: '📈' },
+      { label: '风险控制', score: 14, maxScore: 20, comment: '分散到300只股票，单一个股风险极低', icon: '📉' },
+      { label: '基金经理', score: 12, maxScore: 15, comment: '被动跟踪指数，不依赖经理能力', icon: '👤' },
+      { label: '费率水平', score: 10, maxScore: 10, comment: '管理费仅0.15%！是主动基金的1/10', icon: '💰' },
+      { label: '当前时机', score: 5, maxScore: 5, comment: 'PE约12倍，处于历史低位，长期定投好时机', icon: '⏰' },
+    ],
+    pros: ['费率极低，长期省下大笔费用', '分散持有300家公司，风险分散', '不依赖基金经理，风格稳定'], cons: ['牛市涨不过优秀主动基金', '包含一些低质量公司', '需要证券账户才能买ETF'],
+    suggestion: '新手定投首选！每月发工资后买一笔，坚持3年以上。可在支付宝/天天基金买联接基金，不需要证券账户。',
+  },
+}
+
+// ─── Daily Brief ───
+export interface DailyBrief {
+  date: string; weekday: string
+  marketSummary: string; marketDirection: '强势' | '偏强' | '震荡' | '偏弱' | '弱势'
+  keyIndex: { name: string; value: string; change: string }
+  hotInflow: string; importantNews: string; todayAdvice: string
+  learningTip: string
+}
+export function generateDailyBrief(): DailyBrief {
+  const today = new Date()
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+  return {
+    date: `${today.getMonth() + 1}月${today.getDate()}日`,
+    weekday: `周${weekdays[today.getDay()]}`,
+    marketSummary: '今日偏股基金整体偏强，消费和科技板块领涨，债基平稳。全市场超3000只基金上涨。',
+    marketDirection: '偏强',
+    keyIndex: { name: '偏股基金指数', value: '11280.5', change: '+0.82%' },
+    hotInflow: '沪深300ETF、科创50ETF获资金净流入居前',
+    importantNews: '央行MLF降息10BP，利好债基和成长风格基金',
+    todayAdvice: '今日是定投日，按计划执行即可。市场估值仍处低位，不必急于减仓。',
+    learningTip: '💡 今日小知识：基金分红不等于赚钱！分红后净值会下降，你的总资产不变。选择"红利再投资"比"现金分红"更划算。',
+  }
+}
+

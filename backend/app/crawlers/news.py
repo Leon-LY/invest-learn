@@ -74,6 +74,27 @@ def _is_finance_article(title: str, summary: str) -> bool:
     return any(kw in text for kw in FINANCE_KEYWORDS)
 
 
+def _classify_categories(title: str, summary: str) -> list:
+    """Auto-assign Chinese categories based on keyword matching."""
+    cats = set()
+    text = title + " " + (summary or "")
+    # 基金
+    if any(kw in text for kw in ["基金", "ETF", "QDII", "FOF", "REIT", "定投", "净值", "基金经理", "公募", "私募"]):
+        cats.add("基金")
+    # 行业
+    if any(kw in text for kw in ["行业", "板块", "赛道", "科技", "消费", "医药", "新能源", "半导体",
+                                   "白酒", "银行", "地产", "光伏", "锂电", "芯片", "AI", "基建", "煤炭", "钢铁"]):
+        cats.add("行业")
+    # 大佬
+    if any(kw in text for kw in ["经理", "张坤", "谢治宇", "葛兰", "侯昊", "刘格菘", "大佬", "牛散"]):
+        cats.add("大佬")
+    # 策略
+    if any(kw in text for kw in ["策略", "配置", "仓位", "止损", "止盈", "轮动", "红利", "价值投资", "平衡",
+                                   "定投", "回撤", "收益", "风险"]):
+        cats.add("策略")
+    return list(cats) if cats else ["基金"]  # default to 基金
+
+
 class NewsCrawler(BaseCrawler):
     """Crawler for financial news from RSS feeds and scraping."""
     source_name = "news_rss"
@@ -149,13 +170,14 @@ class NewsCrawler(BaseCrawler):
             result = await self.db.execute(stmt)
             if result.scalar_one_or_none():
                 continue
+            s = str(row.get("内容", row.get("content", "")))[:500]
             article = NewsArticle(
                 source_id=source.id,
                 title=title[:500],
-                summary=str(row.get("内容", row.get("content", "")))[:500],
+                summary=s,
                 source_url=str(row.get("链接", row.get("url", ""))),
                 published_at=datetime.now(timezone.utc),
-                categories=[],
+                categories=_classify_categories(title, s),
                 tags=[],
                 sentiment=None,
             )
@@ -206,7 +228,7 @@ class NewsCrawler(BaseCrawler):
                 source_url=entry.get("link", ""),
                 author=entry.get("author", ""),
                 published_at=self._parse_date(entry.get("published")),
-                categories=[],
+                categories=_classify_categories(title, summary),
                 tags=[],
                 sentiment=None,
             )

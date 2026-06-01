@@ -82,8 +82,14 @@ class NewsService:
 
         return {"items": items, "total": total, "page": page, "size": size}
 
-    async def get_article_detail(self, article_id: int) -> Optional[dict]:
-        """Get full article detail with source name and AI analysis."""
+    async def get_article_by_id(self, article_id: int):
+        """Get raw article ORM object by ID."""
+        stmt = select(NewsArticle).where(NewsArticle.id == article_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_article_detail(self, article_id: int, include_analysis: bool = True) -> Optional[dict]:
+        """Get full article detail with source name. AI analysis loaded separately."""
         stmt = select(NewsArticle).where(NewsArticle.id == article_id)
         result = await self.db.execute(stmt)
         article = result.scalar_one_or_none()
@@ -96,13 +102,10 @@ class NewsService:
             src_result = await self.db.execute(src_stmt)
             src_name = src_result.scalar()
 
-        # Use summary as content if no full text (no more fake generation in production)
+        # Use summary as content if no full text
         content = article.content
         if not content or len(content.strip()) < 80:
             content = article.summary or ""
-
-        # Get or generate AI impact analysis
-        analysis = await self._get_or_generate_analysis(article)
 
         detail = {
             "id": article.id, "title": article.title, "summary": article.summary,
@@ -112,7 +115,7 @@ class NewsService:
             "categories": article.categories or [], "tags": article.tags or [],
             "related_stocks": article.related_stocks or [],
             "published_at": article.published_at.isoformat() if article.published_at else None,
-            "ai_analysis": analysis,
+            "ai_analysis": None,  # Loaded separately via /news/{id}/analysis
             "related_news": [],
         }
 

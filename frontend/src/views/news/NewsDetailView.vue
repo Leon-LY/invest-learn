@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { marked } from 'marked'
 import AppShell from '@/layouts/AppShell.vue'
@@ -11,19 +11,13 @@ marked.setOptions({ breaks: true, gfm: true })
 const route = useRoute()
 const article = ref<any>(null)
 const loading = ref(true)
+const aiAnalysis = ref<any>(null)
+const analysisLoading = ref(false)
+const analysisError = ref(false)
 
 const renderedContent = computed(() => {
   if (!article.value?.content) return ''
   return marked.parse(article.value.content) as string
-})
-
-/** Get AI analysis from API response, with minimal fallback */
-const aiAnalysis = computed(() => {
-  const a = article.value?.ai_analysis
-  if (a) return a
-  // Fallback: if API returns no analysis (should not happen in production)
-  if (!article.value) return null
-  return null
 })
 
 /** Format ISO timestamp to friendly display */
@@ -37,10 +31,27 @@ function formatTime(iso: string | undefined | null): string {
   return `${d.getFullYear()}-${mm}-${dd} ${hh}:${mi}`
 }
 
+async function loadAnalysis(articleId: number) {
+  if (analysisLoading.value || aiAnalysis.value) return
+  analysisLoading.value = true
+  analysisError.value = false
+  try {
+    const result = await newsApi.getAnalysis(articleId)
+    aiAnalysis.value = result
+  } catch (e) {
+    console.error('AI analysis load failed:', e)
+    analysisError.value = true
+  } finally {
+    analysisLoading.value = false
+  }
+}
+
 onMounted(async () => {
   try {
     const id = Number(route.params.id)
     article.value = await newsApi.getDetail(id)
+    // Load AI analysis separately after article renders
+    loadAnalysis(id)
   } catch (e) { console.error(e) }
   finally { loading.value = false }
 })
@@ -75,8 +86,16 @@ const impactColors: Record<string, string> = {
         <div v-if="article.content" class="max-w-none dark:text-gray-300 markdown-body" v-html="renderedContent" />
         <div v-else class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{{ article.summary || '暂无内容详情' }}</div>
 
-        <!-- 🤖 AI Impact Analysis -->
-        <div v-if="aiAnalysis" class="mt-6 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary-light to-purple-50 dark:from-primary/10 dark:to-purple-900/20 p-5">
+        <!-- 🤖 AI Impact Analysis — loaded async -->
+        <div v-if="analysisLoading" class="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-8 text-center">
+          <div class="animate-spin inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full mb-2"></div>
+          <div class="text-sm text-gray-500">🤖 AI 正在分析这条新闻对基金的影响...</div>
+          <div class="text-xs text-gray-400 mt-1">DeepSeek 分析生成中，预计 3-8 秒</div>
+        </div>
+        <div v-else-if="analysisError" class="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 text-center">
+          <span class="text-sm text-gray-400">AI 分析暂时不可用，请稍后重试</span>
+        </div>
+        <div v-else-if="aiAnalysis" class="mt-6 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary-light to-purple-50 dark:from-primary/10 dark:to-purple-900/20 p-5">
           <div class="flex items-center gap-2 mb-3">
             <span class="text-xl">🤖</span>
             <h3 class="font-bold text-sm text-gray-900 dark:text-white">AI 影响分析</h3>

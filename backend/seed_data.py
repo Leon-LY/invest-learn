@@ -3,7 +3,7 @@ Seed script: populate learning content (categories, articles, glossary, strategi
 Run: python seed_data.py
 """
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy import select
 from app.core.database import AsyncSessionLocal
 from app.models.learn import LearnCategory, LearnArticle, GlossaryTerm, InvestmentStrategy
@@ -761,14 +761,16 @@ async def seed():
             ("基金", "北向资金连续净流入：外资在买什么基金？", "positive", "北向资金连续5周净流入。通过陆股通和QFII渠道，外资主要配置消费、金融和新能源板块的龙头基金。"),
         ]
         analysis_count = 0
-        for category, title, sentiment, summary in seed_news:
+        now = datetime.now(timezone.utc)
+        for i, (category, title, sentiment, summary) in enumerate(seed_news):
             exists = await db.execute(sel(NewsArticle).where(NewsArticle.title == title))
             if exists.scalar_one_or_none():
                 continue
+            # Stagger publish times: newest first, oldest ~3 days ago
             article = NewsArticle(
                 source_id=src.id, title=title, summary=summary,
                 sentiment=sentiment, categories=[category],
-                published_at=datetime.now(timezone.utc),
+                published_at=now - timedelta(hours=i * 2, minutes=i * 7),
             )
             db.add(article)
             await db.flush()  # Get article.id

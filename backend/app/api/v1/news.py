@@ -59,6 +59,12 @@ async def get_expert_tracker(service: NewsService = Depends(get_news_service)):
     return data
 
 
+@router.get("/expert-tracker/{expert_id}")
+async def get_expert_detail(expert_id: str, service: NewsService = Depends(get_news_service)):
+    """Get detailed expert data including operations."""
+    return await service.get_expert_detail(expert_id)
+
+
 @router.get("/sources/list")
 async def get_sources(service: NewsService = Depends(get_news_service)):
     """Get available news sources."""

@@ -1,121 +1,84 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
-import { experts } from '@/mock/experts'
-import type { Expert } from '@/mock/experts'
+import { newsApi } from '@/api/news'
 
 const route = useRoute()
-const router = useRouter()
-const expert = ref<Expert | null>(null)
+const expert = ref<any>(null)
+const loading = ref(true)
 
-onMounted(() => {
-  const id = route.params.id as string
-  expert.value = experts.find(e => e.id === id) || null
+onMounted(async () => {
+  try {
+    const id = route.params.id as string
+    expert.value = await newsApi.getExpertDetail(id)
+  } catch(e) { console.error(e) }
+  finally { loading.value = false }
 })
-
-const actionColors: Record<string, string> = {
-  '加仓': 'border-l-up bg-up-bg/50',
-  '建仓': 'border-l-up bg-up-bg/50',
-  '减仓': 'border-l-down bg-down-bg/50',
-  '清仓': 'border-l-down bg-down-bg/50',
-  '调仓': 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-900/20',
-  '持有': 'border-l-gray-400 bg-gray-50 dark:bg-gray-800/50',
-}
-
-const actionBadge: Record<string, string> = {
-  '加仓': 'bg-up text-white',
-  '建仓': 'bg-up text-white',
-  '减仓': 'bg-down text-white',
-  '清仓': 'bg-down text-white',
-  '调仓': 'bg-yellow-500 text-white',
-  '持有': 'bg-gray-400 text-white',
-}
-
-const directionColor = (d: string) => d === '看多' ? 'text-up bg-up-bg' : d === '看空' ? 'text-down bg-down-bg' : 'text-yellow-600 bg-yellow-50'
-
-function goFund(code: string) { router.push(`/diagnosis/${code}`) }
 </script>
 
 <template>
   <AppShell showBack>
-    <div v-if="!expert" class="text-center py-20 text-gray-400">大佬未找到</div>
-    <div v-else class="max-w-3xl mx-auto px-4 py-5 space-y-5">
-      <!-- Profile -->
-      <div class="card p-5">
-        <div class="flex items-start gap-4">
-          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white font-bold text-2xl shrink-0">{{ expert.avatar }}</div>
-          <div class="flex-1">
-            <div class="flex items-center gap-2">
-              <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ expert.name }}</h1>
-              <span class="text-yellow-500">{{ '⭐'.repeat(expert.starRating) }}</span>
+    <div class="max-w-3xl mx-auto px-4 py-5 space-y-4">
+      <div v-if="loading" class="space-y-3">
+        <div v-for="i in 4" :key="i" class="skeleton h-20 rounded-xl" />
+      </div>
+
+      <div v-else-if="expert?.error" class="card p-6 text-center text-gray-400 text-sm">{{ expert.error }}</div>
+
+      <div v-else-if="expert" class="space-y-4">
+        <!-- Header -->
+        <div class="card p-5">
+          <div class="flex items-start gap-3">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white font-bold text-xl shrink-0">{{ expert.name?.[0] }}</div>
+            <div>
+              <h1 class="text-lg font-bold dark:text-white">{{ expert.name }}</h1>
+              <p class="text-sm text-gray-400 mt-0.5">{{ expert.type || '基金经理' }} · {{ expert.bio }}</p>
+              <p v-if="expert.fund_code" class="text-xs text-gray-400 mt-1">管理基金：{{ expert.fund_name }}（{{ expert.fund_code }}）</p>
+              <p v-if="expert.note" class="text-xs text-gray-400 mt-1">⚠️ {{ expert.note }}</p>
             </div>
-            <p class="text-sm text-gray-500 mt-0.5">{{ expert.title }}</p>
-            <p class="text-sm text-gray-500">{{ expert.company }} · {{ expert.experience }} · 管理{{ expert.aum }}</p>
-            <p class="text-xs text-primary font-medium mt-1">{{ expert.style }}</p>
           </div>
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-4 leading-relaxed">{{ expert.bio }}</p>
-        <!-- Performance -->
-        <div class="grid grid-cols-3 gap-3 mt-4">
-          <div class="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div class="text-xs text-gray-400">近1年收益</div>
-            <div class="text-lg font-bold" :class="expert.performance.year1 >= 0 ? 'text-up' : 'text-down'">{{ expert.performance.year1 >= 0 ? '+' : '' }}{{ expert.performance.year1 }}%</div>
+
+        <!-- NAV Chart (fund managers only) -->
+        <div v-if="expert.nav_history?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">📈 净值走势（近90日）</h3>
+          <div class="h-40 flex items-end gap-px">
+            <div v-for="(n, i) in expert.nav_history.slice(-60)" :key="i"
+              class="flex-1 rounded-t-sm transition-all"
+              :class="(n.daily_return||0)>=0?'bg-up/60':'bg-down/60'"
+              :style="{ height: `${30 + (n.nav - expert.nav_history[0].nav) / expert.nav_history[0].nav * 100 + 20}%` }"
+              :title="`${n.date}: ${n.nav} (${(n.daily_return||0)>=0?'+':''}${(n.daily_return||0)?.toFixed(2)}%)`" />
           </div>
-          <div class="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div class="text-xs text-gray-400">近3年收益</div>
-            <div class="text-lg font-bold" :class="expert.performance.year3 >= 0 ? 'text-up' : 'text-down'">{{ expert.performance.year3 >= 0 ? '+' : '' }}{{ expert.performance.year3 }}%</div>
+          <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+            <span>{{ expert.nav_history[0]?.date }}</span>
+            <span>{{ expert.nav_history[expert.nav_history.length-1]?.date }}</span>
           </div>
-          <div class="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div class="text-xs text-gray-400">近5年收益</div>
-            <div class="text-lg font-bold" :class="expert.performance.year5 >= 0 ? 'text-up' : 'text-down'">{{ expert.performance.year5 >= 0 ? '+' : '' }}{{ expert.performance.year5 }}%</div>
+        </div>
+
+        <!-- Fund Size History -->
+        <div v-if="expert.size_history?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">💰 规模变动</h3>
+          <div class="space-y-2">
+            <div v-for="s in expert.size_history" :key="s.date" class="flex items-center justify-between text-sm">
+              <span class="text-gray-400">{{ s.date }}</span>
+              <span class="font-medium dark:text-white">{{ (s.size / 1e8).toFixed(1) }}亿</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Operations -->
+        <div v-if="expert.operations?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">📋 近期动态</h3>
+          <div class="space-y-2">
+            <div v-for="(op, i) in expert.operations" :key="i" class="flex items-start gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <span class="text-xs text-gray-400 w-20 shrink-0">{{ op.date }}</span>
+              <span class="text-xs font-medium text-gray-600 dark:text-gray-300 w-16 shrink-0">{{ op.action }}</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">{{ op.detail }}</span>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- Recent Operations -->
-      <section class="card p-4">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">📋 近期操作记录</h2>
-        <div class="space-y-3">
-          <div
-            v-for="op in expert.recentOperations" :key="op.date + op.fundCode"
-            class="border-l-4 rounded-r-lg p-3"
-            :class="actionColors[op.action] || 'border-l-gray-300'"
-          >
-            <div class="flex items-center justify-between mb-1">
-              <div class="flex items-center gap-2">
-                <span class="text-xs px-2 py-0.5 rounded-full text-white font-medium" :class="actionBadge[op.action]">{{ op.action }}</span>
-                <span class="text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-primary" @click="goFund(op.fundCode)">{{ op.fundName }}</span>
-                <span class="text-xs text-gray-400">{{ op.fundCode }}</span>
-              </div>
-              <span class="text-xs text-gray-400">{{ op.date }}</span>
-            </div>
-            <div class="flex items-center gap-2 text-xs text-gray-500">
-              <span class="text-gray-700 dark:text-gray-300 font-medium">金额：{{ op.amount }}</span>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">💬 {{ op.reason }}</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Predictions -->
-      <section class="card p-4">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">🔮 行情预测</h2>
-        <div class="space-y-3">
-          <div v-for="p in expert.predictions" :key="p.id" class="border border-gray-100 dark:border-gray-800 rounded-lg p-3">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-xs px-2 py-0.5 rounded-full font-medium" :class="directionColor(p.direction)">{{ p.direction }}</span>
-              <span class="text-xs text-gray-400">{{ p.category }}</span>
-              <span class="text-xs text-gray-400">信心 {{ p.confidence }}%</span>
-            </div>
-            <h4 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">{{ p.title }}</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{{ p.content }}</p>
-            <div class="flex gap-1.5 mt-2">
-              <span v-for="t in p.tags" :key="t" class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400">{{ t }}</span>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   </AppShell>
 </template>

@@ -30,7 +30,7 @@ class NewsService:
                 "宏观": ["央行", "利率", "通胀", "GDP", "PMI", "CPI", "降息", "加息", "货币政策", "财政", "汇率", "人民币", "美元", "宏观", "经济数据", "美联储"],
                 "策略": ["策略", "定投", "配置", "仓位", "止损", "止盈", "轮动", "红利", "价值投资", "平衡", "回撤", "收益", "风险", "复利", "组合"],
                 "海外": ["美股", "港股", "QDII", "纳斯达克", "标普", "恒生", "全球", "海外", "美元", "日元", "欧股"],
-                "大佬": ["张坤", "谢治宇", "葛兰", "侯昊", "刘格菘", "经理", "大佬", "牛散", "朱少醒", "任泽平", "李蓓", "林园", "但斌", "洪灏"],
+                "大佬": ["zhangkun", "张坤", "xiezhiyu", "谢治宇", "gelan", "葛兰", "houhao", "侯昊", "刘格菘", "经理", "大佬", "牛散", "朱少醒", "任泽平", "李蓓", "林园", "但斌", "洪灏"],
             }
             keywords = kw_map.get(category, [category])
             conditions = []
@@ -54,7 +54,7 @@ class NewsService:
                 "宏观": ["央行", "利率", "通胀", "GDP", "PMI", "CPI", "降息", "加息", "货币政策", "财政", "汇率", "人民币", "美元", "宏观", "经济数据", "美联储"],
                 "策略": ["策略", "定投", "配置", "仓位", "止损", "止盈", "轮动", "红利", "价值投资", "平衡", "回撤", "收益", "风险", "复利", "组合"],
                 "海外": ["美股", "港股", "QDII", "纳斯达克", "标普", "恒生", "全球", "海外", "美元", "日元", "欧股"],
-                "大佬": ["张坤", "谢治宇", "葛兰", "侯昊", "刘格菘", "经理", "大佬", "牛散", "朱少醒", "任泽平", "李蓓", "林园", "但斌", "洪灏"],
+                "大佬": ["zhangkun", "张坤", "xiezhiyu", "谢治宇", "gelan", "葛兰", "houhao", "侯昊", "刘格菘", "经理", "大佬", "牛散", "朱少醒", "任泽平", "李蓓", "林园", "但斌", "洪灏"],
             }
             keywords = kw_map.get(category, [category])
             conditions = []
@@ -276,10 +276,10 @@ class NewsService:
 
         # Fund managers with AKShare detailed data
         fund_managers = [
-            ("张坤", "005827", "易方达蓝筹精选", "价值投资·消费龙头", "公募一哥，管理规模曾超千亿。以重仓白酒和互联网平台闻名，坚持长期持有伟大企业。代表作易方达蓝筹精选5年年化超15%。"),
-            ("谢治宇", "163406", "兴全合润", "均衡配置·性价比", "兴全基金灵魂人物，不追热点不赌单一赛道。牛熊市中均表现稳健，注重持有体验，回撤控制出色。"),
-            ("葛兰", "001475", "中欧医疗健康", "医药赛道·深度研究", "美国西北大学生物医学博士，对创新药产业链有远超同行的理解。经历医药板块大幅调整仍在坚守，逆向加仓。"),
-            ("侯昊", "161725", "招商中证白酒", "指数增强·白酒专家", "管理国内规模最大的白酒主题基金，对白酒行业周期有独到判断。擅长在行业低迷时逆向布局。"),
+            ("zhangkun", "张坤", "005827", "易方达蓝筹精选", "价值投资·消费龙头", "公募一哥，管理规模曾超千亿。以重仓白酒和互联网平台闻名，坚持长期持有伟大企业。代表作易方达蓝筹精选5年年化超15%。"),
+            ("xiezhiyu", "谢治宇", "163406", "兴全合润", "均衡配置·性价比", "兴全基金灵魂人物，不追热点不赌单一赛道。牛熊市中均表现稳健，注重持有体验，回撤控制出色。"),
+            ("gelan", "葛兰", "001475", "中欧医疗健康", "医药赛道·深度研究", "美国西北大学生物医学博士，对创新药产业链有远超同行的理解。经历医药板块大幅调整仍在坚守，逆向加仓。"),
+            ("houhao", "侯昊", "161725", "招商中证白酒", "指数增强·白酒专家", "管理国内规模最大的白酒主题基金，对白酒行业周期有独到判断。擅长在行业低迷时逆向布局。"),
         ]
         for name, code, fname, style, bio in fund_managers:
             try:
@@ -301,20 +301,100 @@ class NewsService:
 
         # Economists & analysts
         for e in [
-            {'name':'任泽平', 'title':'著名经济学家', 'bio':'前恒大首席经济学家，以新周期理论闻名，对宏观政策和房地产周期有深度研究', 'type':'经济学家'},
-            {'name':'洪灏', 'title':'思睿集团首席经济学家', 'bio':'前交银国际研究主管，CFA持证人，多次精准预判A股关键转折点', 'type':'经济学家'},
-            {'name':'李蓓', 'title':'半夏投资创始人', 'bio':'私募行业少有的女性掌门人，宏观对冲策略，擅长大类资产配置', 'type':'宏观对冲'},
+            {'name':'任泽平','id':'renzeping', 'title':'著名经济学家', 'bio':'前恒大首席经济学家，以新周期理论闻名，对宏观政策和房地产周期有深度研究', 'type':'经济学家'},
+            {'name':'洪灏','id':'honghao', 'title':'思睿集团首席经济学家', 'bio':'前交银国际研究主管，CFA持证人，多次精准预判A股关键转折点', 'type':'经济学家'},
+            {'name':'李蓓','id':'libei', 'title':'半夏投资创始人', 'bio':'私募行业少有的女性掌门人，宏观对冲策略，擅长大类资产配置', 'type':'宏观对冲'},
         ]:
             experts.append({**e, 'performance': {'year1': None, 'year3': None}, 'source': '公开资料'})
 
         # Media & independent investors
         for m in [
-            {'name':'林园', 'title':'民间投资传奇', 'bio':'从8000元到百亿身家，极度看好消费和医药，嘴巴经济理论提出者', 'type':'民间投资家'},
-            {'name':'但斌', 'title':'东方港湾董事长', 'bio':'中国价值投资旗帜人物，时间的玫瑰理念提出者，穿越牛熊坚持理念', 'type':'价值投资家'},
+            {'name':'林园','id':'linyuan', 'title':'民间投资传奇', 'bio':'从8000元到百亿身家，极度看好消费和医药，嘴巴经济理论提出者', 'type':'民间投资家'},
+            {'name':'但斌','id':'danbin', 'title':'东方港湾董事长', 'bio':'中国价值投资旗帜人物，时间的玫瑰理念提出者，穿越牛熊坚持理念', 'type':'价值投资家'},
         ]:
             experts.append({**m, 'performance': {'year1': None, 'year3': None}, 'source': '公开资料'})
 
         return experts
+
+    async def get_expert_detail(self, expert_id: str) -> dict:
+        """Get detailed expert profile with operations, performance, and holdings."""
+        import asyncio
+
+        # Map expert_id to fund code for fund managers
+        manager_map = {
+            "zhangkun": ("005827", "zhangkun", "张坤", "易方达蓝筹精选"),
+            "xiezhiyu": ("163406", "xiezhiyu", "谢治宇", "兴全合润"),
+            "gelan": ("001475", "gelan", "葛兰", "中欧医疗健康"),
+            "houhao": ("161725", "houhao", "侯昊", "招商中证白酒"),
+        }
+
+        if expert_id in manager_map:
+            code, name, fname = manager_map[expert_id]
+            ops = []
+            try:
+                import akshare as ak
+                # Fund NAV history for chart
+                nav_df = await asyncio.to_thread(ak.fund_open_fund_info_em, symbol=code, indicator="单位净值走势")
+                nav_history = []
+                if nav_df is not None and not nav_df.empty:
+                    nav_df = nav_df.sort_values("净值日期")
+                    for _, row in nav_df.tail(90).iterrows():
+                        nav_history.append({
+                            "date": str(row.get("净值日期", ""))[:10],
+                            "nav": float(row.get("单位净值", 0)),
+                            "daily_return": float(row.get("日增长率", 0)) if row.get("日增长率") else None,
+                        })
+
+                # Fund size history
+                size_df = await asyncio.to_thread(ak.fund_open_fund_info_em, symbol=code, indicator="季度规模变动")
+                size_history = []
+                if size_df is not None and not size_df.empty:
+                    for _, row in size_df.tail(4).iterrows():
+                        size_history.append({
+                            "date": str(row.get("报告期", ""))[:10],
+                            "size": float(row.get("资产规模", row.get("期末总份额", 0)) or 0),
+                        })
+
+                # Simulated recent operations from NAV changes
+                if nav_df is not None and not nav_df.empty:
+                    nav_df = nav_df.tail(60)
+                    rets = nav_df["日增长率"].dropna().values
+                    if len(rets) > 10:
+                        best_idx = rets.argmax()
+                        worst_idx = rets.argmin()
+                        ops = [
+                            {"date": str(nav_df.iloc[best_idx].get("净值日期", ""))[:10], "action": "收益亮点",
+                             "detail": f"单日涨幅 {float(rets[best_idx]):.2f}%，近60日最佳表现日"},
+                            {"date": str(nav_df.iloc[worst_idx].get("净值日期", ""))[:10], "action": "波动回撤",
+                             "detail": f"单日跌幅 {float(rets[worst_idx]):.2f}%，近60日最大回撤日"},
+                        ]
+
+                return {
+                    "id": expert_id,
+                    "name": name,
+                    "fund_name": fname,
+                    "fund_code": code,
+                    "nav_history": nav_history,
+                    "size_history": size_history,
+                    "operations": ops,
+                }
+            except Exception as e:
+                logger.warning(f"Expert detail failed for {expert_id}: {e}")
+                return {"id": expert_id, "name": name, "error": str(e)}
+
+        # Non-fund-manager experts
+        non_manager = {
+            "renzeping": {"name":"任泽平","type":"经济学家","bio":"前恒大首席经济学家，国务院发展研究中心出身"},
+            "honghao": {"name":"洪灏","type":"经济学家","bio":"前交银国际研究主管，CFA持证人"},
+            "libei": {"name":"李蓓","type":"宏观对冲","bio":"半夏投资创始人，宏观对冲策略"},
+            "linyuan": {"name":"林园","type":"民间投资家","bio":"从8000元到百亿身家的投资传奇"},
+            "danbin": {"name":"但斌","type":"价值投资家","bio":"东方港湾董事长，时间的玫瑰"},
+        }
+        if expert_id in non_manager:
+            info = non_manager[expert_id]
+            return {"id": expert_id, **info, "nav_history": [], "operations": [], "note": "该大佬非公募基金经理，无公开持仓数据"}
+
+        return {"id": expert_id, "name": expert_id, "error": "未找到该专家"}
 
     async def get_recent_analyses(self, limit: int = 10) -> list[dict]:
         """Get recent AI analyses with article info."""

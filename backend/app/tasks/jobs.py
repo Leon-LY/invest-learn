@@ -51,6 +51,21 @@ async def crawl_news():
     await _run_crawler(NewsCrawler, "News")
 
 
+async def generate_expert_predictions():
+    """Every 30 min: pre-generate expert predictions via DeepSeek and cache."""
+    try:
+        async with AsyncSessionLocal() as db:
+            from app.services.news_service import NewsService
+            from app.core.cache import cache_set
+            svc = NewsService(db)
+            predictions = await svc.get_expert_predictions(limit=4)
+            if predictions:
+                await cache_set("analysis:expert_predictions", predictions, ttl=3600)
+                logger.info(f"[ExpertPredictions] Cached {len(predictions)} predictions")
+    except Exception as e:
+        logger.error(f"[ExpertPredictions] Failed: {e}")
+
+
 async def auto_analyze_news():
     """Every 5 min: generate AI analysis for unanalyzed articles."""
     try:

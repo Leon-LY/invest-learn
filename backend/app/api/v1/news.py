@@ -47,7 +47,12 @@ async def get_ai_analyses(limit: int = 10, service: NewsService = Depends(get_ne
 
 @router.get("/expert-predictions")
 async def get_expert_predictions(limit: int = 6, service: NewsService = Depends(get_news_service)):
-    """Get DeepSeek-generated expert predictions on recent news."""
+    """Get cached DeepSeek-generated expert predictions (pre-generated every 30min)."""
+    from app.core.cache import cache_get
+    cached = await cache_get("analysis:expert_predictions")
+    if cached:
+        return cached[:limit]
+    # Fallback: generate live (slower, but ensures data availability)
     return await service.get_expert_predictions(limit)
 
 

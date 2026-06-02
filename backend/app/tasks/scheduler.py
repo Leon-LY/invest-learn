@@ -19,6 +19,7 @@ def start_scheduler():
         crawl_news,
         auto_analyze_news,
         crawl_etf,
+        generate_expert_predictions,
     )
 
     # Daily: sync stock list and historical data (off-hours)
@@ -66,6 +67,14 @@ def start_scheduler():
         crawl_etf,
         CronTrigger(hour=8, minute=0),
         id="crawl_etf",
+        replace_existing=True,
+    )
+
+    # Every 30 min: pre-generate expert predictions
+    scheduler.add_job(
+        generate_expert_predictions,
+        IntervalTrigger(minutes=30),
+        id="expert_predictions",
         replace_existing=True,
     )
 

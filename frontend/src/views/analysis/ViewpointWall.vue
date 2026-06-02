@@ -89,10 +89,10 @@ const presetFunds = ['005827','161725','110027','510300','163406']
         </div>
 
         <!-- Submit -->
-        <div class="flex items-center justify-between pt-2">
-          <span class="text-xs text-gray-400">🤖 AI 自动分析方向、标签、关联基金 {{ imageFile ? '· 截图将通过视觉模型分析' : '' }}</span>
+        <div class="flex items-center gap-3 pt-2">
+          <span class="text-xs text-gray-400 truncate">🤖 AI 自动分析 {{ imageFile ? '· 截图视觉识别' : '' }}</span>
           <button @click="submit" :disabled="submitting || (!content.trim() && !imageFile)"
-            class="px-6 py-2.5 bg-primary text-white text-sm font-medium rounded-xl disabled:opacity-50 transition-opacity">
+            class="shrink-0 px-6 py-2.5 bg-primary text-white text-sm font-medium rounded-xl disabled:opacity-50 transition-opacity">
             {{ submitting ? '分析中...' : '提交分析' }}
           </button>
         </div>

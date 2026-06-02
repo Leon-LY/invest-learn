@@ -498,13 +498,51 @@ class NewsService:
             except Exception as e:
                 logger.warning(f"Fund data failed for {expert_id}: {e}")
 
-        # Generate operations from news + analyses (distinct from fund_operations)
-        ops = []
-        for n in related_news[:5]:
-            ops.append({"date": (n.get("published_at") or "")[:10], "action":"📰 相关新闻", "detail": n.get("title","")[:120]})
-        for a in related_analyses[:3]:
-            ops.append({"date": "", "action":f"🤖 {a['impact_level']}", "detail": a["short_term"][:120]})
-        result["operations"] = ops[:10]
+        # ── Investment insights: what to learn from this expert ──
+        insights = []
+        if expert_id in manager_map:
+            insights = [
+                {"icon":"📊","title":"持仓风格","detail":f"{profile.get('bio','')[:80]}..."},
+                {"icon":"🎯","title":"投资理念","detail":"长期持有优质企业，不因短期波动卖出。在市场恐慌时反而是加仓良机。"},
+                {"icon":"📉","title":"回撤应对","detail":"即使优秀基金也会有20-30%的回撤。关键是不在底部割肉，坚持定投摊成本。"},
+                {"icon":"💡","title":"学习要点","detail":"关注基金经理季报中的观点变化，判断其是否言行一致。换手率低说明真正在践行长期主义。"},
+            ]
+        else:
+            insights = [
+                {"icon":"🔍","title":"研究风格","detail":f"{profile.get('bio','')[:80]}..."},
+                {"icon":"📰","title":"观点价值","detail":"关注其对宏观数据和政策走向的判断，作为自己投资决策的参考而非盲从。"},
+                {"icon":"⚠️","title":"独立思考","detail":"大佬观点≠投资建议。每个人的资金量、风险承受能力不同，不能简单复制。"},
+            ]
+
+        # ── News digest: curated news with market context ──
+        news_digest = []
+        for n in related_news[:8]:
+            entry = {
+                "date": (n.get("published_at") or "")[:10],
+                "title": n.get("title", ""),
+                "news_id": n.get("id"),
+                "sentiment": n.get("sentiment", ""),
+            }
+            # Tag each news with relevant sector
+            for kw in cfg["keywords"][:6]:
+                if kw in (n.get("title","") + (n.get("summary") or "")):
+                    entry["tag"] = kw
+                    break
+            news_digest.append(entry)
+
+        # ── Market context summary ──
+        market_context = ""
+        if related_analyses:
+            contexts = [a["short_term"] for a in related_analyses[:3] if a.get("short_term")]
+            market_context = "；".join(contexts[:2])[:200] if contexts else ""
+
+        result["insights"] = insights
+        result["news_digest"] = news_digest
+        result["market_context"] = market_context
+        result["fund_style"] = cfg.get("keywords", [])[:4]
+
+        # ── Merge operations: fund performance events only ──
+        result["operations"] = result.get("fund_operations", [])
 
         return result
 

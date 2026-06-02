@@ -36,7 +36,9 @@ async function refreshSummary() {
 onMounted(() => {
   const hour = new Date().getHours()
   greeting.value = hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好'
-  refreshSummary(); fetchWatchlist(); fetchNews()
+  // Fire all requests without blocking render
+  refreshSummary()
+  setTimeout(() => { fetchWatchlist(); fetchNews() }, 100)
   refreshTimer = setInterval(refreshSummary, 180000)
 })
 onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })

@@ -295,10 +295,9 @@ class MarketService:
         return None
 
     async def get_market_summary(self) -> dict:
-        """Get real-time market overview (cached 60s)."""
+        """Get real-time market overview (cached 60s, first call is slow due to API fetch)."""
         from datetime import date as dt_date
 
-        # Return cached version if available
         cached = await cache_get("market:summary")
         if cached:
             return cached

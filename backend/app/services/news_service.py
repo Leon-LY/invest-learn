@@ -214,10 +214,10 @@ class NewsService:
     async def get_expert_predictions(self, limit: int = 6) -> list[dict]:
         """Generate per-article expert predictions — each expert analyzes 2-3 news individually."""
         import random, asyncio as _asyncio
-        stmt = select(NewsArticle).order_by(desc(NewsArticle.published_at)).limit(20)
+        stmt = select(NewsArticle).order_by(desc(NewsArticle.published_at)).limit(36)
         result = await self.db.execute(stmt)
         all_news = result.scalars().all()
-        if len(all_news) < 6:
+        if len(all_news) < 12:
             return []
 
         experts = [
@@ -233,9 +233,10 @@ class NewsService:
         random.shuffle(all_news)
         for i, exp in enumerate(experts[:limit]):
             expert_predictions = []
-            my_news = all_news[i*3:i*3+3] if i*3+3 <= len(all_news) else all_news[:3]
+            # Each expert gets 5 unique news articles
+            my_news = all_news[i*6:i*6+6] if i*6+6 <= len(all_news) else all_news[i*5:i*5+5]
 
-            for j, news in enumerate(my_news[:2]):
+            for j, news in enumerate(my_news[:5]):
                 try:
                     prompt = f"""你是投资专家{exp['name']}。风格：{exp['focus']}关注领域：{exp['prefers']}。
 

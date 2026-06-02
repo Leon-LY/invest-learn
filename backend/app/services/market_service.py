@@ -236,7 +236,7 @@ class MarketService:
         """Fetch fund info from AKShare and save to DB. Returns Fund or None."""
         import asyncio
         try:
-            fund_info = await asyncio.to_thread(self._fetch_fund_from_akshare, code)
+            fund_info = await self._fetch_fund_from_akshare(code)
             if not fund_info:
                 return None
 
@@ -263,12 +263,14 @@ class MarketService:
         import logging
         log = logging.getLogger(__name__)
 
-        # Primary: TianTian fund API (always works, no rate limit)
+        # Primary: TianTian fund API (runs in thread, no async needed)
         try:
-            import httpx, json, re
+            import json, re, urllib.request
             url = f"http://fundgz.1234567.com.cn/js/{code}.js"
-            resp = httpx.get(url, timeout=(3, 8))
-            if resp.status_code == 200:
+            with urllib.request.urlopen(url, timeout=8) as resp:
+                text = resp.read().decode('utf-8')
+            match = re.search(r'jsonpgz\((.+)\)', text)
+            if match:
                 match = re.search(r'jsonpgz\((.+)\)', resp.text)
                 if match:
                     data = json.loads(match.group(1))
@@ -340,13 +342,13 @@ class MarketService:
                     "close": _to_float(dp.close), "change_pct": _to_float(dp.change_pct),
                 })
 
-        # Fallback: fetch live from Sina API (most reliable inside China)
+        # Fallback: fetch live from Sina API (async, no blocking)
         if not indices:
             try:
                 import httpx, re
-                resp = httpx.get("http://hq.sinajs.cn/list=sh000001,sz399001,sz399006,sh000300",
-                    headers={"Referer": "https://finance.sina.com.cn"},
-                    timeout=(5, 8))
+                async with httpx.AsyncClient(timeout=8) as client:
+                    resp = await client.get("http://hq.sinajs.cn/list=sh000001,sz399001,sz399006,sh000300",
+                        headers={"Referer": "https://finance.sina.com.cn"})
                 if resp.status_code == 200:
                     for line in resp.text.strip().split("\n"):
                         parts = line.split('"')[1].split(",") if '"' in line else []
@@ -518,7 +520,8 @@ class MarketService:
         try:
             import httpx, json, re
             url = f"http://fundgz.1234567.com.cn/js/{code}.js"
-            resp = httpx.get(url, timeout=(3, 8))
+            async with httpx.AsyncClient(timeout=8) as client:
+                resp = await client.get(url)
             if resp.status_code == 200:
                 match = re.search(r'jsonpgz\((.+)\)', resp.text)
                 if match:

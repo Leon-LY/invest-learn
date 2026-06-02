@@ -104,9 +104,16 @@ async def get_news_detail(article_id: int, service: NewsService = Depends(get_ne
 
 @router.get("/{article_id}/analysis")
 async def get_news_analysis(article_id: int, service: NewsService = Depends(get_news_service)):
-    """Get or generate AI analysis for a news article."""
+    """Get or generate AI analysis (cached 1h)."""
+    from app.core.cache import cache_get, cache_set
+    cache_key = f"analysis:article:{article_id}"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
     article = await service.get_article_by_id(article_id)
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
     analysis = await service._get_or_generate_analysis(article)
+    if analysis:
+        await cache_set(cache_key, analysis, ttl=3600)
     return analysis

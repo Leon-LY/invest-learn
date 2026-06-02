@@ -111,7 +111,8 @@ async def create_viewpoint(request: Request, service: NewsService = Depends(get_
             log.error(f"Vision failed: {e}", exc_info=True)
     if not content.strip(): return {"error": "请提供文本或上传图片"}
     try:
-        return await service.create_viewpoint(content=content, source=data.get("source","用户投稿"), author=data.get("author",""), link=data.get("link",""))
+        original = data.get("content", "")
+        return await service.create_viewpoint(content=content, source=data.get("source","用户投稿"), author=data.get("author",""), link=data.get("link",""), original_content=original, image_b64=image_data)
     except Exception as e:
         log.error(f"Viewpoint: {e}", exc_info=True)
         return {"error": str(e)}

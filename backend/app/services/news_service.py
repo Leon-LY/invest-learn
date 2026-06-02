@@ -672,7 +672,7 @@ class NewsService:
             "generated_at": a.generated_at.isoformat() if a.generated_at else None,
         } for a, art in rows]
 
-    async def create_viewpoint(self, content: str, source: str = "用户投稿", author: str = "", link: str = "") -> dict:
+    async def create_viewpoint(self, content: str, source: str = "用户投稿", author: str = "", link: str = "", original_content: str = "", image_b64: str = "") -> dict:
         """Submit a user viewpoint and auto-analyze with DeepSeek."""
         if not content.strip():
             return {"error": "内容不能为空"}
@@ -691,7 +691,9 @@ class NewsService:
             logger.warning(f"Viewpoint AI analysis failed: {e}")
 
         vp = Viewpoint(
-            source=source, author=author or None, content=content, source_link=link or None,
+            source=source, author=author or None, content=content,
+            original_content=original_content or None, image_base64=image_b64 or None,
+            source_link=link or None,
             ai_title=ai_result.get("title", "") if ai_result else None,
             ai_summary=ai_result.get("summary", ai_result.get("short_term", "")) if ai_result else None,
             direction=ai_result.get("direction", ai_result.get("impact_level", "中性")) if ai_result else None,
@@ -713,7 +715,8 @@ class NewsService:
     def _viewpoint_to_dict(v: Viewpoint) -> dict:
         return {
             "id": v.id, "source": v.source, "author": v.author,
-            "content": v.content, "ai_title": v.ai_title,
+            "content": v.content, "original_content": v.original_content or "",
+            "image_base64": v.image_base64 or "", "ai_title": v.ai_title,
             "ai_summary": v.ai_summary, "direction": v.direction,
             "confidence": v.confidence, "related_funds": v.related_funds or [],
             "tags": v.tags or [], "created_at": v.created_at.isoformat() if v.created_at else None,

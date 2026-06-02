@@ -152,10 +152,11 @@ const presetFunds = ['005827','161725','110027','510300','163406']
               <div v-if="v.tags?.length" class="flex flex-wrap gap-1.5">
                 <span v-for="t in v.tags" :key="t" class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">{{ t }}</span>
               </div>
-              <!-- Original content -->
-              <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <div class="text-xs font-medium text-gray-400 mb-1">📝 原文 / 提取内容</div>
-                <p class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">{{ v.content }}</p>
+              <!-- Original submission -->
+              <div v-if="v.original_content || v.image_base64" class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <div class="text-xs font-medium text-gray-400 mb-2">📝 原始提交</div>
+                <p v-if="v.original_content" class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">{{ v.original_content }}</p>
+                <img v-if="v.image_base64" :src="'data:image/jpeg;base64,'+v.image_base64" class="mt-2 max-h-64 rounded-lg border border-gray-200 dark:border-gray-700" />
               </div>
             </div>
           </details>

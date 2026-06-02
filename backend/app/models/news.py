@@ -55,7 +55,9 @@ class Viewpoint(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     source: Mapped[str] = mapped_column(String(50), default="用户投稿")  # 抖音/小红书/微博/用户投稿
     author: Mapped[Optional[str]] = mapped_column(String(100))  # UP主名称
-    content: Mapped[str] = mapped_column(Text, nullable=False)  # 原始内容
+    content: Mapped[str] = mapped_column(Text, nullable=False)  # AI分析后的内容
+    original_content: Mapped[Optional[str]] = mapped_column(Text)  # 用户原始提交内容
+    image_base64: Mapped[Optional[str]] = mapped_column(Text)  # 上传的截图(base64)
     source_link: Mapped[Optional[str]] = mapped_column(String(500))  # 来源链接
     ai_title: Mapped[Optional[str]] = mapped_column(String(200))  # AI生成标题
     ai_summary: Mapped[Optional[str]] = mapped_column(Text)  # AI摘要

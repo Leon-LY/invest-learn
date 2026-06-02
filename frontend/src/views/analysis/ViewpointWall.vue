@@ -41,7 +41,7 @@ async function submit() {
     content.value = ''; author.value = ''; link.value = ''
     imageFile.value = null; imagePreview.value = ''
     viewpoints.value = (await newsApi.getViewpoints(20)) as unknown as any[]
-  } catch(e) { alert('提交失败') }
+  } catch(e: any) { alert('提交失败: ' + (e?.response?.data?.error || e?.message || '未知错误')) }
   finally { submitting.value = false }
 }
 

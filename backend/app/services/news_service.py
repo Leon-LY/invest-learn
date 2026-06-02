@@ -357,28 +357,40 @@ class NewsService:
             "danbin": ("danbin","但斌","价值投资家","东方港湾董事长","中国价值投资旗帜人物，时间的玫瑰理念提出者。重仓茅台腾讯十余年，穿越牛熊坚持理念。"),
         }
 
-        # Find related news from DB
-        expert_names = {
-            "zhangkun":"张坤","xiezhiyu":"谢治宇","gelan":"葛兰","houhao":"侯昊",
-            "renzeping":"任泽平","honghao":"洪灏","libei":"李蓓","linyuan":"林园","danbin":"但斌",
+        # Multi-strategy news search: by name, by fund code, by sector keywords
+        expert_config = {
+            "zhangkun": {"names":["张坤","蓝筹精选","易方达蓝筹"], "keywords":["白酒","消费","互联网","茅台","腾讯"], "fund":"005827"},
+            "xiezhiyu": {"names":["谢治宇","兴全合润"], "keywords":["均衡","性价比","宁德时代","半导体"], "fund":"163406"},
+            "gelan":     {"names":["葛兰","中欧医疗","医疗健康"], "keywords":["医药","创新药","CXO","医疗器械","恒瑞"], "fund":"001475"},
+            "houhao":    {"names":["侯昊","招商中证","中证白酒"], "keywords":["白酒","茅台","五粮液","泸州老窖","消费"], "fund":"161725"},
+            "renzeping": {"names":["任泽平","泽平"], "keywords":["宏观","政策","新周期","PMI","GDP","利率","改革"], "fund":""},
+            "honghao":   {"names":["洪灏","交银国际"], "keywords":["量化","周期","估值分位","资金流向","情绪","A股"], "fund":""},
+            "libei":     {"names":["李蓓","半夏投资"], "keywords":["宏观对冲","利率","汇率","大类资产","大宗商品","黄金","债券"], "fund":""},
+            "linyuan":   {"names":["林园","林园投资"], "keywords":["医药","消费","中药","老龄化","垄断","嘴巴经济"], "fund":""},
+            "danbin":    {"names":["但斌","东方港湾"], "keywords":["价值投资","时间的玫瑰","茅台","腾讯","长期持有"], "fund":""},
         }
-        name = expert_names.get(expert_id, "")
 
+        cfg = expert_config.get(expert_id, {"names":[], "keywords":[], "fund":""})
+        search_terms = cfg["names"] + cfg["keywords"]
+
+        # Search news by multiple terms
         related_news = []
-        if name:
-            stmt = select(NewsArticle).where(
-                or_(NewsArticle.title.ilike(f"%{name}%"), NewsArticle.summary.ilike(f"%{name}%"))
-            ).order_by(desc(NewsArticle.published_at)).limit(10)
+        if search_terms:
+            conditions = []
+            for term in search_terms[:6]:
+                conditions.append(NewsArticle.title.ilike(f"%{term}%"))
+            stmt = select(NewsArticle).where(or_(*conditions)).order_by(desc(NewsArticle.published_at)).limit(15)
             result = await self.db.execute(stmt)
             related_news = [self._to_item(a) for a in result.scalars().all()]
 
-        # Related AI analyses
+        # Get ALL recent AI analyses and filter those related to this expert's domain
+        all_analyses_stmt = select(NewsAnalysis).order_by(desc(NewsAnalysis.generated_at)).limit(30)
+        ana_result = await self.db.execute(all_analyses_stmt)
         related_analyses = []
-        if related_news:
-            news_ids = [n["id"] for n in related_news[:5]]
-            ana_stmt = select(NewsAnalysis).where(NewsAnalysis.news_id.in_(news_ids)).limit(10)
-            ana_result = await self.db.execute(ana_stmt)
-            for a in ana_result.scalars().all():
+        for a in ana_result.scalars().all():
+            # Check if analysis mentions expert's keywords
+            text = (a.short_term or "") + (a.action_advice or "")
+            if any(kw in text for kw in cfg["keywords"][:4]):
                 related_analyses.append({
                     "news_id": a.news_id,
                     "impact_level": a.impact_level,
@@ -388,38 +400,34 @@ class NewsService:
                     "generated_by": a.generated_by,
                 })
 
-        # Build base profile
+        # Generate rich operations from the found data
+        operations = []
+        # From AI analyses
+        for a in related_analyses[:4]:
+            operations.append({
+                "date": "", "action": f"AI分析·{a['impact_level']}",
+                "detail": a["short_term"][:120],
+            })
+        # From related news
+        for n in related_news[:4]:
+            operations.append({
+                "date": (n.get("published_at") or "")[:10],
+                "action": "相关动态",
+                "detail": n.get("title", "")[:120],
+            })
+
+        # Build profile
+        profile = {}
         if expert_id in manager_map:
             code, eid, ename, fname, style, bio = manager_map[expert_id]
-            profile = {
-                "id": expert_id, "name": ename, "type": "基金经理",
-                "title": f"{fname} · {style}", "bio": bio,
-                "fund_name": fname, "fund_code": code,
-            }
+            profile = {"id":expert_id,"name":ename,"type":"基金经理","title":f"{fname} · {style}","bio":bio,"fund_name":fname,"fund_code":code}
         elif expert_id in non_manager:
             eid, ename, etype, etitle, ebio = non_manager[expert_id]
-            profile = {
-                "id": expert_id, "name": ename, "type": etype,
-                "title": etitle, "bio": ebio,
-            }
+            profile = {"id":expert_id,"name":ename,"type":etype,"title":etitle,"bio":ebio}
         else:
             return {"id": expert_id, "error": "未找到该专家"}
 
-        # Add operations: recent AI analyses + related news + predictions
-        operations = []
-        for a in related_analyses[:5]:
-            operations.append({
-                "date": "", "action": f"AI分析: {a['impact_level']}",
-                "detail": a["short_term"][:100],
-            })
-        for n in related_news[:3]:
-            operations.append({
-                "date": (n.get("published_at") or "")[:10],
-                "action": "相关新闻",
-                "detail": n.get("title", "")[:100],
-            })
-
-        # Get predictive views from cache
+        # Predictive views from cache
         pred_view = None
         cached_preds = await cache_get("analysis:expert_predictions")
         if cached_preds:
@@ -430,9 +438,9 @@ class NewsService:
 
         result = {
             **profile,
-            "related_news": related_news[:8],
+            "related_news": related_news[:10],
             "related_analyses": related_analyses[:8],
-            "operations": operations[:10],
+            "operations": operations[:12],
             "predictive_view": pred_view,
             "nav_history": [],
             "size_history": [],

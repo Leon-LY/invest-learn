@@ -22,29 +22,39 @@ class PortfolioPlanCrawler(BaseCrawler):
         """Fetch popular public plans from Tiantian Fund plan square."""
         plans = []
         try:
-            # Fetch plan ranking from Tiantian API
-            async with httpx.AsyncClient(timeout=15) as client:
-                for page in range(1, 4):
-                    url = f"https://api.1234567.com.cn/plan/square/list?pageIndex={page}&pageSize=20&orderBy=returnRate&orderDir=desc"
-                    resp = await client.get(url, headers={
-                        "User-Agent": "Mozilla/5.0",
-                        "Referer": "https://plan.1234567.com.cn/",
-                    })
-                    if resp.status_code != 200:
-                        continue
-                    data = resp.json()
-                    items = data.get("data", {}).get("list", [])
-                    for item in items:
-                        plans.append({
-                            "plan_id": item.get("planId", ""),
-                            "name": item.get("planName", ""),
-                            "owner": item.get("userName", ""),
-                            "return_rate": item.get("totalReturnRate", 0),
-                            "followers": item.get("followCount", 0),
-                            "funds_count": item.get("fundCount", 0),
-                        })
-                    if len(items) < 20:
-                        break
+            async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+                # Try multiple possible API endpoints
+                urls = [
+                    "https://planapi.1234567.com.cn/plan/square/list?pageIndex=1&pageSize=30&orderBy=returnRate&orderDir=desc",
+                    "https://plan.1234567.com.cn/api/square/list?pageIndex=1&pageSize=30&orderBy=returnRate&orderDir=desc",
+                ]
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+                    "Referer": "https://plan.1234567.com.cn/",
+                    "Accept": "application/json",
+                }
+                for url in urls:
+                    resp = await client.get(url, headers=headers)
+                    logger.info(f"Tried {url}: {resp.status_code}")
+                    if resp.status_code == 200:
+                        try:
+                            data = resp.json()
+                            items = data.get("data", {}).get("list", data.get("data", []))
+                            if not isinstance(items, list):
+                                items = data.get("list", [])
+                            for item in items:
+                                plans.append({
+                                    "plan_id": str(item.get("planId", item.get("id", ""))),
+                                    "name": str(item.get("planName", item.get("name", ""))),
+                                    "owner": str(item.get("userName", item.get("nickname", ""))),
+                                    "return_rate": float(item.get("totalReturnRate", item.get("returnRate", 0)) or 0),
+                                    "followers": int(item.get("followCount", item.get("fans", 0)) or 0),
+                                    "funds_count": int(item.get("fundCount", item.get("count", 0)) or 0),
+                                })
+                            if plans:
+                                break
+                        except Exception:
+                            continue
             logger.info(f"Fetched {len(plans)} plans")
         except Exception as e:
             logger.error(f"Plan fetch failed: {e}")

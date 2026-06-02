@@ -135,7 +135,7 @@ const presetFunds = [
           <h3 class="text-sm font-semibold dark:text-white mb-3">💡 优化建议</h3>
           <div class="space-y-2">
             <div v-for="(a, i) in result.advice" :key="i" class="flex items-start gap-2 text-sm">
-              <span class="text-gray-400">{{ i+1 }}.</span>
+              <span class="text-gray-400">{{ Number(i)+1 }}.</span>
               <span class="text-gray-600 dark:text-gray-400">{{ a }}</span>
             </div>
           </div>

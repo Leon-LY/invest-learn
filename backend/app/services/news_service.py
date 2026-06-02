@@ -256,6 +256,50 @@ class NewsService:
 
         return predictions
 
+    async def get_expert_tracker(self) -> list[dict]:
+        """Get real fund manager data from AKShare (cached 1h)."""
+        import asyncio
+        experts = []
+
+        # Popular fund manager codes for AKShare
+        manager_codes = [
+            ("张坤", "005827", "易方达蓝筹精选"),
+            ("谢治宇", "163406", "兴全合润"),
+            ("葛兰", "001475", "中欧医疗健康"),
+            ("刘格菘", "002939", "广发创新升级"),
+            ("朱少醒", "161005", "富国天惠"),
+            ("侯昊", "161725", "招商中证白酒"),
+        ]
+
+        for name, fund_code, fund_name in manager_codes:
+            try:
+                import akshare as ak
+                # Get fund NAV data for performance calculation
+                nav_df = await asyncio.to_thread(
+                    ak.fund_open_fund_info_em, symbol=fund_code, indicator="单位净值走势"
+                )
+                perf = {"year1": None, "year3": None, "year5": None}
+                if nav_df is not None and not nav_df.empty:
+                    nav_df = nav_df.sort_values("净值日期")
+                    nav_values = nav_df["单位净值"].dropna().values
+                    if len(nav_values) > 250:
+                        latest = float(nav_values[-1])
+                        perf["year1"] = round((latest / float(nav_values[-250]) - 1) * 100, 1) if len(nav_values) > 250 else None
+                        perf["year3"] = round((latest / float(nav_values[0]) - 1) * 100, 1) if len(nav_values) > 750 else None
+
+                experts.append({
+                    "name": name,
+                    "fund_code": fund_code,
+                    "fund_name": fund_name,
+                    "performance": perf,
+                    "style": "价值投资" if name in ("张坤","朱少醒") else "均衡配置" if name == "谢治宇" else "成长投资",
+                    "data_source": "AKShare/天天基金",
+                })
+            except Exception as e:
+                logger.warning(f"Expert tracker failed for {name}: {e}")
+
+        return experts
+
     async def get_recent_analyses(self, limit: int = 10) -> list[dict]:
         """Get recent AI analyses with article info."""
         stmt = (

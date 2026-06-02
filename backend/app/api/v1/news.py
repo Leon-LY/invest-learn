@@ -41,8 +41,16 @@ async def get_news_analysis(article_id: int, service: NewsService = Depends(get_
 
 @router.get("/analyses")
 async def get_ai_analyses(limit: int = 10, service: NewsService = Depends(get_news_service)):
-    """Get recent AI analyses from the news_analyses table (real DeepSeek data)."""
-    return await service.get_recent_analyses(limit)
+    """Get recent AI analyses (cached 5 min)."""
+    from app.core.cache import cache_get, cache_set
+    cache_key = f"analysis:recent:{limit}"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
+    data = await service.get_recent_analyses(limit)
+    if data:
+        await cache_set(cache_key, data, ttl=300)
+    return data
 
 
 @router.get("/expert-predictions")
@@ -54,6 +62,19 @@ async def get_expert_predictions(limit: int = 6, service: NewsService = Depends(
         return cached[:limit]
     # Fallback: generate live (slower, but ensures data availability)
     return await service.get_expert_predictions(limit)
+
+
+@router.get("/expert-tracker")
+async def get_expert_tracker(service: NewsService = Depends(get_news_service)):
+    """Get real fund manager data scraped from public sources (cached 1h)."""
+    from app.core.cache import cache_get, cache_set
+    cached = await cache_get("analysis:expert_tracker")
+    if cached:
+        return cached
+    data = await service.get_expert_tracker()
+    if data:
+        await cache_set("analysis:expert_tracker", data, ttl=3600)
+    return data
 
 
 @router.get("/sources/list")

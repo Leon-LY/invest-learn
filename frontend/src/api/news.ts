@@ -8,4 +8,5 @@ export const newsApi = {
   getSentimentStats(days = 7) { return client.get('/news/sentiment/stats', { params: { days } }) },
   getAnalyses(limit = 10) { return client.get('/news/analyses', { params: { limit } }) },
   getExpertPredictions(limit = 6) { return client.get('/news/expert-predictions', { params: { limit } }) },
+  getExpertTracker() { return client.get('/news/expert-tracker') },
 }

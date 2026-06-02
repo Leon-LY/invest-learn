@@ -8,6 +8,7 @@ const router = useRouter()
 const activeTab = ref<'predictions' | 'ai' | 'experts'>('ai')
 const realAnalyses = ref<any[]>([])
 const predictions = ref<any[]>([])
+const experts = ref<any[]>([])
 const lastRefresh = ref('')
 const predRefresh = ref('')
 let refreshTimer: ReturnType<typeof setInterval> | null = null
@@ -36,10 +37,13 @@ async function refreshPredictions() {
     predRefresh.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
   } catch(e) {}
 }
+async function refreshExperts() {
+  try { experts.value = (await newsApi.getExpertTracker()) as unknown as any[] } catch(e) {}
+}
 
 onMounted(async () => {
-  await Promise.all([refreshAnalyses(), refreshPredictions()])
-  refreshTimer = setInterval(() => { refreshAnalyses(); refreshPredictions() }, 300000)
+  await Promise.all([refreshAnalyses(), refreshPredictions(), refreshExperts()])
+  refreshTimer = setInterval(() => { refreshAnalyses(); refreshPredictions(); refreshExperts() }, 300000)
 })
 onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
 </script>
@@ -117,11 +121,28 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
         </div>
       </div>
 
-      <!-- TAB 3: Expert Overview — real data pending -->
-      <div v-if="activeTab === 'experts'" class="card p-8 text-center">
-        <div class="text-3xl mb-3">👤</div>
-        <p class="text-sm text-gray-500 dark:text-gray-400">大佬追踪数据暂未接入实时源</p>
-        <p class="text-xs text-gray-400 mt-1">正在接入权威数据源，将提供基金经理、经济学家实时观点</p>
+      <!-- TAB 3: Expert Tracker — real scraped data -->
+      <div v-if="activeTab === 'experts'" class="space-y-3">
+        <div class="text-xs text-gray-400">📊 基金数据追踪（来自天天基金/ AKShare）</div>
+        <div v-if="!experts.length" class="card p-6 text-center text-xs text-gray-400">正在加载基金经理数据...</div>
+        <div v-for="e in experts" :key="e.fund_code"
+          class="card p-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white font-bold shrink-0">{{ e.name[0] }}</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <h3 class="font-semibold text-sm dark:text-white">{{ e.name }}</h3>
+                <span class="text-xs text-gray-400">{{ e.style }}</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-0.5">管理 {{ e.fund_name }}（{{ e.fund_code }}）</p>
+              <div class="flex gap-3 mt-2 text-xs">
+                <span :class="(e.performance?.year1||0)>=0?'text-up':'text-down'">近1年 {{ (e.performance?.year1||0)>=0?'+':'' }}{{ e.performance?.year1 ?? '--' }}%</span>
+                <span :class="(e.performance?.year3||0)>=0?'text-up':'text-down'">近3年 {{ (e.performance?.year3||0)>=0?'+':'' }}{{ e.performance?.year3 ?? '--' }}%</span>
+              </div>
+              <div class="text-[10px] text-gray-400 mt-1">数据源: {{ e.data_source }}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </AppShell>

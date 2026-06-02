@@ -208,6 +208,31 @@ class NewsService:
             "generated_by": a.generated_by or "template",
         }
 
+    async def get_recent_analyses(self, limit: int = 10) -> list[dict]:
+        """Get recent AI analyses with article info."""
+        stmt = (
+            select(NewsAnalysis, NewsArticle)
+            .join(NewsArticle, NewsAnalysis.news_id == NewsArticle.id)
+            .order_by(desc(NewsAnalysis.generated_at))
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        rows = result.all()
+        return [{
+            "id": a.id,
+            "news_id": a.news_id,
+            "title": art.title,
+            "impact_score": a.impact_score,
+            "impact_level": a.impact_level,
+            "affected_funds": a.affected_funds or [],
+            "short_term": a.short_term or "",
+            "medium_term": a.medium_term or "",
+            "action_advice": a.action_advice or "",
+            "key_points": a.key_points or [],
+            "generated_by": a.generated_by,
+            "generated_at": a.generated_at.isoformat() if a.generated_at else None,
+        } for a, art in rows]
+
     async def get_sources(self) -> list[dict]:
         """Get all news sources with article count."""
         stmt = select(NewsSource).where(NewsSource.is_active == True)

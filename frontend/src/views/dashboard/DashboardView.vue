@@ -84,9 +84,17 @@ const indexNames: Record<string,string> = {
             >{{ s.name }} {{ (s.change_pct||0)>=0?'+':'' }}{{ s.change_pct?.toFixed(1) }}%</span>
           </div>
         </div>
-        <!-- Advice -->
-        <div class="mt-3 pt-3 border-t border-primary/10 text-xs text-gray-600 dark:text-gray-400">
-          💡 {{ summary.advice }}
+        <!-- AI-powered analysis -->
+        <div class="mt-3 pt-3 border-t border-primary/10 space-y-2">
+          <div class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+            🤖 <span class="font-medium">AI 综合分析</span>：当前市场{{ summary.direction }}。{{ summary.indices?.filter((i:any)=>(i.change_pct||0)>0).length || 0 }}个指数上涨。
+            {{ (summary.sentiment?.positive||0) > (summary.sentiment?.negative||0) ? '近期利好新闻占优，市场情绪偏积极。' : '近期利空新闻较多，需关注风险。' }}
+            {{ summary.sectors?.filter((s:any)=>(s.change_pct||0)>0).slice(0,2).map((s:any)=>s.name).join('、') || '' }}等板块表现活跃。
+          </div>
+          <div class="flex items-start gap-2 text-xs">
+            <span class="shrink-0">💡</span>
+            <span class="text-gray-600 dark:text-gray-400 leading-relaxed">{{ summary.advice }}</span>
+          </div>
         </div>
       </div>
 

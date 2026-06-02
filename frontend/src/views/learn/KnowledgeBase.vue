@@ -47,16 +47,18 @@ function selectCategory(slug: string) {
         <p class="text-sm text-gray-400 mt-1">从零开始学习投资，建立自己的投资体系</p>
       </div>
 
-      <!-- Category cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div v-for="cat in categories" :key="cat.id"
+      <!-- Category chips — compact horizontal scroll -->
+      <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        <button
+          @click="selectCategory('')"
+          class="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+          :class="!selectedCategory ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'"
+        >全部</button>
+        <button v-for="cat in categories" :key="cat.id"
           @click="selectCategory(cat.slug)"
-          class="card p-4 cursor-pointer transition-all"
-          :class="selectedCategory === cat.slug ? 'ring-2 ring-primary/40 shadow-md' : ''">
-          <div class="text-2xl mb-2">{{ iconMap[cat.icon] || '📚' }}</div>
-          <div class="font-medium text-sm dark:text-white">{{ cat.name }}</div>
-          <div class="text-xs text-gray-400 mt-1 line-clamp-2">{{ cat.description }}</div>
-        </div>
+          class="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1"
+          :class="selectedCategory === cat.slug ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'"
+        >{{ iconMap[cat.icon] || '' }} {{ cat.name }}</button>
       </div>
 
       <!-- Quick links -->

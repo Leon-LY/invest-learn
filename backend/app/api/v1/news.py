@@ -39,6 +39,12 @@ async def get_news_analysis(article_id: int, service: NewsService = Depends(get_
     return analysis
 
 
+@router.get("/analyses")
+async def get_ai_analyses(limit: int = 10, service: NewsService = Depends(get_news_service)):
+    """Get recent AI analyses from the news_analyses table (real DeepSeek data)."""
+    return await service.get_recent_analyses(limit)
+
+
 @router.get("/sources/list")
 async def get_sources(service: NewsService = Depends(get_news_service)):
     """Get available news sources."""

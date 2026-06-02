@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { experts, aiAnalyses } from '@/mock/experts'
+import { newsApi } from '@/api/news'
 import type { Expert, AIAnalysis } from '@/mock/experts'
 import EmptyState from '@/components/common/EmptyState.vue'
 
 const router = useRouter()
 const activeTab = ref<'predictions' | 'ai' | 'experts'>('predictions')
+const realAnalyses = ref<any[]>([])
 
 // Collect all predictions from all experts
 const allPredictions = experts.flatMap(e => e.predictions.map(p => ({ ...p, expertName: e.name, expertId: e.id, expertTitle: e.title })))
@@ -16,8 +18,17 @@ const allPredictions = experts.flatMap(e => e.predictions.map(p => ({ ...p, expe
 const directionColor = (d: string) => d === '看多' ? 'text-up bg-up-bg' : d === '看空' ? 'text-down bg-down-bg' : 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30'
 const confidenceColor = (c: number) => c >= 80 ? 'text-green-600' : c >= 60 ? 'text-yellow-600' : 'text-red-500'
 const riskColor = (r: string) => r === '低' ? 'text-down' : r === '中低' ? 'text-green-500' : r === '中' ? 'text-yellow-600' : r === '中高' ? 'text-orange-500' : 'text-up'
+const impactColors: Record<string, string> = {
+  '重大利好': 'bg-up text-white', '利好': 'bg-up-bg text-up',
+  '中性': 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  '利空': 'bg-down-bg text-down', '重大利空': 'bg-down text-white',
+}
 
 function goExpert(id: string) { router.push(`/analysis/expert/${id}`) }
+
+onMounted(async () => {
+  try { realAnalyses.value = (await newsApi.getAnalyses(10)) as unknown as any[] } catch(e) {}
+})
 </script>
 
 <template>
@@ -71,6 +82,28 @@ function goExpert(id: string) { router.push(`/analysis/expert/${id}`) }
 
       <!-- ===== TAB 2: AI Analysis ===== -->
       <div v-if="activeTab === 'ai'" class="space-y-4">
+        <!-- Real analyses from DeepSeek -->
+        <div v-if="realAnalyses.length" class="mb-2">
+          <div class="text-xs text-gray-400 mb-2">🤖 DeepSeek 实时分析（{{ realAnalyses.length }}条）</div>
+          <div v-for="a in realAnalyses.slice(0,6)" :key="'r'+a.id"
+            @click="router.push(`/news/${a.news_id}`)"
+            class="card p-4 cursor-pointer hover:shadow-md mb-3 border-l-4 border-l-primary">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="px-2 py-0.5 text-xs rounded-full font-medium" :class="impactColors[a.impact_level]">{{ a.impact_level }}</span>
+              <span class="text-xs text-gray-400">影响评分 {{ a.impact_score }}</span>
+              <span class="text-xs text-gray-400 ml-auto">{{ a.generated_by === 'deepseek' ? '🤖 DeepSeek' : '📋 模板' }}</span>
+            </div>
+            <h3 class="font-semibold text-sm dark:text-white mb-1.5 line-clamp-1">{{ a.title }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{{ a.short_term }}</p>
+            <div class="flex items-start gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+              <span class="text-sm shrink-0">💡</span>
+              <p class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ a.action_advice }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mock AI analyses fallback -->
+        <div class="text-xs text-gray-400 mb-2">📊 策略分析报告</div>
         <div
           v-for="a in aiAnalyses" :key="a.id"
           class="card p-4"

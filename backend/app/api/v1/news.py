@@ -104,13 +104,17 @@ async def create_viewpoint(data: dict, service: NewsService = Depends(get_news_s
         except Exception as e:
             logger.warning(f"Image analysis fallback: {e}")
 
-    return await service.create_viewpoint(
-        content=content or data.get("content", ""),
-        source=data.get("source", "用户投稿"),
-        author=data.get("author", ""),
-        link=data.get("link", ""),
-        image_analysis=data.get("image_analysis"),
-    )
+    try:
+        return await service.create_viewpoint(
+            content=content or data.get("content", ""),
+            source=data.get("source", "用户投稿"),
+            author=data.get("author", ""),
+            link=data.get("link", ""),
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Viewpoint creation failed: {e}", exc_info=True)
+        return {"error": f"提交失败: {str(e)}"}
 
 
 @router.get("/viewpoints")

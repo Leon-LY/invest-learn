@@ -81,50 +81,27 @@ async def get_expert_detail(expert_id: str, service: NewsService = Depends(get_n
 
 @router.post("/viewpoints")
 async def create_viewpoint(request: Request, service: NewsService = Depends(get_news_service)):
-    """Submit a viewpoint + auto AI analysis. Supports base64 image."""
-    import logging
+    import logging, base64
     log = logging.getLogger(__name__)
-    try:
-        data = await request.json()
-    except Exception:
-        data = {}
+    data = {}
+    try: data = await request.json()
+    except: pass
     image_data = data.get("image", "")
     content = data.get("content", "")
-
-    # Analyze image with Qwen Vision (always if provided)
     if image_data:
         try:
-            import base64
-            img_bytes = base64.b64decode(image_data)
             from app.services.vision_service import analyze_image
-            vision_result = await analyze_image(img_bytes)
-            if vision_result:
-                parts = [vision_result.get("content", "")]
-                if vision_result.get("key_points"):
-                    parts.append("要点: " + "; ".join(vision_result["key_points"]))
-                if vision_result.get("numbers_extracted"):
-                    parts.append("数据: " + vision_result["numbers_extracted"])
-                vision_text = "\n\n".join(filter(None, parts))
-                # Append to user text, or use as sole content
-                if content.strip():
-                    content = content.strip() + "\n\n[截图分析]: " + vision_text
-                else:
-                    content = vision_text
-                if vision_result.get("data_points"):
-                    content += "\n\n提取数据: " + vision_result["data_points"]
-        except Exception as e:
-            logger.warning(f"Image analysis fallback: {e}")
-
+            vr = await analyze_image(base64.b64decode(image_data))
+            if vr:
+                vt = chr(10).join(filter(None, [vr.get("content",""), vr.get("key_points") and ("要点: "+"; ".join(vr["key_points"])), vr.get("numbers_extracted") and ("数据: "+vr["numbers_extracted"])]))
+                content = (content.strip() + "[截图]: " + vt) if content.strip() else vt
+        except Exception as e: log.warning(f"Vision: {e}")
+    if not content.strip(): return {"error": "请提供文本或上传图片"}
     try:
-        return await service.create_viewpoint(
-            content=content or data.get("content", ""),
-            source=data.get("source", "用户投稿"),
-            author=data.get("author", ""),
-            link=data.get("link", ""),
-        )
+        return await service.create_viewpoint(content=content, source=data.get("source","用户投稿"), author=data.get("author",""), link=data.get("link",""))
     except Exception as e:
-        log.error(f"Viewpoint creation failed: {e}", exc_info=True)
-        return {"error": f"提交失败: {str(e)}"}
+        log.error(f"Viewpoint: {e}", exc_info=True)
+        return {"error": str(e)}
 
 
 @router.get("/viewpoints")

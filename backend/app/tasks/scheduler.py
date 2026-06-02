@@ -116,13 +116,19 @@ def start_scheduler():
                 logger.info(f"Initial crawl: {name} ✓")
             except Exception as e:
                 logger.error(f"Initial crawl: {name} ✗ — {e}")
-            await asyncio.sleep(3)  # Stagger to avoid rate limits
+            await asyncio.sleep(3)
 
         logger.info("Initial AI analysis...")
-        try:
-            await auto_analyze_news()
-        except Exception as e:
-            logger.error(f"Initial analysis failed: {e}")
+        try: await auto_analyze_news()
+        except Exception as e: logger.error(f"Failed: {e}")
+
+        logger.info("Initial expert predictions...")
+        try: await generate_expert_predictions()
+        except Exception as e: logger.error(f"Failed: {e}")
+
+        logger.info("Initial expert tracker...")
+        try: await refresh_expert_tracker()
+        except Exception as e: logger.error(f"Failed: {e}")
     asyncio.create_task(initial_crawl())
 
 

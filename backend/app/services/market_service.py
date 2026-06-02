@@ -479,6 +479,7 @@ class MarketService:
             market_ctx = "市场数据暂不可用"
 
         # Step 3: Find relevant recent news for these funds
+        from app.models.news import NewsArticle
         relevant_news = []
         for code in fund_codes[:5]:
             stmt = select(Fund).where(Fund.code == code)

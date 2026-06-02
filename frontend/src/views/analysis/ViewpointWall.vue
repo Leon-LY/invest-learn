@@ -80,8 +80,16 @@ const uniqueAuthors = computed(() => {
         <!-- Row 2: Link -->
         <input v-model="link" placeholder="视频 / 文章链接（选填）" class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white" />
 
-        <!-- Row 3: Content textarea -->
-        <textarea v-model="content" placeholder="粘贴观点内容...&#10;&#10;例如：这个UP主说新能源已经见底了，锂矿价格从60万跌到10万，宁德时代Q1业绩超预期" rows="5"
+        <!-- Row 3: Quick action buttons -->
+        <div class="flex gap-2 text-xs">
+          <button @click="content='买入 '" class="px-2 py-1 rounded bg-up-bg text-up">买入</button>
+          <button @click="content='卖出 '" class="px-2 py-1 rounded bg-down-bg text-down">卖出</button>
+          <button @click="content='调仓 '" class="px-2 py-1 rounded bg-blue-50 text-blue-600">调仓</button>
+          <button @click="content='加仓 '" class="px-2 py-1 rounded bg-orange-50 text-orange-600">加仓</button>
+          <span class="text-gray-400 self-center">快捷录入：先点操作，再填代码+金额</span>
+        </div>
+        <!-- Row 4: Content textarea -->
+        <textarea v-model="content" placeholder="粘贴观点或快速记录...&#10;&#10;快捷格式：「买入 005827 50000」「加仓 161725 20000」" rows="4"
           class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white resize-none" />
 
         <!-- Row 4: Image upload -->

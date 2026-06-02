@@ -31,12 +31,9 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
 <template>
   <AppShell>
     <div class="max-w-4xl mx-auto px-4 py-5 space-y-5">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">智能分析</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">大佬观点追踪 & 投资组合参考</p>
-        </div>
-        <button @click="router.push('/viewpoints')" class="px-3 py-1.5 text-xs bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors">📣 民间观点</button>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">智能分析</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">大佬观点追踪 & 投资组合参考</p>
       </div>
 
       <!-- Tab Switcher -->

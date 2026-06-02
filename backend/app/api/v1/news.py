@@ -82,6 +82,8 @@ async def get_expert_detail(expert_id: str, service: NewsService = Depends(get_n
 @router.post("/viewpoints")
 async def create_viewpoint(data: dict, service: NewsService = Depends(get_news_service)):
     """Submit a viewpoint + auto AI analysis. Supports base64 image."""
+    import logging
+    log = logging.getLogger(__name__)
     image_data = data.get("image", "")
     content = data.get("content", "")
 
@@ -112,8 +114,7 @@ async def create_viewpoint(data: dict, service: NewsService = Depends(get_news_s
             link=data.get("link", ""),
         )
     except Exception as e:
-        import logging
-        logging.getLogger(__name__).error(f"Viewpoint creation failed: {e}", exc_info=True)
+        log.error(f"Viewpoint creation failed: {e}", exc_info=True)
         return {"error": f"提交失败: {str(e)}"}
 
 

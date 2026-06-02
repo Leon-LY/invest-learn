@@ -10,10 +10,16 @@ import {
   mockCategories, mockArticles, mockArticleDetail, mockGlossary, mockStrategies,
 } from './data'
 
-/** Check at runtime whether mock is enabled. Default = true. */
+/** Check at runtime whether mock is enabled. Default = false in production. */
 function isMockEnabled(): boolean {
   const val = localStorage.getItem('mock-api')
-  if (val === null) return true  // default: mock ON
+  if (val === null) {
+    // Default OFF — only enable mock for local development
+    const host = window.location.hostname
+    const isLocal = host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.')
+    if (!isLocal) return false
+    return false  // safe default: real data only
+  }
   return val === 'true'
 }
 
@@ -200,12 +206,7 @@ export function setupMock(axios: AxiosInstance) {
     }
     if (path === 'market/search') {
       const params = data as any
-      const results = mockSearch(params?.params?.q || '')
-      if (results.length === 0) {
-        // Fall through to real API for codes not in mock
-        return originalGet(url, data)
-      }
-      return JSON.parse(JSON.stringify(results))
+      return JSON.parse(JSON.stringify(mockSearch(params?.params?.q || '')))
     }
     if (path === 'market/screener') {
       const all = getMockFundList()
@@ -337,6 +338,6 @@ export function setupMock(axios: AxiosInstance) {
   axios.put = ((url: string, data?: any, config?: any) => handler('put', url, data)) as any
   axios.delete = ((url: string, config?: any) => handler('delete', url)) as any
 
-  console.log('[InvestLearn] Mock API ready. Data will display automatically.')
-  console.log('[InvestLearn] To switch to real API: localStorage.setItem("mock-api", "false")')
+  console.log('[远见] Mock API loaded (disabled by default in production).')
+  console.log('[远见] To enable mock: localStorage.setItem("mock-api", "true")')
 }

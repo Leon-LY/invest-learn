@@ -420,19 +420,23 @@ class MarketService:
         return result
 
     async def get_portfolio_summary(self, funds: list) -> dict:
-        """Analyze user's fund portfolio with real data + AI insights."""
-        import httpx, json, re
-        holdings = []
-        total_risk = 0
-        type_dist = {}
+        """Rich portfolio analysis: real NAV + news + market context + AI advice."""
+        import httpx, json, re, asyncio
 
+        holdings = []
+        type_dist = {}
+        fund_codes = []
+
+        # Step 1: Fetch real-time data for each fund
         for item in funds:
-            code = str(item.get("code", ""))
+            code = str(item.get("code", "")).strip()
             amount = float(item.get("amount", 0))
-            if not code or len(code) != 6:
+            if not code or len(code) != 6 or amount <= 0:
                 continue
+            fund_codes.append(code)
 
             info = {"code": code, "amount": amount}
+            # TianTian real-time quote
             try:
                 async with httpx.AsyncClient(timeout=6) as client:
                     resp = await client.get(f"http://fundgz.1234567.com.cn/js/{code}.js")
@@ -441,12 +445,13 @@ class MarketService:
                         if m:
                             d = json.loads(m.group(1))
                             info["name"] = d.get("name", "")
-                            info["nav"] = float(d.get("dwjz", 0))
-                            info["est_return"] = float(d.get("gszzl", 0))
+                            info["nav"] = float(d.get("dwjz", 0)) if d.get("dwjz") else None
+                            info["est_return"] = float(d.get("gszzl", 0)) if d.get("gszzl") else None
+                            info["nav_date"] = d.get("jzrq", "")
             except Exception:
                 pass
 
-            # Classify type from DB
+            # Classification + performance from DB
             stmt = select(Fund).where(Fund.code == code)
             r = await self.db.execute(stmt)
             fund = r.scalar_one_or_none()
@@ -454,42 +459,91 @@ class MarketService:
                 info["type"] = fund.fund_type or "混合型"
                 type_dist[info["type"]] = type_dist.get(info["type"], 0) + amount
             else:
-                info["type"] = "未知"
-                type_dist["未知"] = type_dist.get("未知", 0) + amount
+                info["type"] = "混合型"
+                type_dist["混合型"] = type_dist.get("混合型", 0) + amount
 
             holdings.append(info)
 
+        if not holdings or not fund_codes:
+            return {"error": "请提供有效的基金代码和金额", "holdings": [], "allocation": [], "advice": []}
+
         total_amount = sum(h["amount"] for h in holdings)
-        if total_amount == 0:
-            return {"holdings": holdings, "error": "无法获取基金数据"}
 
-        # Allocation analysis
-        allocation = []
-        for t, amt in type_dist.items():
-            allocation.append({"type": t, "ratio": round(amt / total_amount * 100, 1)})
+        # Step 2: Get market context
+        market_ctx = ""
+        try:
+            mkt = await cache_get("market:summary")
+            if mkt:
+                market_ctx = f"当前市场{mkt.get('direction','震荡')}，{mkt.get('advice','')[:80]}"
+        except Exception:
+            market_ctx = "市场数据暂不可用"
 
-        # Risk assessment
-        scores = {"股票型": 8, "混合型": 6, "指数型": 5, "债券型": 2, "货币型": 1}
-        risk_score = sum(scores.get(h.get("type",""), 5) * h["amount"] / total_amount for h in holdings)
-        risk_level = "高" if risk_score > 7 else "中高" if risk_score > 5 else "中" if risk_score > 3 else "低"
+        # Step 3: Find relevant recent news for these funds
+        relevant_news = []
+        for code in fund_codes[:5]:
+            stmt = select(Fund).where(Fund.code == code)
+            r = await self.db.execute(stmt)
+            f = r.scalar_one_or_none()
+            if f:
+                kw = f.name[:4] if f.name else code
+                news_stmt = select(NewsArticle).where(
+                    or_(NewsArticle.title.ilike(f"%{kw}%"), NewsArticle.title.ilike(f"%{f.fund_type}%"))
+                ).order_by(desc(NewsArticle.published_at)).limit(3)
+                nr = await self.db.execute(news_stmt)
+                for n in nr.scalars().all():
+                    relevant_news.append({
+                        "fund_code": code,
+                        "title": n.title[:100],
+                        "sentiment": n.sentiment or "",
+                        "date": n.published_at.strftime("%m-%d") if n.published_at else "",
+                    })
+        relevant_news = relevant_news[:10]
 
-        # Simple advice
-        advice_parts = []
-        if risk_score > 7:
-            advice_parts.append("组合整体风险偏高，建议增加债券或货币基金比例到20-30%")
-        if len(holdings) < 3:
-            advice_parts.append("持仓基金较少（<3只），建议分散到3-5只不同类型基金")
-        if any(h.get("type") == "混合型" for h in holdings):
-            advice_parts.append("混合型基金占比较高，注意查看基金经理是否风格漂移")
+        # Step 4: Allocation + risk
+        allocation = [{"type": t, "ratio": round(amt/total_amount*100, 1)} for t, amt in type_dist.items()]
+        scores = {"股票型":8,"混合型":6,"指数型":5,"ETF":5,"债券型":2,"货币型":1,"QDII":7}
+        risk_score = round(sum(scores.get(h.get("type",""),5)*h["amount"]/total_amount for h in holdings), 1)
+        risk_level = "高" if risk_score>7 else "中高" if risk_score>5 else "中" if risk_score>3 else "低"
+
+        # Step 5: Generate grounded advice (no AI hallucination — based on real data)
+        advice = []
+        # Diversification check
+        type_count = len(type_dist)
+        if type_count == 1:
+            advice.append({"level":"warning","text":f"⚠️ 你的{len(holdings)}只基金全部属于同一类型（{list(type_dist.keys())[0]}），一旦该类型回调，整个组合都会受冲击。建议增加1-2只不同类型基金分散风险。"})
+        elif type_count >= 3:
+            advice.append({"level":"good","text":f"✅ 配置了{type_count}种不同类型的基金，分散度较好。不同类型在市场不同阶段表现各异，可以平滑波动。"})
+
+        # Risk check
+        if risk_level in ("高","中高"):
+            advice.append({"level":"warning","text":f"⚡ 组合风险等级为「{risk_level}」（评分{risk_score}）。如果这是你的主要资金，建议增加债券或货币基金（占比20-30%）做安全垫，降低整体波动。"})
+
+        # Fund count check
+        if len(holdings) == 1:
+            advice.append({"level":"warning","text":"📌 只持有1只基金风险集中。即使是最优秀的基金经理也会有回撤期，建议至少配置3-5只不同类型基金。"})
+        elif len(holdings) > 8:
+            advice.append({"level":"info","text":"💡 持有超过8只基金，注意是否有重复配置。不同基金可能持有相似的股票，看似分散实则集中。"})
+
+        # Market-aware advice
+        if market_ctx:
+            advice.append({"level":"info","text":f"📊 市场背景：{market_ctx}"})
+
+        # Specific fund advice based on real data
+        for h in holdings:
+            if h.get("est_return") is not None and abs(h["est_return"]) > 1:
+                direction = "涨" if h["est_return"] > 0 else "跌"
+                advice.append({"level":"info","text":f"📈 {h.get('name',h['code'])} 今日{direction}{abs(h['est_return']):.2f}%，净值{h.get('nav','?')}。短期波动属于正常现象，不建议因单日涨跌调整仓位。"})
 
         return {
             "holdings": holdings,
             "total_amount": round(total_amount, 2),
             "allocation": allocation,
-            "risk_score": round(risk_score, 1),
+            "risk_score": risk_score,
             "risk_level": risk_level,
-            "advice": advice_parts or ["组合配置合理，坚持定投即可"],
+            "advice": advice,
+            "relevant_news": relevant_news,
             "fund_count": len(holdings),
+            "market_context": market_ctx,
         }
 
     # ─── Funds ──────────────────────────────────────────

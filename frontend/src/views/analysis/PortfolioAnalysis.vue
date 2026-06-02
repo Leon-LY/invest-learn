@@ -9,6 +9,12 @@ const loading = ref(false)
 const error = ref('')
 
 function addRow() { funds.value.push({ code: '', amount: '' }) }
+function addPreset(code: string) {
+  // Fill first empty row, otherwise append
+  const empty = funds.value.find(f => !f.code.trim())
+  if (empty) { empty.code = code; return }
+  funds.value.push({ code, amount: '' })
+}
 function removeRow(i: number) { funds.value.splice(i, 1) }
 
 async function analyze() {
@@ -59,7 +65,7 @@ const presetFunds = [
         <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
           <p class="text-xs text-gray-400 mb-2">快速填入：</p>
           <div class="flex flex-wrap gap-1.5">
-            <button v-for="p in presetFunds" :key="p.code" @click="funds.push({code:p.code,amount:''})"
+            <button v-for="p in presetFunds" :key="p.code" @click="addPreset(p.code)"
               class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-primary/10 hover:text-primary transition-colors">
               + {{ p.name }}
             </button>
@@ -132,13 +138,32 @@ const presetFunds = [
 
         <!-- Advice -->
         <div v-if="result.advice?.length" class="card p-4">
-          <h3 class="text-sm font-semibold dark:text-white mb-3">💡 优化建议</h3>
+          <h3 class="text-sm font-semibold dark:text-white mb-3">💡 智能分析</h3>
           <div class="space-y-2">
-            <div v-for="(a, i) in result.advice" :key="i" class="flex items-start gap-2 text-sm">
-              <span class="text-gray-400">{{ Number(i)+1 }}.</span>
-              <span class="text-gray-600 dark:text-gray-400">{{ a }}</span>
+            <div v-for="(a, i) in result.advice" :key="i" class="p-3 rounded-lg text-sm"
+              :class="a.level==='warning'?'bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800':a.level==='good'?'bg-green-50 dark:bg-green-950/20':'bg-gray-50 dark:bg-gray-800/50'">
+              <span class="leading-relaxed">{{ a.text }}</span>
             </div>
           </div>
+        </div>
+
+        <!-- Relevant News -->
+        <div v-if="result.relevant_news?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">📰 相关资讯</h3>
+          <div class="space-y-1.5">
+            <div v-for="n in result.relevant_news" :key="n.title" class="flex items-center gap-2 text-xs p-2 rounded bg-gray-50 dark:bg-gray-800/50">
+              <span class="text-gray-400 w-10 shrink-0">{{ n.date }}</span>
+              <span class="flex-1 text-gray-600 dark:text-gray-400 line-clamp-1">{{ n.title }}</span>
+              <span v-if="n.sentiment==='positive'" class="text-up font-medium shrink-0">利好</span>
+              <span v-else-if="n.sentiment==='negative'" class="text-down font-medium shrink-0">利空</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Market context -->
+        <div v-if="result.market_context" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-2">🌐 当前市场</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{{ result.market_context }}</p>
         </div>
       </div>
     </div>

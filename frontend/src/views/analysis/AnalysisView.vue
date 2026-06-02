@@ -35,8 +35,8 @@ async function refreshAnalyses() {
   } catch(e) {}
 }
 
-onMounted(() => {
-  refreshAnalyses()
+onMounted(async () => {
+  await refreshAnalyses()
   refreshTimer = setInterval(refreshAnalyses, 300000) // every 5 min
 })
 onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })

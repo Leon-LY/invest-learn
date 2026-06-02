@@ -65,28 +65,31 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
         >{{ t.l }}</button>
       </div>
 
-      <!-- TAB 1: Predictions — DeepSeek multi-perspective analysis -->
+      <!-- TAB 1: Predictions — per-expert cards with detail links -->
       <div v-if="activeTab === 'predictions'" class="space-y-3">
         <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-400">🤖 DeepSeek 多视角分析（{{ predictions.length }}个视角）{{ predRefresh ? '· ' + predRefresh : '' }}</span>
+          <span class="text-xs text-gray-400">🤖 6位大佬 × 多角度分析（{{ predictions.length }}位）{{ predRefresh ? '· ' + predRefresh : '' }}</span>
           <button @click="refreshPredictions()" class="text-xs text-primary hover:underline">刷新</button>
         </div>
         <div v-if="!predictions.length" class="card p-6 text-center">
           <div class="text-2xl mb-2">{{ predRefresh ? '📭' : '⏳' }}</div>
-          <p class="text-sm text-gray-500 dark:text-gray-400">{{ predRefresh ? '暂无预测数据' : '正在生成多视角分析...' }}</p>
-          <p class="text-xs text-gray-400 mt-1">DeepSeek 以价值/宏观/成长/量化四种视角分析最新新闻</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ predRefresh ? '暂无数据' : '正在生成大佬分析...' }}</p>
         </div>
         <div v-for="p in predictions" :key="p.id"
+          @click="router.push(`/analysis/expert-prediction/${p.id}`)"
           class="card p-4 cursor-pointer hover:shadow-md">
-          <div class="flex items-center gap-2 mb-2 flex-wrap">
+          <div class="flex items-center gap-2 mb-2">
             <span class="font-semibold text-sm dark:text-white">{{ p.expert }}</span>
-            <span class="text-xs text-gray-400">{{ p.title_role }}</span>
-            <span class="text-xs text-gray-400 ml-auto">信心 {{ p.confidence }}%</span>
+            <span class="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{{ p.prefers }}</span>
+            <span class="text-xs text-gray-400 ml-auto">{{ p.prediction_count }}条分析 · 信心 {{ p.confidence }}%</span>
           </div>
-          <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1.5">{{ p.title }}</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed">{{ p.content }}</p>
-          <div v-if="p.tags?.length" class="flex gap-1.5 mt-2">
-            <span v-for="t in p.tags" :key="t" class="text-xs px-2 py-0.5 bg-primary-light dark:bg-primary/20 text-primary rounded-full">{{ t }}</span>
+          <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">「{{ p.latest_title }}」</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed mb-2">{{ p.latest_content }}</p>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="text-primary">查看全部 {{ p.prediction_count }} 条分析 →</span>
+            <div class="flex gap-1 ml-auto">
+              <span v-for="t in p.tags?.slice(0,2)" :key="t" class="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500">{{ t }}</span>
+            </div>
           </div>
         </div>
       </div>

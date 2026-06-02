@@ -212,62 +212,79 @@ class NewsService:
         }
 
     async def get_expert_predictions(self, limit: int = 6) -> list[dict]:
-        """Generate diverse expert predictions via DeepSeek — each expert sees different news."""
-        import random
+        """Generate per-article expert predictions — each expert analyzes 2-3 news individually."""
+        import random, asyncio as _asyncio
         stmt = select(NewsArticle).order_by(desc(NewsArticle.published_at)).limit(20)
         result = await self.db.execute(stmt)
         all_news = result.scalars().all()
-        if len(all_news) < 10:
+        if len(all_news) < 6:
             return []
 
         experts = [
-            {"id":"zhangkun",   "name":"张坤", "title":"易方达·价值投资", "focus":"你只关注消费、互联网和白酒龙头。寻找有护城河、自由现金流充裕的优质公司。不追热点，不在意短期波动。", "prefers":"消费/互联网/白酒"},
-            {"id":"libei",      "name":"李蓓", "title":"半夏·宏观对冲", "focus":"你从宏观到微观，关注利率、汇率、政策周期和大类资产轮动。善于在全球视角下发现市场定价错误。", "prefers":"债券/黄金/大宗商品"},
-            {"id":"renzeping",  "name":"任泽平", "title":"泽平·政策解读", "focus":"你从政策文件和经济数据中解读市场信号。关注货币宽松、财政刺激和产业政策方向，判断政策对具体行业的影响。", "prefers":"基建/新能源/地产"},
-            {"id":"liugesong",  "name":"刘格菘", "title":"广发·成长赛道", "focus":"你寻找处于景气上升期的行业，关注技术革命和渗透率拐点。你相信在正确的赛道上，估值不是最重要的。", "prefers":"半导体/AI/新能源/光伏"},
-            {"id":"honghao",    "name":"洪灏", "title":"思睿·量化周期", "focus":"你用数据和模型判断市场周期位置。关注估值分位、资金流向、情绪指标。市场极度悲观时你反而乐观。", "prefers":"沪深300/中证500/创业板"},
-            {"id":"linyuan",    "name":"林园", "title":"林园·逆向思维", "focus":"你极度逆向，善于在市场恐慌时发现被忽视的机会。你相信垄断性消费和医药资产能穿越周期，越是别人不敢买的时候你越兴奋。", "prefers":"医药/消费/中药"},
+            {"id":"zhangkun","name":"张坤","title":"易方达·价值投资","focus":"只关注消费、互联网和白酒龙头。寻找有护城河、自由现金流充裕的优质公司。","prefers":"消费/互联网/白酒"},
+            {"id":"libei","name":"李蓓","title":"半夏·宏观对冲","focus":"从宏观到微观，关注利率汇率政策周期。善于发现市场定价错误和资产轮动机会。","prefers":"债券/黄金/大宗商品"},
+            {"id":"renzeping","name":"任泽平","title":"泽平·政策解读","focus":"从政策文件和经济数据中解读市场信号。关注货币宽松、产业政策方向。","prefers":"基建/新能源/地产"},
+            {"id":"liugesong","name":"刘格菘","title":"广发·成长赛道","focus":"寻找景气上升行业，关注技术革命和渗透率拐点。坚信赛道比估值重要。","prefers":"半导体/AI/新能源/光伏"},
+            {"id":"honghao","name":"洪灏","title":"思睿·量化周期","focus":"用数据和模型判断市场周期。关注估值分位、资金流向、情绪指标。","prefers":"沪深300/中证500/创业板"},
+            {"id":"linyuan","name":"林园","title":"林园·逆向思维","focus":"极度逆向，市场恐慌时贪婪。相信垄断性消费和医药能穿越周期。","prefers":"医药/消费/中药"},
         ]
 
-        predictions = []
+        results = []
         random.shuffle(all_news)
         for i, exp in enumerate(experts[:limit]):
-            try:
-                # Each expert sees a different subset of news
-                start = i * 3 % (len(all_news) - 3)
-                my_news = all_news[start:start + 3]
-                titles = "\n".join([f"- {a.title}" for a in my_news])
+            expert_predictions = []
+            my_news = all_news[i*3:i*3+3] if i*3+3 <= len(all_news) else all_news[:3]
 
-                prompt = f"""你是一位资深中国投资专家，你的投资风格如下：
+            for j, news in enumerate(my_news[:2]):
+                try:
+                    prompt = f"""你是投资专家{exp['name']}。风格：{exp['focus']}关注领域：{exp['prefers']}。
 
-{exp['focus']}
+针对这条新闻，从你的专业视角分析：
 
-请从你的专业视角，针对以下新闻中你最关注的1-2条，给出独立判断。
-重要：你必须给出与其他人不同的观点，基于你的特定风格。
+新闻：{news.title[:100]}
+摘要：{news.summary or ''}
 
-新闻：
-{titles}
+返回JSON（15字内标题，80字内分析）：
+{{"title":"你的判断标题","content":"你的分析","tags":["标签"],"relatedFunds":["代码"],"confidence":60-90}}"""
 
-返回JSON：
-{{"title":"15字以内的判断标题（要有你的个人风格）","content":"80-120字分析，基于你的专长领域给出具体判断，不要泛泛而谈","tags":["标签1","标签2"],"relatedFunds":["具体基金代码"],"confidence":60-90}}"""
+                    result = await llm_service.analyze_news(prompt, None, None)
+                    if result:
+                        expert_predictions.append({
+                            "news_title": news.title[:50],
+                            "news_id": news.id,
+                            "title": result.get("title", result.get("key_points",[""])[0] if result.get("key_points") else "分析"),
+                            "content": (result.get("short_term") or result.get("action_advice") or "")[:120],
+                            "tags": (result.get("tags") or result.get("key_points", []))[:2],
+                            "relatedFunds": [f["code"] for f in result.get("affected_funds", [])[:2]] if result.get("affected_funds") else [],
+                            "confidence": abs(result.get("impact_score", 65)),
+                        })
+                except Exception as e:
+                    logger.warning(f"Prediction failed: {exp['name']}: {e}")
+                await _asyncio.sleep(0.3)
 
-                result = await llm_service.analyze_news(prompt, None, None)
-                if result:
-                    predictions.append({
-                        "id": exp["id"],
-                        "expert": exp["name"],
-                        "title_role": exp["title"],
-                        "title": result.get("title", result.get("key_points",[""])[0] if result.get("key_points") else ""),
-                        "content": result.get("short_term", result.get("action_advice", "")),
-                        "tags": result.get("key_points", result.get("tags", []))[:2],
-                        "relatedFunds": [f["code"] for f in result.get("affected_funds", [])[:2]],
-                        "confidence": abs(result.get("impact_score", 65)),
-                    })
-                await asyncio.sleep(0.5)  # Stagger to avoid rate limits
-            except Exception as e:
-                logger.warning(f"Prediction failed for {exp['name']}: {e}")
+            if expert_predictions:
+                avg_conf = sum(p["confidence"] for p in expert_predictions) // max(len(expert_predictions), 1)
+                results.append({
+                    "id": exp["id"],
+                    "expert": exp["name"],
+                    "title_role": exp["title"],
+                    "prefers": exp["prefers"],
+                    "prediction_count": len(expert_predictions),
+                    "latest_title": expert_predictions[0]["title"],
+                    "latest_content": expert_predictions[0]["content"],
+                    "confidence": avg_conf,
+                    "predictions": expert_predictions,
+                    "tags": expert_predictions[0].get("tags", []),
+                })
 
-        return predictions
+        return results
+
+    async def get_expert_prediction_detail(self, expert_id: str) -> dict:
+        all_preds = await self.get_expert_predictions(limit=6)
+        for p in all_preds:
+            if p["id"] == expert_id:
+                return p
+        return {"id": expert_id, "error": "未找到数据"}
 
     async def get_expert_tracker(self) -> list[dict]:
         """Get diverse expert data: fund managers (AKShare) + economists/analysts."""

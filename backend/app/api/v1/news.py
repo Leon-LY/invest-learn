@@ -38,12 +38,18 @@ async def get_ai_analyses(limit: int = 10, service: NewsService = Depends(get_ne
 
 @router.get("/expert-predictions")
 async def get_expert_predictions(limit: int = 6, service: NewsService = Depends(get_news_service)):
-    """Get cached DeepSeek-generated expert predictions (pre-generated every 30min)."""
+    """Get cached DeepSeek expert predictions (pre-generated every 30min)."""
     from app.core.cache import cache_get
     cached = await cache_get("analysis:expert_predictions")
     if cached:
         return cached[:limit]
     return await service.get_expert_predictions(limit)
+
+
+@router.get("/expert-predictions/{expert_id}")
+async def get_expert_prediction_detail(expert_id: str, service: NewsService = Depends(get_news_service)):
+    """Get detailed predictions for one expert across multiple news."""
+    return await service.get_expert_prediction_detail(expert_id)
 
 
 @router.get("/expert-tracker")

@@ -46,11 +46,27 @@ SYSTEM_PROMPT = """你是一位专业的基金投资信息提取助手。用户�
 - 如果是多个图片区域的拼接，逐一分析每个区域"""
 
 
-async def analyze_image(image_data: bytes, content_type: str = "image/png") -> Optional[dict]:
+async def analyze_image(image_data: bytes, content_type: str = "image/jpeg") -> Optional[dict]:
     """Send image to Qwen Vision for investment analysis."""
     if not settings.QWEN_API_KEY:
         logger.warning("Qwen API key not configured")
         return None
+
+    # Compress large images to avoid timeout
+    if len(image_data) > 500_000:  # >500KB
+        try:
+            from PIL import Image
+            import io
+            img = Image.open(io.BytesIO(image_data))
+            if max(img.size) > 1024:
+                img.thumbnail((1024, 1024), Image.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, format='JPEG', quality=70)
+            image_data = buf.getvalue()
+            content_type = "image/jpeg"
+            logger.info(f"Image compressed: {len(image_data)} bytes")
+        except Exception:
+            pass  # Continue with original if PIL not available
 
     image_b64 = base64.b64encode(image_data).decode("utf-8")
     data_url = f"data:{content_type};base64,{image_b64}"

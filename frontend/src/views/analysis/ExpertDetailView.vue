@@ -84,9 +84,41 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Operations timeline -->
+        <!-- Fund operations (real trading data) -->
+        <div v-if="expert.fund_operations?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">📊 基金操盘数据（近60日真实数据）</h3>
+          <div class="space-y-2">
+            <div v-for="(op, i) in expert.fund_operations" :key="'f'+i" class="flex items-start gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-xs">
+              <span class="text-gray-400 w-24 shrink-0">{{ op.date }}</span>
+              <span class="font-medium text-gray-600 dark:text-gray-300 w-20 shrink-0">{{ op.action }}</span>
+              <span class="text-gray-500 dark:text-gray-400">{{ op.detail }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance highlights -->
+        <div v-if="expert.performance_highlights?.latest_nav" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">🏆 业绩亮点</h3>
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <div class="text-xs text-gray-400 mb-1">最新净值</div>
+              <div class="text-lg font-bold dark:text-white tabular-nums">{{ expert.performance_highlights.latest_nav.toFixed(4) }}</div>
+              <div class="text-xs text-gray-400">{{ expert.performance_highlights.nav_date }}</div>
+            </div>
+            <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <div class="text-xs text-gray-400 mb-1">日涨跌</div>
+              <div :class="(expert.performance_highlights.day_change||0)>=0?'text-up':'text-down'" class="text-lg font-bold tabular-nums">{{ (expert.performance_highlights.day_change||0)>=0?'+':'' }}{{ expert.performance_highlights.day_change?.toFixed(2) }}%</div>
+            </div>
+            <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <div class="text-xs text-gray-400 mb-1">基金代码</div>
+              <div class="text-lg font-bold dark:text-white">{{ expert.fund_code }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- News & Analysis timeline -->
         <div v-if="expert.operations?.length" class="card p-4">
-          <h3 class="text-sm font-semibold dark:text-white mb-3">📋 近期动态 & 分析</h3>
+          <h3 class="text-sm font-semibold dark:text-white mb-3">📋 近期动态 & 观点</h3>
           <div class="space-y-2">
             <div v-for="(op, i) in expert.operations" :key="i" class="flex items-start gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-xs">
               <span class="text-gray-400 w-20 shrink-0">{{ op.date }}</span>

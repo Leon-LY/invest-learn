@@ -400,22 +400,6 @@ class NewsService:
                     "generated_by": a.generated_by,
                 })
 
-        # Generate rich operations from the found data
-        operations = []
-        # From AI analyses
-        for a in related_analyses[:4]:
-            operations.append({
-                "date": "", "action": f"AI分析·{a['impact_level']}",
-                "detail": a["short_term"][:120],
-            })
-        # From related news
-        for n in related_news[:4]:
-            operations.append({
-                "date": (n.get("published_at") or "")[:10],
-                "action": "相关动态",
-                "detail": n.get("title", "")[:120],
-            })
-
         # Build profile
         profile = {}
         if expert_id in manager_map:
@@ -440,13 +424,15 @@ class NewsService:
             **profile,
             "related_news": related_news[:10],
             "related_analyses": related_analyses[:8],
-            "operations": operations[:12],
+            "operations": [],
+            "fund_operations": [],
             "predictive_view": pred_view,
             "nav_history": [],
             "size_history": [],
+            "performance_highlights": {},
         }
 
-        # Try to add fund performance data
+        # Try to add fund performance data + real operations
         if expert_id in manager_map:
             code = manager_map[expert_id][0]
             try:
@@ -461,6 +447,38 @@ class NewsService:
                             "daily_return": float(row.get("日增长率", 0)) if row.get("日增长率") else None,
                         })
 
+                    # Generate fund operations from real NAV data
+                    ops = []
+                    tail = nav_df.tail(60)
+                    rets = tail["日增长率"].dropna()
+                    if len(rets) > 10:
+                        vals = rets.values
+                        best_i = vals.argmax(); worst_i = vals.argmin()
+                        ops.append({"date": str(tail.iloc[best_i].get("净值日期",""))[:10], "action":"📈 单日最佳","detail":f"日涨幅 +{float(vals[best_i]):.2f}%，近60日最佳表现"})
+                        ops.append({"date": str(tail.iloc[worst_i].get("净值日期",""))[:10], "action":"📉 单日回撤","detail":f"日跌幅 {float(vals[worst_i]):.2f}%，近60日最大回撤"})
+
+                        # Find streaks
+                        streak_up = streak_down = 0
+                        max_up = max_down = 0
+                        for v in vals:
+                            if v > 0: streak_up += 1; streak_down = 0
+                            elif v < 0: streak_down += 1; streak_up = 0
+                            else: streak_up = streak_down = 0
+                            max_up = max(max_up, streak_up); max_down = max(max_down, streak_down)
+                        if max_up >= 3:
+                            ops.append({"date": "近60日", "action":"🔥 连涨纪录", "detail":f"最高连续 {max_up} 个交易日上涨"})
+                        if max_down >= 3:
+                            ops.append({"date": "近60日", "action":"❄️ 连跌纪录", "detail":f"最高连续 {max_down} 个交易日下跌"})
+
+                        # NAV milestones
+                        first_nav = float(tail.iloc[0].get("单位净值",0))
+                        last_nav = float(tail.iloc[-1].get("单位净值",0))
+                        if first_nav > 0:
+                            chg = round((last_nav/first_nav-1)*100, 2)
+                            ops.append({"date": "近60日", "action":"📊 期净值变化", "detail":f"净值从 {first_nav:.4f} → {last_nav:.4f}，变动 {chg:+.2f}%"})
+
+                    result["fund_operations"] = ops
+
                 size_df = await asyncio.to_thread(ak.fund_open_fund_info_em, symbol=code, indicator="季度规模变动")
                 if size_df is not None and not size_df.empty:
                     for _, row in size_df.tail(6).iterrows():
@@ -468,8 +486,25 @@ class NewsService:
                             "date": str(row.get("报告期", ""))[:10],
                             "size": float(row.get("资产规模", row.get("期末总份额", 0)) or 0),
                         })
+
+                # Performance highlights
+                if result["nav_history"]:
+                    navs = result["nav_history"]
+                    result["performance_highlights"] = {
+                        "latest_nav": navs[-1]["nav"],
+                        "nav_date": navs[-1]["date"],
+                        "day_change": navs[-1]["daily_return"],
+                    }
             except Exception as e:
                 logger.warning(f"Fund data failed for {expert_id}: {e}")
+
+        # Generate operations from news + analyses (distinct from fund_operations)
+        ops = []
+        for n in related_news[:5]:
+            ops.append({"date": (n.get("published_at") or "")[:10], "action":"📰 相关新闻", "detail": n.get("title","")[:120]})
+        for a in related_analyses[:3]:
+            ops.append({"date": "", "action":f"🤖 {a['impact_level']}", "detail": a["short_term"][:120]})
+        result["operations"] = ops[:10]
 
         return result
 

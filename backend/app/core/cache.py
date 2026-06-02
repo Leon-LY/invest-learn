@@ -30,7 +30,7 @@ async def cache_get(key: str) -> Optional[Any]:
 async def cache_set(key: str, value: Any, ttl: int = 60) -> None:
     """Set a cache value with TTL in seconds, serializing to JSON."""
     r = await get_redis()
-    await r.setex(key, ttl, json.dumps(value, ensure_ascii=False, default=str))
+    await r.setex(key, ttl, json.dumps(value, ensure_ascii=False, default=float))
 
 
 async def cache_delete(key: str) -> None:

@@ -75,10 +75,10 @@ onMounted(() => {
   restoreScroll()
 })
 
-// Auto-refresh when navigating back to news list from detail page
+// Restore scroll position + refresh when returning from detail
 watch(() => route.path, (to, from) => {
   if (to === '/news' && from?.startsWith('/news/')) {
-    doRefresh()
+    restoreScroll()
   }
 })
 
@@ -96,11 +96,12 @@ async function fetchNews() {
 async function loadMore() {
   if (loadingMore.value || !hasMore.value) return
   loadingMore.value = true
-  page.value++
+  const nextPage = page.value + 1
   try {
-    const res = (await newsApi.getList({ category: category.value || undefined, page: page.value, size: 20 })) as any
+    const res = (await newsApi.getList({ category: category.value || undefined, page: nextPage, size: 20 })) as any
     const items = res.items || []
     articles.value.push(...items)
+    page.value = nextPage
     hasMore.value = articles.value.length < (res.total || 0)
   } catch (e) { console.error(e) }
   finally { loadingMore.value = false }

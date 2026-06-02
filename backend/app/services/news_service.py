@@ -350,7 +350,7 @@ class NewsService:
         }
 
         if expert_id in manager_map:
-            code, name, fname = manager_map[expert_id]
+            code, eid, name, fname = manager_map[expert_id]
             ops = []
             try:
                 import akshare as ak

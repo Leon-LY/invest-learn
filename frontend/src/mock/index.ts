@@ -18,7 +18,7 @@ function isMockEnabled(): boolean {
     const host = window.location.hostname
     const isLocal = host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.')
     if (!isLocal) return false
-    return false  // safe default: real data only
+    return true   // auto mock on localhost for dev
   }
   return val === 'true'
 }

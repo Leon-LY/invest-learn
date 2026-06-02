@@ -520,16 +520,17 @@ class NewsService:
 
                 # Get top holdings from latest quarterly report
                 try:
-                    holdings_df = await asyncio.to_thread(ak.fund_portfolio_hold_detail_em, symbol=code, date="2025")
+                    holdings_df = await asyncio.to_thread(ak.fund_portfolio_hold_em, symbol=code, date="2025")
                     if holdings_df is not None and not holdings_df.empty:
                         holdings = []
                         for _, row in holdings_df.head(10).iterrows():
                             holdings.append({
                                 "stock": str(row.get("股票名称", "")),
                                 "code": str(row.get("股票代码", "")),
-                                "ratio": float(row.get("占净值比例", row.get("持仓占比", 0)) or 0),
+                                "ratio": float(row.get("占净值比例", 0) or 0),
                                 "shares": str(row.get("持股数", "")),
                                 "market_value": str(row.get("持仓市值", "")),
+                                "quarter": str(row.get("季度", "")),
                             })
                         result["holdings"] = holdings
                 except Exception:

@@ -96,7 +96,7 @@ onMounted(async () => {
         <!-- ===== 3.5 HOLDINGS ===== -->
         <div v-if="expert.holdings?.length" class="card p-4">
           <h3 class="text-sm font-semibold dark:text-white mb-3">📋 {{ expert.fund_name || '基金' }} 前十大重仓股</h3>
-          <p class="text-xs text-gray-400 mb-2">这是该基金经理实际买入的股票，来自基金最新季报披露</p>
+          <p class="text-xs text-gray-400 mb-2">基金经理实际持仓 · {{ expert.holdings?.[0]?.quarter || '最新季报' }}</p>
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
               <thead>

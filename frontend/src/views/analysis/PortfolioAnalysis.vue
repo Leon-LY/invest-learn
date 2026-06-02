@@ -9,7 +9,7 @@ const loading = ref(false)
 const error = ref('')
 
 function addRow() { funds.value.push({ code: '', amount: '' }) }
-function removeRow(i: number) { if (funds.value.length > 1) funds.value.splice(i, 1) }
+function removeRow(i: number) { funds.value.splice(i, 1) }
 
 async function analyze() {
   loading.value = true; error.value = ''; result.value = null
@@ -45,12 +45,12 @@ const presetFunds = [
       <div class="card p-4">
         <h3 class="text-sm font-semibold dark:text-white mb-3">我的持仓</h3>
         <div class="space-y-2">
-          <div v-for="(f, i) in funds" :key="i" class="flex gap-2">
-            <input v-model="f.code" placeholder="基金代码" maxlength="6"
-              class="w-28 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:text-white" />
-            <input v-model="f.amount" placeholder="金额(元)" type="number"
-              class="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:text-white" />
-            <button @click="removeRow(i)" class="px-2 text-gray-400 hover:text-red-500">✕</button>
+          <div v-for="(f, i) in funds" :key="i" class="flex gap-2 items-center">
+            <input v-model="f.code" placeholder="代码" maxlength="6"
+              class="w-20 px-2.5 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:text-white" />
+            <input v-model="f.amount" placeholder="持有金额(元)" type="number"
+              class="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:text-white min-w-0" />
+            <button @click="removeRow(i)" class="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors text-lg leading-none">−</button>
           </div>
           <button @click="addRow" class="text-xs text-primary hover:underline">+ 添加基金</button>
         </div>
@@ -59,9 +59,9 @@ const presetFunds = [
         <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
           <p class="text-xs text-gray-400 mb-2">快速填入：</p>
           <div class="flex flex-wrap gap-1.5">
-            <button v-for="p in presetFunds" :key="p.code" @click="funds=[{code:p.code,amount:''}];analyze()"
+            <button v-for="p in presetFunds" :key="p.code" @click="funds.push({code:p.code,amount:''})"
               class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-primary/10 hover:text-primary transition-colors">
-              {{ p.name }} ({{ p.code }})
+              + {{ p.name }}
             </button>
           </div>
         </div>

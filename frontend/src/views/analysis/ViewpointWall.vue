@@ -8,8 +8,8 @@ const author = ref('')
 const source = ref('抖音')
 const link = ref('')
 const content = ref('')
-const imageFile = ref<File | null>(null)
-const imagePreview = ref('')
+const imageFiles = ref<File[]>([])
+const imagePreviews = ref<string[]>([])
 const submitting = ref(false)
 const loading = ref(true)
 
@@ -19,27 +19,33 @@ onMounted(async () => {
 })
 
 function onFileChange(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  imageFile.value = file
-  const reader = new FileReader()
-  reader.onload = () => { imagePreview.value = reader.result as string }
-  reader.readAsDataURL(file)
+  const files = (e.target as HTMLInputElement).files
+  if (!files || !files.length) return
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    imageFiles.value.push(file)
+    const reader = new FileReader()
+    const idx = imageFiles.value.length - 1
+    reader.onload = () => { imagePreviews.value[idx] = reader.result as string }
+    reader.readAsDataURL(file)
+  }
+}
+function removeImage(idx: number) {
+  imageFiles.value.splice(idx, 1)
+  imagePreviews.value.splice(idx, 1)
 }
 
 async function submit() {
-  if (!content.value.trim() && !imageFile.value) return
+  if (!content.value.trim() && !imageFiles.value.length) return
   submitting.value = true
   try {
     const payload: Record<string, any> = { source: source.value, author: author.value, link: link.value, content: content.value }
-    if (imageFile.value) {
-      const b64 = imagePreview.value.split(',')[1]
-      payload.image = b64
-      payload.image_analysis = true
+    if (imageFiles.value.length) {
+      payload.image = imagePreviews.value.map(p => p.split(',')[1]).join('||')
     }
     await newsApi.submitViewpoint(payload)
     content.value = ''; author.value = ''; link.value = ''
-    imageFile.value = null; imagePreview.value = ''
+    imageFiles.value = []; imagePreviews.value = []
     viewpoints.value = (await newsApi.getViewpoints(20)) as unknown as any[]
   } catch(e: any) { alert('提交失败: ' + (e?.response?.data?.error || e?.message || '未知错误')) }
   finally { submitting.value = false }
@@ -53,10 +59,7 @@ const filteredViewpoints = computed(() => {
   if (!filterAuthor.value) return viewpoints.value
   return viewpoints.value.filter((v: any) => v.author === filterAuthor.value)
 })
-const uniqueAuthors = computed(() => {
-  const names = new Set(viewpoints.value.map((v: any) => v.author).filter(Boolean))
-  return [...names]
-})
+const uniqueAuthors = computed(() => [...new Set(viewpoints.value.map((v: any) => v.author).filter(Boolean))])
 </script>
 
 <template>
@@ -64,63 +67,46 @@ const uniqueAuthors = computed(() => {
     <div class="max-w-3xl mx-auto px-4 py-5 space-y-4">
       <div>
         <h1 class="text-xl font-bold dark:text-white">💬 市场声音</h1>
-        <p class="text-sm text-gray-400 mt-1">刷到有价值的观点或截图？贴进来，AI 帮你分析</p>
+        <p class="text-sm text-gray-400 mt-1">刷到观点或截图？贴进来，AI 帮你分析</p>
       </div>
 
       <!-- Input card -->
       <div class="card p-5 space-y-4">
-        <!-- Row 1: Platform + Author + Link -->
         <div class="grid grid-cols-2 gap-3">
           <select v-model="source" class="px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white">
             <option v-for="p in platforms" :key="p" :value="p">{{ p }}</option>
           </select>
-          <input v-model="author" placeholder="UP主名称（选填）" class="px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white" />
+          <input v-model="author" placeholder="大神名称（统一用同一个名）" class="px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white" />
         </div>
-
-        <!-- Row 2: Link -->
-        <input v-model="link" placeholder="视频 / 文章链接（选填）" class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white" />
-
-        <!-- Row 3: Quick action buttons -->
-        <div class="flex gap-2 text-xs">
+        <input v-model="link" placeholder="链接（选填）" class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white" />
+        <div class="flex gap-2 text-xs flex-wrap">
           <button @click="content='买入 '" class="px-2 py-1 rounded bg-up-bg text-up">买入</button>
           <button @click="content='卖出 '" class="px-2 py-1 rounded bg-down-bg text-down">卖出</button>
           <button @click="content='调仓 '" class="px-2 py-1 rounded bg-blue-50 text-blue-600">调仓</button>
           <button @click="content='加仓 '" class="px-2 py-1 rounded bg-orange-50 text-orange-600">加仓</button>
-          <span class="text-gray-400 self-center">快捷录入：先点操作，再填代码+金额</span>
         </div>
-        <!-- Row 4: Content textarea -->
-        <textarea v-model="content" placeholder="粘贴观点或快速记录...&#10;&#10;快捷格式：「买入 005827 50000」「加仓 161725 20000」" rows="4"
+        <textarea v-model="content" placeholder="如：买入 005827 50000 看到1116今天建仓了张坤" rows="4"
           class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white resize-none" />
-
-        <!-- Row 4: Image upload -->
         <div class="flex items-center gap-3">
           <label class="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-primary transition-colors text-sm text-gray-500">
             <span>📷</span>
-            <span>{{ imageFile ? imageFile.name.slice(0,20) : '上传截图（选填）' }}</span>
-            <input type="file" accept="image/*" @change="onFileChange" class="hidden" />
+            <span>{{ imageFiles.length ? imageFiles.length + '张' : '上传截图（可多选）' }}</span>
+            <input type="file" accept="image/*" @change="onFileChange" multiple class="hidden" />
           </label>
-          <button v-if="imagePreview" @click="imageFile=null;imagePreview=''" class="text-xs text-red-400 hover:text-red-500">清除</button>
         </div>
-        <!-- Preview -->
-        <div v-if="imagePreview" class="relative">
-          <img :src="imagePreview" class="max-h-48 rounded-lg border border-gray-200 dark:border-gray-700" />
+        <div v-if="imagePreviews.length" class="flex gap-2 overflow-x-auto pb-1">
+          <div v-for="(p, i) in imagePreviews" :key="i" class="relative shrink-0">
+            <img :src="p" class="h-32 rounded-lg border border-gray-200 dark:border-gray-700" />
+            <button @click="removeImage(i)" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs">x</button>
+          </div>
         </div>
-
-        <!-- Submit -->
         <div class="flex items-center gap-3 pt-2">
-          <span class="text-xs text-gray-400 truncate">🤖 AI 自动分析 {{ imageFile ? '· 截图视觉识别' : '' }}</span>
-          <button @click="submit" :disabled="submitting || (!content.trim() && !imageFile)"
-            class="shrink-0 px-6 py-2.5 bg-primary text-white text-sm font-medium rounded-xl disabled:opacity-50 transition-opacity">
+          <span class="text-xs text-gray-400 truncate">🤖 AI 自动分析 {{ imageFiles.length ? '· ' + imageFiles.length + '张截图' : '' }}</span>
+          <button @click="submit" :disabled="submitting || (!content.trim() && !imageFiles.length)"
+            class="shrink-0 px-6 py-2.5 bg-primary text-white text-sm font-medium rounded-xl disabled:opacity-50">
             {{ submitting ? '分析中...' : '提交分析' }}
           </button>
         </div>
-      </div>
-
-      <!-- Quick presets -->
-      <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-        <span class="text-xs text-gray-400 self-center shrink-0">常见基金：</span>
-        <button v-for="c in presetFunds" :key="c" @click="content=content+' '+c"
-          class="shrink-0 text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-primary/10 hover:text-primary transition-colors">{{ c }}</button>
       </div>
 
       <!-- Author filter -->
@@ -131,8 +117,6 @@ const uniqueAuthors = computed(() => {
           class="shrink-0 text-xs px-3 py-1 rounded-full transition-all"
           :class="filterAuthor===a?'bg-primary text-white':'bg-gray-100 dark:bg-gray-800 text-gray-500'">{{ a }}</button>
       </div>
-
-      <!-- Stats -->
       <div v-if="filterAuthor" class="text-xs text-gray-400">
         追踪 <span class="font-medium text-primary">{{ filterAuthor }}</span> · {{ filteredViewpoints.length }} 条记录
       </div>
@@ -144,7 +128,6 @@ const uniqueAuthors = computed(() => {
       <div v-else-if="!filteredViewpoints.length" class="card p-10 text-center text-sm text-gray-400">
         <div class="text-4xl mb-3">💬</div>
         <p>还没有观点，快去录入第一个吧</p>
-        <p class="text-xs mt-1">抖音/小红书/B站刷到的都行，截图也能分析</p>
       </div>
       <div v-else class="space-y-3">
         <div v-for="v in filteredViewpoints" :key="v.id" class="card p-4">
@@ -154,7 +137,7 @@ const uniqueAuthors = computed(() => {
             <span v-if="v.direction" class="text-xs px-2 py-0.5 rounded-full font-medium ml-auto"
               :class="v.direction==='看多'?'bg-up-bg text-up':v.direction==='看空'?'bg-down-bg text-down':'bg-gray-100 text-gray-500'">{{ v.direction }}</span>
             <span v-if="v.confidence" class="text-xs text-gray-400">🤖 {{ v.confidence }}%</span>
-            <span v-if="v.created_at" class="text-xs text-gray-400 ml-auto">{{ v.created_at?.slice(0,16)?.replace('T',' ') }}</span>
+            <span v-if="v.created_at" class="text-xs text-gray-400">{{ v.created_at?.slice(0,16)?.replace('T',' ') }}</span>
           </div>
           <h3 class="font-medium text-sm dark:text-white mb-1.5">{{ v.ai_title || '观点分析' }}</h3>
           <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-2 leading-relaxed">{{ v.ai_summary || v.content.slice(0,150) }}</p>
@@ -165,27 +148,18 @@ const uniqueAuthors = computed(() => {
           <details class="mt-1">
             <summary class="text-xs text-primary cursor-pointer hover:underline">查看完整分析</summary>
             <div class="mt-3 space-y-3">
-              <!-- AI Analysis -->
               <div v-if="v.ai_summary" class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
                 <div class="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">🤖 AI 分析</div>
                 <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ v.ai_summary }}</p>
               </div>
-              <!-- Affected funds -->
               <div v-if="v.related_funds?.length" class="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
-                <div class="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">📊 相关影响</div>
-                <div class="space-y-1.5">
-                  <div v-for="f in v.related_funds" :key="typeof f==='string'?f:f.code" class="text-sm">
-                    <span class="font-mono font-medium text-gray-800 dark:text-gray-200">{{ typeof f==='string'?f:f.code }}</span>
-                    <span v-if="typeof f!=='string' && f.name" class="text-gray-500 ml-1">- {{ f.name }}</span>
-                    <span v-if="typeof f!=='string' && f.impact" class="text-xs text-gray-400 block mt-0.5">{{ f.impact }}</span>
-                  </div>
+                <div class="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">📊 相关基金</div>
+                <div v-for="f in v.related_funds" :key="typeof f==='string'?f:f.code" class="text-sm">
+                  <span class="font-mono font-medium text-gray-800 dark:text-gray-200">{{ typeof f==='string'?f:f.code }}</span>
+                  <span v-if="typeof f!=='string' && f.name" class="text-gray-500 ml-1">- {{ f.name }}</span>
+                  <span v-if="typeof f!=='string' && f.impact" class="text-xs text-gray-400 block mt-0.5">{{ f.impact }}</span>
                 </div>
               </div>
-              <!-- Tags -->
-              <div v-if="v.tags?.length" class="flex flex-wrap gap-1.5">
-                <span v-for="t in v.tags" :key="t" class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">{{ t }}</span>
-              </div>
-              <!-- Original submission -->
               <div v-if="v.original_content || v.image_base64" class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                 <div class="text-xs font-medium text-gray-400 mb-2">📝 原始提交</div>
                 <p v-if="v.original_content" class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">{{ v.original_content }}</p>

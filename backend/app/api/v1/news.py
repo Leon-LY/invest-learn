@@ -91,22 +91,31 @@ async def create_viewpoint(request: Request, service: NewsService = Depends(get_
     if image_data:
         try:
             from app.services.vision_service import analyze_image
-            img_bytes = base64.b64decode(image_data)
-            log.info(f"Analyzing image: {len(img_bytes)} bytes")
-            vr = await analyze_image(img_bytes)
-            if vr:
-                parts = [str(vr.get("content", ""))]
-                kp = vr.get("key_points")
-                if kp and isinstance(kp, list):
-                    parts.append("要点: " + "; ".join(str(x) for x in kp))
-                ne = vr.get("numbers_extracted")
-                if ne:
-                    parts.append("数据: " + str(ne))
-                vt = "\n".join(p for p in parts if p.strip())
+            # Handle multiple images separated by ||
+            images = image_data.split("||") if "||" in image_data else [image_data]
+            all_results = []
+            for idx, img_b64 in enumerate(images):
+                try:
+                    img_bytes = base64.b64decode(img_b64)
+                    log.info(f"Analyzing image {idx+1}/{len(images)}: {len(img_bytes)} bytes")
+                    vr = await analyze_image(img_bytes)
+                    if vr:
+                        parts = [str(vr.get("content", ""))]
+                        kp = vr.get("key_points")
+                        if kp and isinstance(kp, list):
+                            parts.append("要点: " + "; ".join(str(x) for x in kp))
+                        ne = vr.get("numbers_extracted")
+                        if ne:
+                            parts.append("数据: " + str(ne))
+                        all_results.append("\n".join(p for p in parts if p.strip()))
+                except Exception:
+                    continue
+            if all_results:
+                vt = "\n---\n".join(all_results)
                 content = (content.strip() + "\n[截图]: " + vt) if content.strip() else vt
-                log.info(f"Vision OK: {vr.get('title','')}")
+                log.info(f"Vision OK: {len(all_results)}/{len(images)} images")
             else:
-                log.warning("Vision returned None - check Qwen API")
+                log.warning("Vision returned no results")
         except Exception as e:
             log.error(f"Vision failed: {e}", exc_info=True)
     if not content.strip(): return {"error": "请提供文本或上传图片"}

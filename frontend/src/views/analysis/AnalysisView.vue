@@ -7,8 +7,15 @@ import { newsApi } from '@/api/news'
 const router = useRouter()
 const activeTab = ref<'predictions' | 'ai' | 'experts'>('ai')
 const realAnalyses = ref<any[]>([])
+const predictions = ref<any[]>([])
 const lastRefresh = ref('')
+const predRefresh = ref('')
 let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+const directionColor: Record<string, string> = {
+  '看多': 'text-up bg-up-bg', '看空': 'text-down bg-down-bg',
+  '震荡': 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30',
+}
 
 const impactColors: Record<string, string> = {
   '重大利好': 'bg-up text-white', '利好': 'bg-up-bg text-up',
@@ -23,9 +30,16 @@ async function refreshAnalyses() {
   } catch(e) {}
 }
 
+async function refreshPredictions() {
+  try {
+    predictions.value = (await newsApi.getExpertPredictions(6)) as unknown as any[]
+    predRefresh.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  } catch(e) {}
+}
+
 onMounted(async () => {
-  await refreshAnalyses()
-  refreshTimer = setInterval(refreshAnalyses, 300000)
+  await Promise.all([refreshAnalyses(), refreshPredictions()])
+  refreshTimer = setInterval(() => { refreshAnalyses(); refreshPredictions() }, 300000)
 })
 onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
 </script>
@@ -47,11 +61,30 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
         >{{ t.l }}</button>
       </div>
 
-      <!-- TAB 1: Predictions — real data pending -->
-      <div v-if="activeTab === 'predictions'" class="card p-8 text-center">
-        <div class="text-3xl mb-3">🔮</div>
-        <p class="text-sm text-gray-500 dark:text-gray-400">大佬预测数据暂未接入实时源</p>
-        <p class="text-xs text-gray-400 mt-1">我们正在接入专业财经数据源，届时将提供大咖观点追踪</p>
+      <!-- TAB 1: Predictions — DeepSeek multi-perspective analysis -->
+      <div v-if="activeTab === 'predictions'" class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-400">🤖 DeepSeek 多视角分析（{{ predictions.length }}个视角）{{ predRefresh ? '· ' + predRefresh : '' }}</span>
+          <button @click="refreshPredictions()" class="text-xs text-primary hover:underline">刷新</button>
+        </div>
+        <div v-if="!predictions.length" class="card p-6 text-center">
+          <div class="text-2xl mb-2">{{ predRefresh ? '📭' : '⏳' }}</div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ predRefresh ? '暂无预测数据' : '正在生成多视角分析...' }}</p>
+          <p class="text-xs text-gray-400 mt-1">DeepSeek 以价值/宏观/成长/量化四种视角分析最新新闻</p>
+        </div>
+        <div v-for="p in predictions" :key="p.id"
+          class="card p-4 cursor-pointer hover:shadow-md">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="px-2 py-0.5 text-xs font-medium rounded-full" :class="directionColor[p.direction] || directionColor['震荡']">{{ p.direction }}</span>
+            <span class="text-xs text-gray-400">{{ p.expert }}</span>
+            <span class="text-xs text-gray-400 ml-auto">信心 {{ p.confidence }}%</span>
+          </div>
+          <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1.5">{{ p.title }}</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed">{{ p.content }}</p>
+          <div v-if="p.tags?.length" class="flex gap-1.5 mt-2">
+            <span v-for="t in p.tags" :key="t" class="text-xs px-2 py-0.5 bg-primary-light dark:bg-primary/20 text-primary rounded-full">{{ t }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- TAB 2: AI Analysis — real DeepSeek data -->

@@ -208,6 +208,54 @@ class NewsService:
             "generated_by": a.generated_by or "template",
         }
 
+    async def get_expert_predictions(self, limit: int = 6) -> list[dict]:
+        """Generate expert-style predictions via DeepSeek on recent news."""
+        # Get latest news for context
+        stmt = select(NewsArticle).order_by(desc(NewsArticle.published_at)).limit(5)
+        result = await self.db.execute(stmt)
+        recent = result.scalars().all()
+        if not recent:
+            return []
+
+        titles = "\n".join([f"- {a.title}" for a in recent])
+
+        experts = [
+            {"id": "value", "name": "价值投资视角", "style": "像张坤一样思考：关注企业护城河、自由现金流、长期竞争优势。偏爱消费和互联网龙头。"},
+            {"id": "macro", "name": "宏观对冲视角", "style": "像李蓓一样思考：从宏观到微观，关注利率、汇率、政策周期和大类资产轮动。"},
+            {"id": "growth", "name": "成长赛道视角", "style": "像刘格菘一样思考：关注产业景气度、技术革命和渗透率拐点。偏爱新能源、半导体、AI等成长行业。"},
+            {"id": "quant", "name": "量化数据视角", "style": "用数据和概率思考：关注估值分位、资金流向、动量因子和市场情绪指标。"},
+        ]
+
+        predictions = []
+        for exp in experts[:limit]:
+            try:
+                prompt = f"""你是一位资深中国投资专家。请以以下风格分析近期市场动态：
+
+风格定位：{exp['style']}
+
+近期重要新闻：
+{titles}
+
+请给出你的判断（JSON格式）：
+{{"direction": "看多/看空/震荡", "title": "10字以内的观点标题", "content": "80-150字的分析，包含具体判断和逻辑", "tags": ["标签1", "标签2"], "relatedFunds": ["基金代码"], "confidence": 60-90的整数}}"""
+
+                result = await llm_service.analyze_news(prompt, None, None)
+                if result:
+                    predictions.append({
+                        "id": exp["id"],
+                        "expert": exp["name"],
+                        "direction": result.get("impact_level", "中性").replace("利好", "看多").replace("利空", "看空"),
+                        "title": result.get("key_points", [""])[0] if result.get("key_points") else "最新市场分析",
+                        "content": result.get("short_term", ""),
+                        "tags": result.get("key_points", [])[:2],
+                        "relatedFunds": [f["code"] for f in result.get("affected_funds", [])[:2]],
+                        "confidence": abs(result.get("impact_score", 60)),
+                    })
+            except Exception as e:
+                logger.warning(f"Expert prediction failed for {exp['name']}: {e}")
+
+        return predictions
+
     async def get_recent_analyses(self, limit: int = 10) -> list[dict]:
         """Get recent AI analyses with article info."""
         stmt = (

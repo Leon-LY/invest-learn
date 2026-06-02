@@ -281,8 +281,11 @@ class NewsService:
         return results
 
     async def get_expert_prediction_detail(self, expert_id: str) -> dict:
-        all_preds = await self.get_expert_predictions(limit=6)
-        for p in all_preds:
+        # Read from cache first — don't regenerate
+        from app.core.cache import cache_get
+        cached = await cache_get("analysis:expert_predictions")
+        all_preds = cached if cached else await self.get_expert_predictions(limit=6)
+        for p in (all_preds or []):
             if p["id"] == expert_id:
                 return p
         return {"id": expert_id, "error": "未找到数据"}

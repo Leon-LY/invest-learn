@@ -67,8 +67,15 @@ async def get_expert_tracker(service: NewsService = Depends(get_news_service)):
 
 @router.get("/expert-tracker/{expert_id}")
 async def get_expert_detail(expert_id: str, service: NewsService = Depends(get_news_service)):
-    """Get detailed expert data including operations."""
-    return await service.get_expert_detail(expert_id)
+    """Get detailed expert data (from cache or freshly scraped)."""
+    from app.core.cache import cache_get, cache_set
+    cached = await cache_get(f"analysis:expert_detail:{expert_id}")
+    if cached:
+        return cached
+    data = await service.get_expert_detail(expert_id)
+    if data and not data.get("error"):
+        await cache_set(f"analysis:expert_detail:{expert_id}", data, ttl=3600)
+    return data
 
 
 @router.get("/sources/list")

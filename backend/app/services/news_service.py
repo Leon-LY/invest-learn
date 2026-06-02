@@ -339,6 +339,9 @@ class NewsService:
         for m in [
             {'name':'林园','id':'linyuan', 'title':'民间投资传奇', 'bio':'从8000元到百亿身家，极度看好消费和医药，嘴巴经济理论提出者', 'type':'民间投资家'},
             {'name':'但斌','id':'danbin', 'title':'东方港湾董事长', 'bio':'中国价值投资旗帜人物，时间的玫瑰理念提出者，穿越牛熊坚持理念', 'type':'价值投资家'},
+            {'name':'邱国鹭','id':'qiuguolu', 'title':'高毅资产董事长', 'bio':'前南方基金投资总监，著有《投资中最简单的事》。坚持逆向投资，管理规模超千亿', 'type':'私募大佬'},
+            {'name':'李大霄','id':'lidaxiao', 'title':'英大证券首席经济学家', 'bio':'A股最具争议的分析师，以婴儿底钻石底等底部判断闻名，极度悲观时的逆向提醒有价值', 'type':'证券分析师'},
+            {'name':'赵丹阳','id':'zhaodanyang', 'title':'赤子之心创始人', 'bio':'中国私募基金行业开创者之一，以价值投资和全球视野著称，曾与巴菲特共进午餐', 'type':'私募教父'},
         ]:
             experts.append({**m, 'performance': {'year1': None, 'year3': None}, 'source': '公开资料'})
 

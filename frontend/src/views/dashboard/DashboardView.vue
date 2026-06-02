@@ -84,16 +84,23 @@ const indexNames: Record<string,string> = {
             >{{ s.name }} {{ (s.change_pct||0)>=0?'+':'' }}{{ s.change_pct?.toFixed(1) }}%</span>
           </div>
         </div>
-        <!-- AI-powered analysis -->
-        <div class="mt-3 pt-3 border-t border-primary/10 space-y-2">
-          <div class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-            🤖 <span class="font-medium">AI 综合分析</span>：当前市场{{ summary.direction }}。{{ summary.indices?.filter((i:any)=>(i.change_pct||0)>0).length || 0 }}个指数上涨。
-            {{ (summary.sentiment?.positive||0) > (summary.sentiment?.negative||0) ? '近期利好新闻占优，市场情绪偏积极。' : '近期利空新闻较多，需关注风险。' }}
-            {{ summary.sectors?.filter((s:any)=>(s.change_pct||0)>0).slice(0,2).map((s:any)=>s.name).join('、') || '' }}等板块表现活跃。
+        <!-- Beginner-friendly market analysis -->
+        <div class="mt-3 pt-3 border-t border-primary/10 space-y-2 text-xs">
+          <div class="flex items-start gap-2">
+            <span class="shrink-0 mt-0.5">🤖</span>
+            <div class="text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">AI 市场解读</p>
+              <p>今天市场整体<span class="font-medium" :class="summary.direction==='强势'||summary.direction==='偏强'?'text-up':'text-down'">{{ summary.direction }}</span>，{{ summary.indices?.filter((i:any)=>(i.change_pct||0)>0).length || 0 }}个主要指数上涨。{{ (summary.sentiment?.positive||0) > (summary.sentiment?.negative||0) ? '最近财经新闻中好消息更多，市场情绪比较积极。' : '近期市场消息偏负面，投资需更加谨慎。' }}</p>
+              <p class="mt-1">{{ summary.sectors?.filter((s:any)=>(s.change_pct||0)>0).slice(0,3).map((s:any)=>s.name).join('、') || '各大板块' }}{{ (summary.sectors?.filter((s:any)=>(s.change_pct||0)>0).length||0) > 0 ? ' 今天表现较好，资金在向这些方向集中。' : ' 今天整体平淡，没有明显的热点方向。' }}<span class="text-gray-400 ml-1">（注：板块轮动是正常现象，不要追涨杀跌）</span></p>
+            </div>
           </div>
-          <div class="flex items-start gap-2 text-xs">
-            <span class="shrink-0">💡</span>
-            <span class="text-gray-600 dark:text-gray-400 leading-relaxed">{{ summary.advice }}</span>
+          <div class="flex items-start gap-2 mt-1">
+            <span class="shrink-0 mt-0.5">💡</span>
+            <p class="text-gray-600 dark:text-gray-400 leading-relaxed">{{ summary.advice }}</p>
+          </div>
+          <div class="flex items-start gap-2 mt-1">
+            <span class="shrink-0 mt-0.5">📚</span>
+            <p class="text-gray-400 leading-relaxed">投资小知识：基金净值每天只有一个（T日15:00前买入按当日净值计算），不要像盯股票一样时刻盯着。定投的核心是"坚持"而不是"择时"。</p>
           </div>
         </div>
       </div>

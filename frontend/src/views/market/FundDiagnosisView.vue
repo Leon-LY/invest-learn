@@ -152,24 +152,22 @@ const feeEstimate = computed(() => {
       <!-- Fund Detail -->
       <div v-else-if="fund" class="space-y-4">
         <!-- Header -->
-        <div class="card p-5">
-          <div class="flex items-start justify-between mb-2">
-            <div>
-              <h1 class="text-lg font-bold dark:text-white">{{ info.name }}</h1>
-              <div class="flex items-center gap-2 mt-1 text-xs text-gray-400">
-                <span>{{ info.code }}</span>
-                <span>·</span>
-                <span>{{ info.fund_type || '混合型' }}</span>
-                <span>·</span>
-                <span :class="riskColor[info.risk_level || '中']" class="px-1.5 py-0.5 rounded text-xs font-medium">{{ info.risk_level || '中' }}风险</span>
+        <div class="card p-4">
+          <div class="flex items-start gap-3">
+            <div class="flex-1 min-w-0">
+              <h1 class="text-lg font-bold dark:text-white truncate">{{ info.name }}</h1>
+              <div class="flex items-center gap-1.5 mt-1 text-xs text-gray-400 flex-nowrap">
+                <span class="shrink-0">{{ info.code }}</span>
+                <span class="shrink-0">·</span>
+                <span class="shrink-0">{{ info.fund_type || '混合型' }}</span>
+                <span class="shrink-0">·</span>
+                <span :class="riskColor[info.risk_level || '中']" class="shrink-0 px-1.5 py-0.5 rounded text-xs font-medium">{{ info.risk_level || '中' }}风险</span>
               </div>
             </div>
-            <div class="text-right">
-              <div class="text-2xl font-bold dark:text-white tabular-nums">{{ info.latest_nav || '--' }}</div>
-              <div :class="perfClass(info.latest_return)" class="text-sm font-medium tabular-nums">
-                {{ perfSign(info.latest_return) }}
-              </div>
-              <div class="text-xs text-gray-400 mt-0.5">{{ info.nav_date ? '净值日期: ' + info.nav_date : '' }}</div>
+            <div class="text-right shrink-0">
+              <div class="text-xl font-bold dark:text-white tabular-nums whitespace-nowrap">{{ info.latest_nav || '--' }}</div>
+              <div :class="perfClass(info.latest_return)" class="text-sm font-medium tabular-nums whitespace-nowrap">{{ perfSign(info.latest_return) }}</div>
+              <div class="text-[11px] text-gray-400 whitespace-nowrap">{{ info.nav_date || '' }}</div>
             </div>
           </div>
           <div class="flex gap-2 mt-3">

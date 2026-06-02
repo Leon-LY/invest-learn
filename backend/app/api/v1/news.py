@@ -81,12 +81,30 @@ async def get_expert_detail(expert_id: str, service: NewsService = Depends(get_n
 
 @router.post("/viewpoints")
 async def create_viewpoint(data: dict, service: NewsService = Depends(get_news_service)):
-    """Submit a viewpoint + auto AI analysis."""
+    """Submit a viewpoint + auto AI analysis. Supports base64 image."""
+    image_data = data.get("image", "")
+    content = data.get("content", "")
+
+    # If image is provided, analyze with Qwen Vision first
+    if image_data and not content.strip():
+        try:
+            import base64
+            img_bytes = base64.b64decode(image_data)
+            from app.services.vision_service import analyze_image
+            vision_result = await analyze_image(img_bytes)
+            if vision_result:
+                content = vision_result.get("content", "") or vision_result.get("data_points", "")
+                if vision_result.get("data_points"):
+                    content += "\n\n提取数据: " + vision_result["data_points"]
+        except Exception as e:
+            logger.warning(f"Image analysis fallback: {e}")
+
     return await service.create_viewpoint(
-        content=data.get("content", ""),
+        content=content or data.get("content", ""),
         source=data.get("source", "用户投稿"),
         author=data.get("author", ""),
         link=data.get("link", ""),
+        image_analysis=data.get("image_analysis"),
     )
 
 

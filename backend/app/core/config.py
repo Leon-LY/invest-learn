@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com/v1"
     DEEPSEEK_MODEL: str = "deepseek-chat"
 
+    # ── Qwen Vision (通义千问 VL) ──
+    QWEN_API_KEY: str = ""
+    QWEN_MODEL: str = "qwen-vl-plus"  # or qwen-vl-max
+
     # ── Crawler network ──
     CRAWLER_HTTP_TIMEOUT: float = 30.0
     CRAWLER_RETRY_MAX: int = 3

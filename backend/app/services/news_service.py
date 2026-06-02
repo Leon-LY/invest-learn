@@ -212,52 +212,60 @@ class NewsService:
         }
 
     async def get_expert_predictions(self, limit: int = 6) -> list[dict]:
-        """Generate expert-style predictions via DeepSeek on recent news."""
-        # Get latest news for context
-        stmt = select(NewsArticle).order_by(desc(NewsArticle.published_at)).limit(5)
+        """Generate diverse expert predictions via DeepSeek — each expert sees different news."""
+        import random
+        stmt = select(NewsArticle).order_by(desc(NewsArticle.published_at)).limit(20)
         result = await self.db.execute(stmt)
-        recent = result.scalars().all()
-        if not recent:
+        all_news = result.scalars().all()
+        if len(all_news) < 10:
             return []
 
-        titles = "\n".join([f"- {a.title}" for a in recent])
-
         experts = [
-            {"id": "value", "name": "张坤·价值投资", "style": "像张坤一样思考：关注护城河、自由现金流、长期竞争优势。偏爱消费和互联网龙头，不追热点不赌赛道。"},
-            {"id": "macro", "name": "李蓓·宏观对冲", "style": "像李蓓一样思考：从宏观到微观，关注利率汇率政策周期和大类资产轮动。善于发现市场定价错误。"},
-            {"id": "policy", "name": "任泽平·政策解读", "style": "像任泽平一样思考：从政策文件、经济数据和改革方向中解读市场信号。关注货币财政和产业政策。"},
-            {"id": "growth", "name": "刘格菘·成长赛道", "style": "像刘格菘一样思考：关注产业景气度、技术革命和渗透率拐点。偏爱新能源、半导体等景气行业。"},
-            {"id": "quant", "name": "洪灏·量化周期", "style": "像洪灏一样思考：用数据和量化模型判断市场周期。关注估值分位、资金流向、情绪指标和全球资金轮动。"},
-            {"id": "contrarian", "name": "林园·逆向思维", "style": "像林园一样思考：极度逆向，市场恐慌时贪婪。关注被忽视的垄断性消费和医药资产，敢于重仓。"},
+            {"id":"zhangkun",   "name":"张坤", "title":"易方达·价值投资", "focus":"你只关注消费、互联网和白酒龙头。寻找有护城河、自由现金流充裕的优质公司。不追热点，不在意短期波动。", "prefers":"消费/互联网/白酒"},
+            {"id":"libei",      "name":"李蓓", "title":"半夏·宏观对冲", "focus":"你从宏观到微观，关注利率、汇率、政策周期和大类资产轮动。善于在全球视角下发现市场定价错误。", "prefers":"债券/黄金/大宗商品"},
+            {"id":"renzeping",  "name":"任泽平", "title":"泽平·政策解读", "focus":"你从政策文件和经济数据中解读市场信号。关注货币宽松、财政刺激和产业政策方向，判断政策对具体行业的影响。", "prefers":"基建/新能源/地产"},
+            {"id":"liugesong",  "name":"刘格菘", "title":"广发·成长赛道", "focus":"你寻找处于景气上升期的行业，关注技术革命和渗透率拐点。你相信在正确的赛道上，估值不是最重要的。", "prefers":"半导体/AI/新能源/光伏"},
+            {"id":"honghao",    "name":"洪灏", "title":"思睿·量化周期", "focus":"你用数据和模型判断市场周期位置。关注估值分位、资金流向、情绪指标。市场极度悲观时你反而乐观。", "prefers":"沪深300/中证500/创业板"},
+            {"id":"linyuan",    "name":"林园", "title":"林园·逆向思维", "focus":"你极度逆向，善于在市场恐慌时发现被忽视的机会。你相信垄断性消费和医药资产能穿越周期，越是别人不敢买的时候你越兴奋。", "prefers":"医药/消费/中药"},
         ]
 
         predictions = []
-        for exp in experts[:limit]:
+        random.shuffle(all_news)
+        for i, exp in enumerate(experts[:limit]):
             try:
-                prompt = f"""你是一位资深中国投资专家。请以以下风格分析近期市场动态：
+                # Each expert sees a different subset of news
+                start = i * 3 % (len(all_news) - 3)
+                my_news = all_news[start:start + 3]
+                titles = "\n".join([f"- {a.title}" for a in my_news])
 
-风格定位：{exp['style']}
+                prompt = f"""你是一位资深中国投资专家，你的投资风格如下：
 
-近期重要新闻：
+{exp['focus']}
+
+请从你的专业视角，针对以下新闻中你最关注的1-2条，给出独立判断。
+重要：你必须给出与其他人不同的观点，基于你的特定风格。
+
+新闻：
 {titles}
 
-请给出你的判断（JSON格式）：
-{{"direction": "看多/看空/震荡", "title": "10字以内的观点标题", "content": "80-150字的分析，包含具体判断和逻辑", "tags": ["标签1", "标签2"], "relatedFunds": ["基金代码"], "confidence": 60-90的整数}}"""
+返回JSON：
+{{"title":"15字以内的判断标题（要有你的个人风格）","content":"80-120字分析，基于你的专长领域给出具体判断，不要泛泛而谈","tags":["标签1","标签2"],"relatedFunds":["具体基金代码"],"confidence":60-90}}"""
 
                 result = await llm_service.analyze_news(prompt, None, None)
                 if result:
                     predictions.append({
                         "id": exp["id"],
                         "expert": exp["name"],
-                        "direction": result.get("impact_level", "中性").replace("利好", "看多").replace("利空", "看空"),
-                        "title": result.get("key_points", [""])[0] if result.get("key_points") else "最新市场分析",
-                        "content": result.get("short_term", ""),
-                        "tags": result.get("key_points", [])[:2],
+                        "title_role": exp["title"],
+                        "title": result.get("title", result.get("key_points",[""])[0] if result.get("key_points") else ""),
+                        "content": result.get("short_term", result.get("action_advice", "")),
+                        "tags": result.get("key_points", result.get("tags", []))[:2],
                         "relatedFunds": [f["code"] for f in result.get("affected_funds", [])[:2]],
-                        "confidence": abs(result.get("impact_score", 60)),
+                        "confidence": abs(result.get("impact_score", 65)),
                     })
+                await asyncio.sleep(0.5)  # Stagger to avoid rate limits
             except Exception as e:
-                logger.warning(f"Expert prediction failed for {exp['name']}: {e}")
+                logger.warning(f"Prediction failed for {exp['name']}: {e}")
 
         return predictions
 
@@ -266,26 +274,28 @@ class NewsService:
         import asyncio
         experts = []
 
-        # Fund managers with AKShare real performance
+        # Fund managers with AKShare detailed data
         fund_managers = [
-            ("张坤", "005827", "易方达蓝筹精选", "价值投资派", "公募一哥，重仓白酒龙头和互联网平台"),
-            ("谢治宇", "163406", "兴全合润", "均衡配置派", "不追热点不赌赛道，注重收益与回撤平衡"),
-            ("葛兰", "001475", "中欧医疗健康", "医药赛道女王", "美国生物医学博士，专注创新药产业链"),
-            ("侯昊", "161725", "招商中证白酒", "指数增强派", "管理国内最大白酒主题基金"),
+            ("张坤", "005827", "易方达蓝筹精选", "价值投资·消费龙头", "公募一哥，管理规模曾超千亿。以重仓白酒和互联网平台闻名，坚持长期持有伟大企业。代表作易方达蓝筹精选5年年化超15%。"),
+            ("谢治宇", "163406", "兴全合润", "均衡配置·性价比", "兴全基金灵魂人物，不追热点不赌单一赛道。牛熊市中均表现稳健，注重持有体验，回撤控制出色。"),
+            ("葛兰", "001475", "中欧医疗健康", "医药赛道·深度研究", "美国西北大学生物医学博士，对创新药产业链有远超同行的理解。经历医药板块大幅调整仍在坚守，逆向加仓。"),
+            ("侯昊", "161725", "招商中证白酒", "指数增强·白酒专家", "管理国内规模最大的白酒主题基金，对白酒行业周期有独到判断。擅长在行业低迷时逆向布局。"),
         ]
         for name, code, fname, style, bio in fund_managers:
             try:
                 import akshare as ak
                 nav_df = await asyncio.to_thread(ak.fund_open_fund_info_em, symbol=code, indicator='单位净值走势')
-                perf = {'year1': None, 'year3': None}
+                perf = {'year1': None, 'year3': None, 'latest_nav': None}
                 if nav_df is not None and not nav_df.empty:
                     nav_df = nav_df.sort_values('净值日期')
                     vals = nav_df['单位净值'].dropna().values
+                    if len(vals) > 0:
+                        perf['latest_nav'] = float(vals[-1])
                     if len(vals) > 250:
                         latest = float(vals[-1])
                         perf['year1'] = round((latest/float(vals[-250])-1)*100, 1) if len(vals)>250 else None
                         perf['year3'] = round((latest/float(vals[0])-1)*100, 1) if len(vals)>750 else None
-                experts.append({'name':name, 'title':style, 'fund_name':fname, 'bio':bio, 'performance':perf, 'type':'基金经理', 'source':'AKShare/天天基金'})
+                experts.append({'name':name, 'title':style, 'fund_name':fname, 'fund_code':code, 'bio':bio, 'performance':perf, 'type':'基金经理', 'source':'AKShare/天天基金(实时净值)'})
             except Exception as e:
                 logger.warning(f'Tracker failed for {name}: {e}')
 

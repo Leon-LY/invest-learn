@@ -1,6 +1,6 @@
 """News API endpoints."""
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, HTTPException, Body
+from fastapi import APIRouter, Depends, Query, HTTPException, Request
 from app.api.deps import get_news_service
 from app.services.news_service import NewsService
 
@@ -80,10 +80,14 @@ async def get_expert_detail(expert_id: str, service: NewsService = Depends(get_n
 
 
 @router.post("/viewpoints")
-async def create_viewpoint(data: dict = Body(...), service: NewsService = Depends(get_news_service)):
+async def create_viewpoint(request: Request, service: NewsService = Depends(get_news_service)):
     """Submit a viewpoint + auto AI analysis. Supports base64 image."""
     import logging
     log = logging.getLogger(__name__)
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
     image_data = data.get("image", "")
     content = data.get("content", "")
 

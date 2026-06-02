@@ -92,11 +92,14 @@ async def get_market_summary(service: MarketService = Depends(get_market_service
 
 @router.post("/portfolio/summary")
 async def portfolio_summary(data: dict, service: MarketService = Depends(get_market_service)):
-    """Generate AI portfolio summary from user's fund holdings."""
+    """Generate portfolio summary from user's fund holdings."""
     funds = data.get("funds", [])
     if not funds:
-        return {"error": "请提供基金列表"}
-    return await service.get_portfolio_summary(funds)
+        return {"error": "请提供基金列表", "holdings": [], "allocation": [], "advice": []}
+    try:
+        return await service.get_portfolio_summary(funds)
+    except Exception as e:
+        return {"error": str(e), "holdings": [], "allocation": [], "advice": []}
 
 
 @router.get("/search")

@@ -21,8 +21,8 @@ async function refreshExperts() {
   try { experts.value = (await newsApi.getExpertTracker()) as unknown as any[] } catch(e) {}
 }
 
-onMounted(async () => {
-  await Promise.all([refreshPredictions(), refreshExperts()])
+onMounted(() => {
+  refreshPredictions(); refreshExperts()
   refreshTimer = setInterval(() => { refreshPredictions(); refreshExperts() }, 300000)
 })
 onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })

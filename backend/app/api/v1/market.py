@@ -104,6 +104,40 @@ async def portfolio_summary(request: Request, service: MarketService = Depends(g
         return {"error": str(e), "holdings": [], "allocation": [], "advice": []}
 
 
+@router.get("/plans")
+async def get_plans():
+    """Get popular Tiantian fund investment plans."""
+    from app.crawlers.portfolio_plan import PortfolioPlanCrawler
+    from app.core.database import AsyncSessionLocal
+    from app.core.cache import cache_get, cache_set
+    cached = await cache_get("market:plans")
+    if cached:
+        return cached
+    async with AsyncSessionLocal() as db:
+        crawler = PortfolioPlanCrawler(db)
+        plans = await crawler.fetch_popular_plans(12)
+        if plans:
+            await cache_set("market:plans", plans, ttl=1800)
+        return plans
+
+
+@router.get("/plans/{plan_id}")
+async def get_plan_detail(plan_id: str):
+    """Get detailed holdings and operations for a plan."""
+    from app.crawlers.portfolio_plan import PortfolioPlanCrawler
+    from app.core.database import AsyncSessionLocal
+    from app.core.cache import cache_get, cache_set
+    cached = await cache_get(f"market:plan:{plan_id}")
+    if cached:
+        return cached
+    async with AsyncSessionLocal() as db:
+        crawler = PortfolioPlanCrawler(db)
+        detail = await crawler.fetch_plan_detail(plan_id)
+        if detail and not detail.get("error"):
+            await cache_set(f"market:plan:{plan_id}", detail, ttl=3600)
+        return detail
+
+
 @router.get("/search")
 async def search_stocks(
     q: str = Query(..., min_length=1),

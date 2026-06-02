@@ -374,7 +374,7 @@ class MarketService:
         # Latest news sentiment stats
         from app.models.news import NewsArticle
         from sqlalchemy import func as sqlfunc
-        sent_stmt = select(NA.sentiment, sqlfunc.count()).group_by(NA.sentiment)
+        sent_stmt = select(NewsArticle.sentiment, sqlfunc.count()).group_by(NewsArticle.sentiment)
         sent_result = await self.db.execute(sent_stmt)
         sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
         for s, c in sent_result.all():

@@ -91,11 +91,18 @@ async def create_viewpoint(request: Request, service: NewsService = Depends(get_
     if image_data:
         try:
             from app.services.vision_service import analyze_image
-            vr = await analyze_image(base64.b64decode(image_data))
+            img_bytes = base64.b64decode(image_data)
+            log.info(f"Analyzing image: {len(img_bytes)} bytes")
+            vr = await analyze_image(img_bytes)
             if vr:
                 vt = chr(10).join(filter(None, [vr.get("content",""), vr.get("key_points") and ("要点: "+"; ".join(vr["key_points"])), vr.get("numbers_extracted") and ("数据: "+vr["numbers_extracted"])]))
-                content = (content.strip() + "[截图]: " + vt) if content.strip() else vt
-        except Exception as e: log.warning(f"Vision: {e}")
+                content = (content.strip() + "\n[截图]: " + vt) if content.strip() else vt
+                log.info(f"Vision OK: {vr.get('title','')}")
+            else:
+                log.warning("Vision returned None - check Qwen API")
+        except Exception as e:
+            log.error(f"Vision failed: {e}", exc_info=True)
+            # Still submit without vision analysis
     if not content.strip(): return {"error": "请提供文本或上传图片"}
     try:
         return await service.create_viewpoint(content=content, source=data.get("source","用户投稿"), author=data.get("author",""), link=data.get("link",""))

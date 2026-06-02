@@ -72,7 +72,7 @@ async def analyze_image(image_data: bytes, content_type: str = "image/jpeg") -> 
     data_url = f"data:{content_type};base64,{image_b64}"
 
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
                 "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
                 headers={

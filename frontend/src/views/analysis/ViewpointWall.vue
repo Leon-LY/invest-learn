@@ -163,7 +163,9 @@ const uniqueAuthors = computed(() => [...new Set(viewpoints.value.map((v: any) =
               <div v-if="v.original_content || v.image_base64" class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                 <div class="text-xs font-medium text-gray-400 mb-2">📝 原始提交</div>
                 <p v-if="v.original_content" class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">{{ v.original_content }}</p>
-                <img v-if="v.image_base64" :src="'data:image/jpeg;base64,'+v.image_base64" class="mt-2 max-h-64 rounded-lg border border-gray-200 dark:border-gray-700" />
+                <div v-if="v.image_base64" class="flex gap-2 overflow-x-auto mt-2">
+                  <img v-for="(img, i) in v.image_base64.split('||')" :key="i" :src="'data:image/jpeg;base64,'+img" class="max-h-48 rounded-lg border border-gray-200 dark:border-gray-700" />
+                </div>
               </div>
             </div>
           </details>

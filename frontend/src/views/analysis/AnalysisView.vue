@@ -55,13 +55,13 @@ function goExpert(id: string) { router.push(`/analysis/expert/${id}`) }
           </div>
           <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1.5">{{ p.title }}</h3>
           <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed">{{ p.content }}</p>
-          <div class="flex items-center gap-2 mt-3 text-xs text-gray-400">
-            <div class="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">{{ experts.find(e => e.id === p.expertId)?.avatar }}</div>
-            <span class="font-medium text-gray-700 dark:text-gray-300">{{ p.expertName }}</span>
-            <span>·</span>
-            <span>{{ p.expertTitle }}</span>
-            <span>·</span>
-            <span>{{ p.date }}</span>
+          <div class="flex items-center gap-2 mt-3 text-xs text-gray-400 flex-nowrap overflow-hidden">
+            <div class="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0">{{ experts.find(e => e.id === p.expertId)?.avatar }}</div>
+            <span class="font-medium text-gray-700 dark:text-gray-300 shrink-0">{{ p.expertName }}</span>
+            <span class="shrink-0">·</span>
+            <span class="truncate">{{ p.expertTitle }}</span>
+            <span class="shrink-0">·</span>
+            <span class="shrink-0">{{ p.date }}</span>
           </div>
           <div v-if="p.relatedFunds.length" class="flex gap-1.5 mt-2">
             <span v-for="f in p.relatedFunds" :key="f" class="text-xs px-2 py-0.5 bg-primary-light dark:bg-primary/20 text-primary rounded-full">{{ f }}</span>
@@ -118,11 +118,11 @@ function goExpert(id: string) { router.push(`/analysis/expert/${id}`) }
           <div class="flex items-start gap-3">
             <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white font-bold text-lg shrink-0">{{ e.avatar }}</div>
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <h3 class="font-semibold text-sm text-gray-900 dark:text-white">{{ e.name }}</h3>
-                <span class="text-yellow-500 text-xs">{{ '⭐'.repeat(e.starRating) }}</span>
+              <div class="flex items-center gap-2 flex-nowrap">
+                <h3 class="font-semibold text-sm text-gray-900 dark:text-white shrink-0">{{ e.name }}</h3>
+                <span class="text-yellow-500 text-xs shrink-0">{{ '⭐'.repeat(e.starRating) }}</span>
               </div>
-              <p class="text-xs text-gray-400 mt-0.5">{{ e.title }} · {{ e.company }}</p>
+              <p class="text-xs text-gray-400 mt-0.5 truncate">{{ e.title }} · {{ e.company }}</p>
               <div class="flex flex-wrap gap-1.5 mt-2">
                 <span class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400">规模 {{ e.aum }}</span>
                 <span class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400">{{ e.experience }}</span>

@@ -70,26 +70,13 @@ async def get_expert_tracker(service: NewsService = Depends(get_news_service)):
 
 @router.get("/expert-tracker/{expert_id}")
 async def get_expert_detail(expert_id: str, service: NewsService = Depends(get_news_service)):
-    """Get expert detail — always from cache (pre-generated every 2h)."""
+    """Get expert detail — always from cache, no fallback generation."""
     from app.core.cache import cache_get
     cached = await cache_get(f"analysis:expert_detail:{expert_id}")
     if cached:
         return cached
-    # Cache miss: return basic profile instantly, trigger async regeneration
-    import asyncio
-    from app.core.cache import cache_set
-    from app.core.database import AsyncSessionLocal
-    basic = {"id":expert_id,"name":expert_id,"type":"加载中","title":"数据正在生成...","bio":"请稍后刷新","related_news":[],"related_analyses":[],"operations":[],"predictive_view":None,"nav_history":[],"size_history":[],"fund_operations":[]}
-    async def regenerate():
-        try:
-            async with AsyncSessionLocal() as db:
-                svc = NewsService(db)
-                data = await svc.get_expert_detail(expert_id)
-                if data and not data.get("error"):
-                    await cache_set(f"analysis:expert_detail:{expert_id}", data, ttl=7200)
-        except Exception: pass
-    asyncio.create_task(regenerate())
-    return basic
+    # Cache miss: just return basic — scheduler fills cache every 2h
+    return {"id":expert_id,"name":expert_id,"type":"加载中","title":"数据生成中，请稍后刷新","related_news":[],"related_analyses":[],"operations":[],"fund_operations":[],"predictive_view":None,"nav_history":[],"size_history":[]}
 
 
 @router.get("/sources/list")

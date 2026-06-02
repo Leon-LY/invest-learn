@@ -23,7 +23,9 @@ const showBottomNav = computed(() => navItems.some(item =>
 <template>
   <router-view v-slot="{ Component, route: r }">
     <transition name="page" mode="out-in">
-      <component :is="Component" :key="r.path" />
+      <keep-alive :max="5">
+        <component :is="Component" :key="r.path" />
+      </keep-alive>
     </transition>
   </router-view>
   <!-- Global BottomNav — rendered once, never unmounts -->

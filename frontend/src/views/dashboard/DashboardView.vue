@@ -91,10 +91,24 @@ const indexNames: Record<string,string> = {
           </div>
         </div>
 
-        <!-- Bottom bar: advice -->
-        <div class="flex items-center gap-2 px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/30 text-xs">
-          <span class="shrink-0">💡</span>
-          <span class="text-gray-600 dark:text-gray-400 truncate">{{ summary?.advice || '数据加载中，请稍后...' }}</span>
+        <!-- Hot sectors -->
+        <div v-if="summary?.sectors?.length" class="flex items-center gap-2 px-4 py-2 text-xs border-t border-gray-100 dark:border-gray-800/30 overflow-x-auto no-scrollbar">
+          <span class="text-gray-400 shrink-0">🔥</span>
+          <span v-for="s in summary.sectors.slice(0,5)" :key="s.name"
+            class="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium"
+            :class="(s.change_pct||0)>=0?'bg-up-bg text-up':'bg-down-bg text-down'"
+          >{{ s.name.slice(0,6) }} {{ (s.change_pct||0)>=0?'+':'' }}{{ s.change_pct?.toFixed(1) }}%</span>
+        </div>
+        <!-- Market advice -->
+        <div class="flex items-start gap-2 px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/30 text-xs border-t border-gray-100 dark:border-gray-800/20">
+          <span class="shrink-0 mt-0.5">💡</span>
+          <p class="text-gray-600 dark:text-gray-400 leading-relaxed">{{ summary?.advice || '市场数据加载中，请稍后刷新...' }}</p>
+        </div>
+        <!-- Market stats -->
+        <div v-if="summary" class="flex items-center gap-3 px-4 py-2 text-[11px] text-gray-400 border-t border-gray-100 dark:border-gray-800/20">
+          <span>📰 近期新闻 {{ summary.hot_news_count || 0 }} 条</span>
+          <span>📊 利好 {{ summary.sentiment?.positive || 0 }}</span>
+          <span>📉 利空 {{ summary.sentiment?.negative || 0 }}</span>
         </div>
       </div>
 

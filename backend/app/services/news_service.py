@@ -665,7 +665,7 @@ class NewsService:
             "generated_at": a.generated_at.isoformat() if a.generated_at else None,
         } for a, art in rows]
 
-    async def create_viewpoint(self, content: str, source: str = "用户投稿", author: str = "") -> dict:
+    async def create_viewpoint(self, content: str, source: str = "用户投稿", author: str = "", link: str = "") -> dict:
         """Submit a user viewpoint and auto-analyze with DeepSeek."""
         if not content.strip():
             return {"error": "内容不能为空"}
@@ -684,7 +684,7 @@ class NewsService:
             logger.warning(f"Viewpoint AI analysis failed: {e}")
 
         vp = Viewpoint(
-            source=source, author=author or None, content=content,
+            source=source, author=author or None, content=content, source_link=link or None,
             ai_title=ai_result.get("title", "") if ai_result else None,
             ai_summary=ai_result.get("summary", ai_result.get("short_term", "")) if ai_result else None,
             direction=ai_result.get("direction", ai_result.get("impact_level", "中性")) if ai_result else None,

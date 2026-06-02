@@ -113,7 +113,7 @@ const routes: RouteRecordRaw[] = [
     path: '/viewpoints',
     name: 'ViewpointWall',
     component: () => import('@/views/analysis/ViewpointWall.vue'),
-    meta: { title: '民间观点墙', layout: 'default' },
+    meta: { title: '市场声音', layout: 'default' },
   },
   {
     path: '/portfolio-analysis',

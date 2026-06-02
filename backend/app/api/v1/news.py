@@ -86,6 +86,7 @@ async def create_viewpoint(data: dict, service: NewsService = Depends(get_news_s
         content=data.get("content", ""),
         source=data.get("source", "用户投稿"),
         author=data.get("author", ""),
+        link=data.get("link", ""),
     )
 
 

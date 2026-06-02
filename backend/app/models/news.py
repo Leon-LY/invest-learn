@@ -56,6 +56,7 @@ class Viewpoint(Base):
     source: Mapped[str] = mapped_column(String(50), default="用户投稿")  # 抖音/小红书/微博/用户投稿
     author: Mapped[Optional[str]] = mapped_column(String(100))  # UP主名称
     content: Mapped[str] = mapped_column(Text, nullable=False)  # 原始内容
+    source_link: Mapped[Optional[str]] = mapped_column(String(500))  # 来源链接
     ai_title: Mapped[Optional[str]] = mapped_column(String(200))  # AI生成标题
     ai_summary: Mapped[Optional[str]] = mapped_column(Text)  # AI摘要
     direction: Mapped[Optional[str]] = mapped_column(String(10))  # 看多/看空/中性

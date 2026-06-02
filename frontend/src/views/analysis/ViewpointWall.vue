@@ -122,6 +122,7 @@ const presetFunds = ['005827','161725','110027','510300','163406']
             <span v-if="v.direction" class="text-xs px-2 py-0.5 rounded-full font-medium ml-auto"
               :class="v.direction==='看多'?'bg-up-bg text-up':v.direction==='看空'?'bg-down-bg text-down':'bg-gray-100 text-gray-500'">{{ v.direction }}</span>
             <span v-if="v.confidence" class="text-xs text-gray-400">🤖 {{ v.confidence }}%</span>
+            <span v-if="v.created_at" class="text-xs text-gray-400 ml-auto">{{ v.created_at?.slice(0,16)?.replace('T',' ') }}</span>
           </div>
           <h3 class="font-medium text-sm dark:text-white mb-1.5">{{ v.ai_title || '观点分析' }}</h3>
           <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-2 leading-relaxed">{{ v.ai_summary || v.content.slice(0,150) }}</p>

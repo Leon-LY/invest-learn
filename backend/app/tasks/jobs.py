@@ -76,7 +76,14 @@ async def refresh_expert_tracker():
             experts = await svc.get_expert_tracker()
             if experts:
                 await cache_set("analysis:expert_tracker", experts, ttl=7200)
-                logger.info(f"[ExpertTracker] Cached {len(experts)} experts")
+                # Pre-cache individual expert details
+                for e in experts:
+                    eid = e.get("id")
+                    if eid:
+                        detail = await svc.get_expert_detail(eid)
+                        if detail and not detail.get("error"):
+                            await cache_set(f"analysis:expert_detail:{eid}", detail, ttl=7200)
+                logger.info(f"[ExpertTracker] Cached {len(experts)} experts + details")
     except Exception as e:
         logger.error(f"[ExpertTracker] Failed: {e}")
 

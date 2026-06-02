@@ -1,6 +1,6 @@
 """Market data API endpoints."""
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, Body
 from app.api.deps import get_market_service
 from app.services.market_service import MarketService
 
@@ -91,7 +91,7 @@ async def get_market_summary(service: MarketService = Depends(get_market_service
 
 
 @router.post("/portfolio/summary")
-async def portfolio_summary(data: dict, service: MarketService = Depends(get_market_service)):
+async def portfolio_summary(data: dict = Body(...), service: MarketService = Depends(get_market_service)):
     """Generate portfolio summary from user's fund holdings."""
     funds = data.get("funds", [])
     if not funds:

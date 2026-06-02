@@ -66,6 +66,22 @@ async def generate_expert_predictions():
         logger.error(f"[ExpertPredictions] Failed: {e}")
 
 
+async def refresh_market_summary():
+    """Every 60s: pre-generate market summary so dashboard loads instantly."""
+    try:
+        async with AsyncSessionLocal() as db:
+            from app.services.market_service import MarketService
+            from app.core.cache import cache_set, cache_delete
+            svc = MarketService(db)
+            # Delete old cache to force fresh generation
+            await cache_delete("market:summary")
+            data = await svc.get_market_summary()
+            if data:
+                await cache_set("market:summary", data, ttl=90)
+    except Exception as e:
+        logger.error(f"[MarketSummary] Failed: {e}")
+
+
 async def refresh_expert_tracker():
     """Every 2 hours: scrape expert data and cache in Redis."""
     try:

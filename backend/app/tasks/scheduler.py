@@ -21,6 +21,7 @@ def start_scheduler():
         crawl_etf,
         generate_expert_predictions,
         refresh_expert_tracker,
+        refresh_market_summary,
     )
 
     # Daily: sync stock list and historical data (off-hours)
@@ -87,6 +88,14 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    # Every 60s: pre-generate market summary
+    scheduler.add_job(
+        refresh_market_summary,
+        IntervalTrigger(seconds=60),
+        id="market_summary",
+        replace_existing=True,
+    )
+
     # Every 5 min: auto AI analysis for unanalyzed articles
     scheduler.add_job(
         auto_analyze_news,
@@ -124,6 +133,10 @@ def start_scheduler():
 
         logger.info("Initial expert predictions...")
         try: await generate_expert_predictions()
+        except Exception as e: logger.error(f"Failed: {e}")
+
+        logger.info("Initial market summary...")
+        try: await refresh_market_summary()
         except Exception as e: logger.error(f"Failed: {e}")
 
         logger.info("Initial expert tracker...")

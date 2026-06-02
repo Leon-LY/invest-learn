@@ -131,7 +131,11 @@ function changeCategory(cat: string) {
       <!-- Category tabs + total count -->
       <div class="flex items-center gap-2">
         <div class="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100/80 dark:bg-gray-800/50 overflow-x-auto no-scrollbar flex-1 min-w-0">
-          <button v-for="c in [{ v: '', l: '全部' }, { v: '基金', l: '基金' }, { v: '行业', l: '行业' }, { v: '大佬', l: '大佬' }, { v: '策略', l: '策略' }]" :key="c.v"
+          <button v-for="c in [
+            { v: '', l: '全部' }, { v: '基金', l: '基金' }, { v: '行业', l: '行业' },
+            { v: '宏观', l: '宏观' }, { v: '策略', l: '策略' }, { v: '海外', l: '海外' },
+            { v: '大佬', l: '大佬' }
+          ]" :key="c.v"
             @click="changeCategory(c.v)"
             class="px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-200"
             :class="category === c.v

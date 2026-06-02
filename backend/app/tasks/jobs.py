@@ -66,6 +66,21 @@ async def generate_expert_predictions():
         logger.error(f"[ExpertPredictions] Failed: {e}")
 
 
+async def refresh_expert_tracker():
+    """Every 2 hours: scrape expert data and cache in Redis."""
+    try:
+        async with AsyncSessionLocal() as db:
+            from app.services.news_service import NewsService
+            from app.core.cache import cache_set
+            svc = NewsService(db)
+            experts = await svc.get_expert_tracker()
+            if experts:
+                await cache_set("analysis:expert_tracker", experts, ttl=7200)
+                logger.info(f"[ExpertTracker] Cached {len(experts)} experts")
+    except Exception as e:
+        logger.error(f"[ExpertTracker] Failed: {e}")
+
+
 async def auto_analyze_news():
     """Every 5 min: generate AI analysis for unanalyzed articles."""
     try:

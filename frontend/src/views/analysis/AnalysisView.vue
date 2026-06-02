@@ -15,7 +15,7 @@ const allPredictions = experts.flatMap(e => e.predictions.map(p => ({ ...p, expe
 
 const directionColor = (d: string) => d === '看多' ? 'text-up bg-up-bg' : d === '看空' ? 'text-down bg-down-bg' : 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30'
 const confidenceColor = (c: number) => c >= 80 ? 'text-green-600' : c >= 60 ? 'text-yellow-600' : 'text-red-500'
-const riskColor = (r: string) => r === '低' ? 'text-down' : r === '中' ? 'text-yellow-600' : 'text-up'
+const riskColor = (r: string) => r === '低' ? 'text-down' : r === '中低' ? 'text-green-500' : r === '中' ? 'text-yellow-600' : r === '中高' ? 'text-orange-500' : 'text-up'
 
 function goExpert(id: string) { router.push(`/analysis/expert/${id}`) }
 </script>

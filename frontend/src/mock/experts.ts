@@ -269,7 +269,7 @@ export interface AIAnalysis {
   confidence: number
   affectedCategories: string[]  // fund categories affected
   actionSuggestion: string
-  riskLevel: '低' | '中' | '高'
+  riskLevel: '低' | '中低' | '中' | '中高' | '高'
 }
 
 export const aiAnalyses: AIAnalysis[] = [
@@ -365,6 +365,10 @@ export const newsImpactAnalyses: NewsImpactAnalysis[] = [
     actionAdvice: '新手投资者优先选择宽基ETF作为底仓，费率低、透明度高、分散效果好。',
     keyPoints: ['被动投资趋势不可逆', 'ETF费率持续降低利好投资者', '宽基ETF是新手最佳选择', '关注ETF流动性'],
   },
+]
+
+// ─── Additional AI Analyses ───
+const additionalAnalyses: AIAnalysis[] = [
   {
     id: 7, date: '2026-05-30', type: 'market_outlook',
     title: '🔮 7月基金配置策略：攻守兼备，重点关注三大方向',
@@ -389,7 +393,7 @@ export const newsImpactAnalyses: NewsImpactAnalysis[] = [
     summary: '可转债兼具"上有弹性、下有保底"的特性。当前可转债平均价格处于历史中低位，转股溢价率合理，是难得的配置窗口。',
     detail: '可转债投资逻辑：\n\n1. 什么是可转债：上市公司发行的可以在特定条件下转换为股票的债券。\n\n2. 为什么现在是好时机：\n- 可转债均价约120元，处于近3年低位\n- 平均转股溢价率约35%，比较合理\n- 信用风险较低（多数发行人为优质上市公司）\n\n3. 投资方式：\n- 直接买可转债：需要股票账户，门槛较高\n- 买可转债基金：最适合普通投资者\n\n4. 推荐关注：兴全可转债、易方达安心回报（含可转债配置）\n\n可转债基金的波动小于纯股票基金，收益弹性高于纯债基金，适合作为组合的"第二层防御"。',
     confidence: 72, affectedCategories: ['债券型基金', '混合型基金'],
-    actionSuggestion: '配置10-15%仓位到可转债基金作为组合的'攻守转换器'',
+    actionSuggestion: "配置10-15%仓位到可转债基金，作为组合的攻守转换器",
     riskLevel: '中低',
   },
   {
@@ -402,3 +406,6 @@ export const newsImpactAnalyses: NewsImpactAnalysis[] = [
     riskLevel: '高',
   },
 ]
+
+// Merge additional analyses into main array
+aiAnalyses.push(...additionalAnalyses)

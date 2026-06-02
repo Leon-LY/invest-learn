@@ -129,29 +129,24 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
         <div class="text-xs text-gray-400">📊 实时追踪（AKShare/天天基金/公开数据，每2小时更新）</div>
         <div v-if="!experts.length" class="card p-6 text-center text-xs text-gray-400">正在加载大佬数据...</div>
         <div v-for="e in experts" :key="e.name"
-          class="card p-4">
+          @click="router.push(`/analysis/expert/${e.id || e.name}`)"
+          class="card p-4 cursor-pointer hover:shadow-md">
           <div class="flex items-start gap-3">
             <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white font-bold shrink-0">{{ e.name[0] }}</div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
                 <h3 class="font-semibold text-sm dark:text-white">{{ e.name }}</h3>
-                <span class="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary dark:text-primary border border-primary/20">{{ e.type }}</span>
+                <span class="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{{ e.type }}</span>
                 <span class="text-xs text-gray-400">{{ e.title }}</span>
               </div>
-              <p class="text-xs text-gray-400 mt-1 leading-relaxed">{{ e.bio }}</p>
-              <!-- Fund manager specific data -->
+              <p class="text-xs text-gray-400 mt-1 leading-relaxed line-clamp-1">{{ e.bio }}</p>
               <div v-if="e.fund_code" class="mt-2 flex items-center gap-3 text-xs flex-wrap">
-                <span class="text-gray-500">📊 {{ e.fund_name }}</span>
-                <span v-if="e.performance?.latest_nav" class="font-mono text-gray-600 dark:text-gray-300">净值 {{ e.performance.latest_nav.toFixed(4) }}</span>
-                <span v-if="e.performance?.year1 != null" :class="e.performance.year1>=0?'text-up':'text-down'" class="font-medium">
-                  近1年 {{ e.performance.year1>=0?'+':'' }}{{ e.performance.year1 }}%
-                </span>
-                <span v-if="e.performance?.year3 != null" :class="e.performance.year3>=0?'text-up':'text-down'" class="font-medium">
-                  近3年 {{ e.performance.year3>=0?'+':'' }}{{ e.performance.year3 }}%
-                </span>
+                <span class="text-gray-500">📊 {{ e.fund_name }}（{{ e.fund_code }}）</span>
+                <span v-if="e.performance?.year1 != null" :class="e.performance.year1>=0?'text-up':'text-down'" class="font-medium">近1年 {{ e.performance.year1>=0?'+':'' }}{{ e.performance.year1 }}%</span>
               </div>
-              <div class="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
-                <span>📡 {{ e.source || '公开资料' }}</span>
+              <div class="flex items-center justify-between mt-2">
+                <span class="text-[10px] text-gray-400">📡 {{ e.source || '公开资料' }}</span>
+                <span class="text-xs text-primary">查看详情 →</span>
               </div>
             </div>
           </div>

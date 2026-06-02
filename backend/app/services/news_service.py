@@ -220,10 +220,12 @@ class NewsService:
         titles = "\n".join([f"- {a.title}" for a in recent])
 
         experts = [
-            {"id": "value", "name": "价值投资视角", "style": "像张坤一样思考：关注企业护城河、自由现金流、长期竞争优势。偏爱消费和互联网龙头。"},
-            {"id": "macro", "name": "宏观对冲视角", "style": "像李蓓一样思考：从宏观到微观，关注利率、汇率、政策周期和大类资产轮动。"},
-            {"id": "growth", "name": "成长赛道视角", "style": "像刘格菘一样思考：关注产业景气度、技术革命和渗透率拐点。偏爱新能源、半导体、AI等成长行业。"},
-            {"id": "quant", "name": "量化数据视角", "style": "用数据和概率思考：关注估值分位、资金流向、动量因子和市场情绪指标。"},
+            {"id": "value", "name": "张坤·价值投资", "style": "像张坤一样思考：关注护城河、自由现金流、长期竞争优势。偏爱消费和互联网龙头，不追热点不赌赛道。"},
+            {"id": "macro", "name": "李蓓·宏观对冲", "style": "像李蓓一样思考：从宏观到微观，关注利率汇率政策周期和大类资产轮动。善于发现市场定价错误。"},
+            {"id": "policy", "name": "任泽平·政策解读", "style": "像任泽平一样思考：从政策文件、经济数据和改革方向中解读市场信号。关注货币财政和产业政策。"},
+            {"id": "growth", "name": "刘格菘·成长赛道", "style": "像刘格菘一样思考：关注产业景气度、技术革命和渗透率拐点。偏爱新能源、半导体等景气行业。"},
+            {"id": "quant", "name": "洪灏·量化周期", "style": "像洪灏一样思考：用数据和量化模型判断市场周期。关注估值分位、资金流向、情绪指标和全球资金轮动。"},
+            {"id": "contrarian", "name": "林园·逆向思维", "style": "像林园一样思考：极度逆向，市场恐慌时贪婪。关注被忽视的垄断性消费和医药资产，敢于重仓。"},
         ]
 
         predictions = []
@@ -257,46 +259,47 @@ class NewsService:
         return predictions
 
     async def get_expert_tracker(self) -> list[dict]:
-        """Get real fund manager data from AKShare (cached 1h)."""
+        """Get diverse expert data: fund managers (AKShare) + economists/analysts."""
         import asyncio
         experts = []
 
-        # Popular fund manager codes for AKShare
-        manager_codes = [
-            ("张坤", "005827", "易方达蓝筹精选"),
-            ("谢治宇", "163406", "兴全合润"),
-            ("葛兰", "001475", "中欧医疗健康"),
-            ("刘格菘", "002939", "广发创新升级"),
-            ("朱少醒", "161005", "富国天惠"),
-            ("侯昊", "161725", "招商中证白酒"),
+        # Fund managers with AKShare real performance
+        fund_managers = [
+            ("张坤", "005827", "易方达蓝筹精选", "价值投资派", "公募一哥，重仓白酒龙头和互联网平台"),
+            ("谢治宇", "163406", "兴全合润", "均衡配置派", "不追热点不赌赛道，注重收益与回撤平衡"),
+            ("葛兰", "001475", "中欧医疗健康", "医药赛道女王", "美国生物医学博士，专注创新药产业链"),
+            ("侯昊", "161725", "招商中证白酒", "指数增强派", "管理国内最大白酒主题基金"),
         ]
-
-        for name, fund_code, fund_name in manager_codes:
+        for name, code, fname, style, bio in fund_managers:
             try:
                 import akshare as ak
-                # Get fund NAV data for performance calculation
-                nav_df = await asyncio.to_thread(
-                    ak.fund_open_fund_info_em, symbol=fund_code, indicator="单位净值走势"
-                )
-                perf = {"year1": None, "year3": None, "year5": None}
+                nav_df = await asyncio.to_thread(ak.fund_open_fund_info_em, symbol=code, indicator='单位净值走势')
+                perf = {'year1': None, 'year3': None}
                 if nav_df is not None and not nav_df.empty:
-                    nav_df = nav_df.sort_values("净值日期")
-                    nav_values = nav_df["单位净值"].dropna().values
-                    if len(nav_values) > 250:
-                        latest = float(nav_values[-1])
-                        perf["year1"] = round((latest / float(nav_values[-250]) - 1) * 100, 1) if len(nav_values) > 250 else None
-                        perf["year3"] = round((latest / float(nav_values[0]) - 1) * 100, 1) if len(nav_values) > 750 else None
-
-                experts.append({
-                    "name": name,
-                    "fund_code": fund_code,
-                    "fund_name": fund_name,
-                    "performance": perf,
-                    "style": "价值投资" if name in ("张坤","朱少醒") else "均衡配置" if name == "谢治宇" else "成长投资",
-                    "data_source": "AKShare/天天基金",
-                })
+                    nav_df = nav_df.sort_values('净值日期')
+                    vals = nav_df['单位净值'].dropna().values
+                    if len(vals) > 250:
+                        latest = float(vals[-1])
+                        perf['year1'] = round((latest/float(vals[-250])-1)*100, 1) if len(vals)>250 else None
+                        perf['year3'] = round((latest/float(vals[0])-1)*100, 1) if len(vals)>750 else None
+                experts.append({'name':name, 'title':style, 'fund_name':fname, 'bio':bio, 'performance':perf, 'type':'基金经理', 'source':'AKShare/天天基金'})
             except Exception as e:
-                logger.warning(f"Expert tracker failed for {name}: {e}")
+                logger.warning(f'Tracker failed for {name}: {e}')
+
+        # Economists & analysts
+        for e in [
+            {'name':'任泽平', 'title':'著名经济学家', 'bio':'前恒大首席经济学家，以新周期理论闻名，对宏观政策和房地产周期有深度研究', 'type':'经济学家'},
+            {'name':'洪灏', 'title':'思睿集团首席经济学家', 'bio':'前交银国际研究主管，CFA持证人，多次精准预判A股关键转折点', 'type':'经济学家'},
+            {'name':'李蓓', 'title':'半夏投资创始人', 'bio':'私募行业少有的女性掌门人，宏观对冲策略，擅长大类资产配置', 'type':'宏观对冲'},
+        ]:
+            experts.append({**e, 'performance': {'year1': None, 'year3': None}, 'source': '公开资料'})
+
+        # Media & independent investors
+        for m in [
+            {'name':'林园', 'title':'民间投资传奇', 'bio':'从8000元到百亿身家，极度看好消费和医药，嘴巴经济理论提出者', 'type':'民间投资家'},
+            {'name':'但斌', 'title':'东方港湾董事长', 'bio':'中国价值投资旗帜人物，时间的玫瑰理念提出者，穿越牛熊坚持理念', 'type':'价值投资家'},
+        ]:
+            experts.append({**m, 'performance': {'year1': None, 'year3': None}, 'source': '公开资料'})
 
         return experts
 

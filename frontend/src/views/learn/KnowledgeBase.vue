@@ -9,7 +9,7 @@ const router = useRouter()
 const categories = ref<any[]>([])
 const articles = ref<any[]>([])
 const loading = ref(true)
-const selectedCategory = ref('')
+const selectedCategoryId = ref<number | null>(null)
 
 const difficultyLabels: Record<string, string> = { beginner: '入门', intermediate: '进阶', advanced: '高级' }
 const iconMap: Record<string, string> = {
@@ -17,9 +17,13 @@ const iconMap: Record<string, string> = {
 }
 
 const filteredArticles = computed(() => {
-  if (!selectedCategory.value) return articles.value
-  return articles.value.filter(a => a.category === selectedCategory.value)
+  if (!selectedCategoryId.value) return articles.value
+  return articles.value.filter(a => a.category_id === selectedCategoryId.value)
 })
+
+function selectCategory(id: number | null) {
+  selectedCategoryId.value = selectedCategoryId.value === id ? null : id
+}
 
 onMounted(async () => {
   try {
@@ -33,9 +37,6 @@ onMounted(async () => {
   finally { loading.value = false }
 })
 
-function selectCategory(slug: string) {
-  selectedCategory.value = selectedCategory.value === slug ? '' : slug
-}
 </script>
 
 <template>
@@ -50,14 +51,14 @@ function selectCategory(slug: string) {
       <!-- Category chips — compact horizontal scroll -->
       <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         <button
-          @click="selectCategory('')"
+          @click="selectCategory(null)"
           class="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-          :class="!selectedCategory ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'"
+          :class="!selectedCategoryId ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'"
         >全部</button>
         <button v-for="cat in categories" :key="cat.id"
-          @click="selectCategory(cat.slug)"
+          @click="selectCategory(cat.id)"
           class="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1"
-          :class="selectedCategory === cat.slug ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'"
+          :class="selectedCategoryId === cat.id ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'"
         >{{ iconMap[cat.icon] || '' }} {{ cat.name }}</button>
       </div>
 
@@ -78,7 +79,7 @@ function selectCategory(slug: string) {
       <!-- Articles -->
       <section>
         <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
-          {{ selectedCategory ? '筛选结果' : '全部文章' }}
+          {{ selectedCategoryId ? '筛选结果' : '全部文章' }}
           <span class="text-xs font-normal text-gray-400">({{ filteredArticles.length }} 篇)</span>
         </h2>
         <div v-if="loading" class="space-y-2">

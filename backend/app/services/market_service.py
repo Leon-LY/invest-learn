@@ -306,9 +306,21 @@ class MarketService:
         idx_result = await self.db.execute(idx_stmt)
         indices = []
         for dp, idx in idx_result.all():
+            change = _to_float(dp.change_pct)
+            # Fallback: compute from previous day close if change_pct is null
+            if change is None:
+                prev_stmt = select(IndexDailyPrice.close).where(
+                    IndexDailyPrice.index_id == idx.id,
+                    IndexDailyPrice.trade_date < today
+                ).order_by(desc(IndexDailyPrice.trade_date)).limit(1)
+                prev_result = await self.db.execute(prev_stmt)
+                prev_close = prev_result.scalar()
+                cur_close = _to_float(dp.close)
+                if prev_close and cur_close and prev_close > 0:
+                    change = round((cur_close / float(prev_close) - 1) * 100, 2)
             indices.append({
                 "code": idx.code, "name": idx.name, "market": idx.market,
-                "close": _to_float(dp.close), "change_pct": _to_float(dp.change_pct),
+                "close": _to_float(dp.close), "change_pct": change,
             })
 
         # If no today data, get most recent

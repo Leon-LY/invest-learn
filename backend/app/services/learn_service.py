@@ -171,6 +171,7 @@ class LearnService:
         return {
             "id": a.id, "title": a.title, "slug": a.slug, "summary": a.summary,
             "level": a.level, "tags": a.tags or [], "estimated_read": a.estimated_read,
+            "category_id": a.category_id,
             "view_count": a.view_count or 0,
             "published_at": a.published_at.isoformat() if a.published_at else None,
         }

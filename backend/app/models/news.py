@@ -48,6 +48,23 @@ class NewsArticle(Base):
     )
 
 
+class Viewpoint(Base):
+    """User-submitted viewpoints from social media, analyzed by DeepSeek."""
+    __tablename__ = "viewpoints"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source: Mapped[str] = mapped_column(String(50), default="用户投稿")  # 抖音/小红书/微博/用户投稿
+    author: Mapped[Optional[str]] = mapped_column(String(100))  # UP主名称
+    content: Mapped[str] = mapped_column(Text, nullable=False)  # 原始内容
+    ai_title: Mapped[Optional[str]] = mapped_column(String(200))  # AI生成标题
+    ai_summary: Mapped[Optional[str]] = mapped_column(Text)  # AI摘要
+    direction: Mapped[Optional[str]] = mapped_column(String(10))  # 看多/看空/中性
+    confidence: Mapped[Optional[int]] = mapped_column(Integer)  # AI信心度
+    related_funds: Mapped[Optional[dict]] = mapped_column(JSONB, default=list)  # 关联基金代码
+    tags: Mapped[Optional[dict]] = mapped_column(JSONB, default=list)  # 标签
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class NewsAnalysis(Base):
     """AI-generated impact analysis for each news article."""
     __tablename__ = "news_analyses"

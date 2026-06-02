@@ -110,6 +110,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '大佬详情', layout: 'default' },
   },
   {
+    path: '/viewpoints',
+    name: 'ViewpointWall',
+    component: () => import('@/views/analysis/ViewpointWall.vue'),
+    meta: { title: '民间观点墙', layout: 'default' },
+  },
+  {
     path: '/portfolio-analysis',
     name: 'PortfolioAnalysis',
     component: () => import('@/views/analysis/PortfolioAnalysis.vue'),

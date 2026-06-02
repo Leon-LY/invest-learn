@@ -11,4 +11,6 @@ export const newsApi = {
   getExpertPredictionDetail(id: string) { return client.get(`/news/expert-predictions/${id}`) },
   getExpertTracker() { return client.get('/news/expert-tracker') },
   getExpertDetail(id: string) { return client.get(`/news/expert-tracker/${id}`) },
+  submitViewpoint(data: Record<string,any>) { return client.post('/news/viewpoints', data) },
+  getViewpoints(limit=20) { return client.get('/news/viewpoints', { params: { limit } }) },
 }

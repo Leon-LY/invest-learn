@@ -4,7 +4,7 @@ import random
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, or_
-from app.models.news import NewsSource, NewsArticle, NewsAnalysis
+from app.models.news import NewsSource, NewsArticle, NewsAnalysis, Viewpoint
 from app.services.llm_service import llm_service
 
 logger = logging.getLogger(__name__)
@@ -664,6 +664,53 @@ class NewsService:
             "generated_by": a.generated_by,
             "generated_at": a.generated_at.isoformat() if a.generated_at else None,
         } for a, art in rows]
+
+    async def create_viewpoint(self, content: str, source: str = "用户投稿", author: str = "") -> dict:
+        """Submit a user viewpoint and auto-analyze with DeepSeek."""
+        if not content.strip():
+            return {"error": "内容不能为空"}
+
+        # DeepSeek analysis
+        ai_result = None
+        try:
+            prompt = f"""分析以下投资观点，提取关键信息。来源：{source}，作者：{author or '未知'}
+
+内容：{content}
+
+返回JSON：
+{{"title":"15字以内的标题","summary":"50-80字摘要","direction":"看多/看空/中性","confidence":50-90,"tags":["标签1","标签2"],"relatedFunds":["基金代码1","基金代码2"]}}"""
+            ai_result = await llm_service.analyze_news(prompt, None, None)
+        except Exception as e:
+            logger.warning(f"Viewpoint AI analysis failed: {e}")
+
+        vp = Viewpoint(
+            source=source, author=author or None, content=content,
+            ai_title=ai_result.get("title", "") if ai_result else None,
+            ai_summary=ai_result.get("summary", ai_result.get("short_term", "")) if ai_result else None,
+            direction=ai_result.get("direction", ai_result.get("impact_level", "中性")) if ai_result else None,
+            confidence=int(ai_result.get("confidence", ai_result.get("impact_score", 50))) if ai_result else None,
+            related_funds=ai_result.get("relatedFunds", ai_result.get("affected_funds", [])) if ai_result else [],
+            tags=ai_result.get("tags", ai_result.get("key_points", [])) if ai_result else [],
+        )
+        self.db.add(vp)
+        await self.db.commit()
+        await self.db.refresh(vp)
+        return self._viewpoint_to_dict(vp)
+
+    async def list_viewpoints(self, limit: int = 20) -> list[dict]:
+        stmt = select(Viewpoint).order_by(desc(Viewpoint.created_at)).limit(limit)
+        result = await self.db.execute(stmt)
+        return [self._viewpoint_to_dict(v) for v in result.scalars().all()]
+
+    @staticmethod
+    def _viewpoint_to_dict(v: Viewpoint) -> dict:
+        return {
+            "id": v.id, "source": v.source, "author": v.author,
+            "content": v.content, "ai_title": v.ai_title,
+            "ai_summary": v.ai_summary, "direction": v.direction,
+            "confidence": v.confidence, "related_funds": v.related_funds or [],
+            "tags": v.tags or [], "created_at": v.created_at.isoformat() if v.created_at else None,
+        }
 
     async def get_sources(self) -> list[dict]:
         """Get all news sources with article count."""

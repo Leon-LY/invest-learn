@@ -79,6 +79,22 @@ async def get_expert_detail(expert_id: str, service: NewsService = Depends(get_n
     return {"id":expert_id,"name":expert_id,"type":"加载中","title":"数据生成中，请稍后刷新","related_news":[],"related_analyses":[],"operations":[],"fund_operations":[],"predictive_view":None,"nav_history":[],"size_history":[]}
 
 
+@router.post("/viewpoints")
+async def create_viewpoint(data: dict, service: NewsService = Depends(get_news_service)):
+    """Submit a viewpoint + auto AI analysis."""
+    return await service.create_viewpoint(
+        content=data.get("content", ""),
+        source=data.get("source", "用户投稿"),
+        author=data.get("author", ""),
+    )
+
+
+@router.get("/viewpoints")
+async def list_viewpoints(limit: int = 20, service: NewsService = Depends(get_news_service)):
+    """List user-submitted viewpoints."""
+    return await service.list_viewpoints(limit)
+
+
 @router.get("/sources/list")
 async def get_sources(service: NewsService = Depends(get_news_service)):
     """Get available news sources."""

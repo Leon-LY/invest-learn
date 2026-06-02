@@ -67,11 +67,12 @@ onMounted(async () => {
               <div class="text-[10px] text-gray-400 mt-0.5">{{ expert.fund_code }}</div>
             </div>
           </div>
-          <!-- NAV mini chart -->
-          <div v-if="expert.nav_history?.length" class="mt-3 h-24 flex items-end gap-px">
-            <div v-for="(n, i) in expert.nav_history.slice(-60)" :key="i" class="flex-1 rounded-t-sm"
-              :class="(n.daily_return||0)>=0?'bg-up/50':'bg-down/50'"
-              :style="{height: expert.nav_history[0]?.nav ? `${15 + Math.abs((n.nav - expert.nav_history[0].nav) / expert.nav_history[0].nav * 100) * 0.5 + 20}%` : '30%'}" />
+          <!-- NAV mini chart with hover tooltips -->
+          <div v-if="expert.nav_history?.length" class="mt-3 h-24 flex items-end gap-px group">
+            <div v-for="(n, i) in expert.nav_history.slice(-60)" :key="i" class="flex-1 rounded-t-sm cursor-pointer transition-all hover:opacity-80"
+              :class="(n.daily_return||0)>=0?'bg-up/50 hover:bg-up/80':'bg-down/50 hover:bg-down/80'"
+              :style="{height: expert.nav_history[0]?.nav ? `${15 + ((n.nav - expert.nav_history[0].nav) / expert.nav_history[0].nav * 100) * 0.5 + 20}%` : '30%'}"
+              :title="`${n.date}: ${n.nav} (${(n.daily_return||0)>=0?'+':''}${(n.daily_return||0)?.toFixed(2)}%)`" />
           </div>
         </div>
 
@@ -115,34 +116,22 @@ onMounted(async () => {
 
         <!-- ===== 3.5 POSITION CHANGES (QUARTERLY) ===== -->
         <div v-if="expert.position_changes?.length" class="card p-4">
-          <h3 class="text-sm font-semibold dark:text-white mb-3">🔄 季度交易记录</h3>
-          <p class="text-xs text-gray-400 mb-2">基金经理实际买卖操作（来自季报披露的累计买入/卖出金额）</p>
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs">
-              <thead>
-                <tr class="text-gray-400 border-b border-gray-100 dark:border-gray-800">
-                  <th class="text-left py-2">股票</th>
-                  <th class="text-left py-2">代码</th>
-                  <th class="text-left py-2">操作</th>
-                  <th class="text-right py-2">金额</th>
-                  <th class="text-right py-2">占比</th>
-                  <th class="text-left py-2">季度</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="c in expert.position_changes.slice(0,12)" :key="c.code+c.quarter" class="border-b border-gray-50 dark:border-gray-800/30">
-                  <td class="py-2 dark:text-white">{{ c.stock }}</td>
-                  <td class="py-2 text-gray-400 font-mono">{{ c.code }}</td>
-                  <td class="py-2">
-                    <span class="px-1.5 py-0.5 rounded text-xs font-medium"
-                      :class="c.action==='买入'?'bg-up-bg text-up':'bg-down-bg text-down'">{{ c.action }}</span>
-                  </td>
-                  <td class="py-2 text-right text-gray-600 dark:text-gray-300">{{ c.amount }}</td>
-                  <td class="py-2 text-right text-gray-400">{{ c.ratio }}</td>
-                  <td class="py-2 text-gray-400">{{ c.quarter }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <h3 class="text-sm font-semibold dark:text-white mb-3">🔄 {{ expert.name }} 季度交易记录</h3>
+          <p class="text-xs text-gray-400 mb-2">基金经理实际买卖操作（季报披露）</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div v-for="c in expert.position_changes.slice(0,12)" :key="c.code+c.quarter"
+              class="p-3 rounded-lg text-sm"
+              :class="c.action==='买入'?'bg-red-50 dark:bg-red-950/10 border border-red-100 dark:border-red-900/30':'bg-green-50 dark:bg-green-950/10 border border-green-100 dark:border-green-900/30'">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-medium dark:text-white">{{ c.stock }}</span>
+                <span class="text-xs font-mono text-gray-400">{{ c.code }}</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-medium" :class="c.action==='买入'?'text-up':'text-down'">{{ c.action }} {{ c.amount }}</span>
+                <span class="text-gray-400">{{ c.ratio }}</span>
+              </div>
+              <div class="text-xs text-gray-400 mt-1.5">{{ c.quarter }}</div>
+            </div>
           </div>
         </div>
 
@@ -176,10 +165,11 @@ onMounted(async () => {
         <!-- ===== 4. SCALE TREND ===== -->
         <div v-if="expert.size_history?.length" class="card p-4">
           <h3 class="text-sm font-semibold dark:text-white mb-3">💰 规模变动（亿元）</h3>
-          <div class="flex items-end gap-2 h-20">
-            <div v-for="s in expert.size_history" :key="s.date" class="flex-1 flex flex-col items-center">
-              <div class="text-[10px] text-gray-500 tabular-nums mb-0.5">{{ (s.size/1e8).toFixed(0) }}</div>
-              <div class="w-full rounded-t-sm bg-primary/40" :style="{height: `${Math.max(8, (s.size/1e8)/Math.max(...expert.size_history.map((x:any)=>x.size/1e8))*100)}%`}" />
+          <div class="flex items-end gap-2 h-24">
+            <div v-for="s in expert.size_history" :key="s.date" class="flex-1 flex flex-col items-center cursor-pointer group" :title="`${s.date?.slice(0,7)}: ${(s.size/1e8).toFixed(1)}亿`">
+              <div class="text-[10px] text-gray-500 tabular-nums mb-0.5 font-medium">{{ (s.size/1e8).toFixed(0) }}亿</div>
+              <div class="w-full rounded-t-sm bg-primary/50 group-hover:bg-primary/80 transition-colors"
+                :style="{height: `${Math.max(12, (s.size/1e8)/Math.max(...expert.size_history.map((x:any)=>x.size/1e8))*100)}%`}" />
               <div class="text-[10px] text-gray-400 mt-0.5">{{ s.date?.slice(0,7) }}</div>
             </div>
           </div>

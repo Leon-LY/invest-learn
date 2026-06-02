@@ -60,11 +60,11 @@ const presetFunds = ['005827','161725','110027','510300','163406']
       <!-- Input card -->
       <div class="card p-5 space-y-4">
         <!-- Row 1: Platform + Author + Link -->
-        <div class="flex gap-3">
-          <select v-model="source" class="w-20 px-2 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white shrink-0">
+        <div class="grid grid-cols-2 gap-3">
+          <select v-model="source" class="px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white">
             <option v-for="p in platforms" :key="p" :value="p">{{ p }}</option>
           </select>
-          <input v-model="author" placeholder="UP主名称" class="w-32 px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white shrink-0" />
+          <input v-model="author" placeholder="UP主名称（选填）" class="px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white" />
         </div>
 
         <!-- Row 2: Link -->

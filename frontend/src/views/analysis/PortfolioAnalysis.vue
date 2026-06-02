@@ -20,9 +20,9 @@ function removeRow(i: number) { funds.value.splice(i, 1) }
 async function analyze() {
   loading.value = true; error.value = ''; result.value = null
   const items = funds.value
-    .filter(f => f.code.trim() && f.amount)
+    .filter(f => f.code.trim() && f.amount && !isNaN(parseFloat(f.amount)))
     .map(f => ({ code: f.code.trim(), amount: parseFloat(f.amount) }))
-  if (!items.length) { error.value = '请至少输入一只基金'; loading.value = false; return }
+  if (!items.length) { error.value = '请至少输入一只基金（并填写金额）'; loading.value = false; return }
   try {
     result.value = await marketApi.portfolioSummary(items)
   } catch(e) { error.value = '分析失败，请重试' }
@@ -91,7 +91,7 @@ const presetFunds = [
             </div>
             <div class="p-3 rounded-xl bg-green-50 dark:bg-green-950/20">
               <div class="text-xs text-gray-400">总金额</div>
-              <div class="text-xl font-bold dark:text-white">{{ (result.total_amount/10000).toFixed(1) }}万</div>
+              <div class="text-xl font-bold dark:text-white">{{ result.total_amount ? (result.total_amount/10000).toFixed(1)+'万' : '--' }}</div>
             </div>
             <div class="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/20">
               <div class="text-xs text-gray-400">风险评分</div>

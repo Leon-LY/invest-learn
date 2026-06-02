@@ -50,25 +50,15 @@ onMounted(async () => {
 
         <!-- ===== 2. PERFORMANCE HIGHLIGHTS ===== -->
         <div v-if="expert.performance_highlights?.latest_nav" class="card p-4">
-          <h3 class="text-sm font-semibold dark:text-white mb-3">📈 基金表现</h3>
-          <div class="grid grid-cols-3 gap-3 text-center">
-            <div class="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30">
-              <div class="text-xs text-gray-400 mb-1">最新净值</div>
-              <div class="text-xl font-bold dark:text-white tabular-nums">{{ expert.performance_highlights.latest_nav.toFixed(4) }}</div>
-              <div class="text-[10px] text-gray-400 mt-0.5">{{ expert.performance_highlights.nav_date }}</div>
-            </div>
-            <div class="p-3 rounded-xl" :class="(expert.performance_highlights.day_change||0)>=0?'bg-red-50 dark:bg-red-950/20':'bg-green-50 dark:bg-green-950/20'">
-              <div class="text-xs text-gray-400 mb-1">日涨跌</div>
-              <div :class="(expert.performance_highlights.day_change||0)>=0?'text-up':'text-down'" class="text-xl font-bold tabular-nums">{{ (expert.performance_highlights.day_change||0)>=0?'+':'' }}{{ expert.performance_highlights.day_change?.toFixed(2) }}%</div>
-            </div>
-            <div class="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/20">
-              <div class="text-xs text-gray-400 mb-1">基金类型</div>
-              <div class="text-sm font-bold dark:text-white">{{ expert.fund_name?.slice(0,6) || '--' }}</div>
-              <div class="text-[10px] text-gray-400 mt-0.5">{{ expert.fund_code }}</div>
-            </div>
+          <div class="flex items-center gap-3 mb-2">
+            <div class="text-2xl font-bold dark:text-white tabular-nums">{{ expert.performance_highlights.latest_nav.toFixed(4) }}</div>
+            <div :class="(expert.performance_highlights.day_change||0)>=0?'text-up':'text-down'" class="text-sm font-bold tabular-nums">{{ (expert.performance_highlights.day_change||0)>=0?'+':'' }}{{ expert.performance_highlights.day_change?.toFixed(2) }}%</div>
+            <span class="text-xs text-gray-400">{{ expert.performance_highlights.nav_date }}</span>
+            <span class="text-xs text-gray-300">|</span>
+            <span class="text-xs text-gray-400">{{ expert.fund_code }}</span>
           </div>
           <!-- NAV mini chart -->
-          <div v-if="expert.nav_history?.length" class="mt-3">
+          <div v-if="expert.nav_history?.length">
             <div class="h-24 flex items-end gap-px">
               <div v-for="(n, i) in expert.nav_history.slice(-60)" :key="i" class="flex-1 rounded-t-sm"
                 :class="(n.daily_return||0)>=0?'bg-up/50':'bg-down/50'"
@@ -76,7 +66,7 @@ onMounted(async () => {
             </div>
             <div class="flex justify-between text-[10px] text-gray-400 mt-1">
               <span>{{ expert.nav_history[0]?.date }}</span>
-              <span class="text-xs">净值区间 {{ expert.nav_history[0]?.nav?.toFixed(4) }} → {{ expert.nav_history[expert.nav_history.length-1]?.nav?.toFixed(4) }}</span>
+              <span>{{ expert.nav_history[0]?.nav?.toFixed(4) }} → {{ expert.nav_history[expert.nav_history.length-1]?.nav?.toFixed(4) }}</span>
               <span>{{ expert.nav_history[expert.nav_history.length-1]?.date }}</span>
             </div>
           </div>

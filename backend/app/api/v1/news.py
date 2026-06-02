@@ -20,24 +20,7 @@ async def get_news_list(
     return await service.get_news_list(category, source_id, sentiment, page, size)
 
 
-@router.get("/{article_id}")
-async def get_news_detail(article_id: int, service: NewsService = Depends(get_news_service)):
-    """Get full article detail (AI analysis loads separately)."""
-    result = await service.get_article_detail(article_id, include_analysis=False)
-    if not result:
-        raise HTTPException(status_code=404, detail="Article not found")
-    return result
-
-
-@router.get("/{article_id}/analysis")
-async def get_news_analysis(article_id: int, service: NewsService = Depends(get_news_service)):
-    """Get or generate AI analysis for a news article."""
-    article = await service.get_article_by_id(article_id)
-    if not article:
-        raise HTTPException(status_code=404, detail="Article not found")
-    analysis = await service._get_or_generate_analysis(article)
-    return analysis
-
+# ── Specific named routes must come BEFORE /{article_id} wildcard ──
 
 @router.get("/analyses")
 async def get_ai_analyses(limit: int = 10, service: NewsService = Depends(get_news_service)):
@@ -60,13 +43,12 @@ async def get_expert_predictions(limit: int = 6, service: NewsService = Depends(
     cached = await cache_get("analysis:expert_predictions")
     if cached:
         return cached[:limit]
-    # Fallback: generate live (slower, but ensures data availability)
     return await service.get_expert_predictions(limit)
 
 
 @router.get("/expert-tracker")
 async def get_expert_tracker(service: NewsService = Depends(get_news_service)):
-    """Get real fund manager data scraped from public sources (cached 1h)."""
+    """Get real expert data (cached 1h)."""
     from app.core.cache import cache_get, cache_set
     cached = await cache_get("analysis:expert_tracker")
     if cached:
@@ -87,3 +69,24 @@ async def get_sources(service: NewsService = Depends(get_news_service)):
 async def get_sentiment_stats(days: int = 7, service: NewsService = Depends(get_news_service)):
     """Get sentiment distribution."""
     return await service.get_sentiment_stats(days)
+
+
+# ── Wildcard routes (must be last) ──
+
+@router.get("/{article_id}")
+async def get_news_detail(article_id: int, service: NewsService = Depends(get_news_service)):
+    """Get full article detail (AI analysis loads separately)."""
+    result = await service.get_article_detail(article_id, include_analysis=False)
+    if not result:
+        raise HTTPException(status_code=404, detail="Article not found")
+    return result
+
+
+@router.get("/{article_id}/analysis")
+async def get_news_analysis(article_id: int, service: NewsService = Depends(get_news_service)):
+    """Get or generate AI analysis for a news article."""
+    article = await service.get_article_by_id(article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    analysis = await service._get_or_generate_analysis(article)
+    return analysis

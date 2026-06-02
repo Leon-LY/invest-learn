@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { newsApi } from '@/api/news'
 
@@ -45,8 +45,18 @@ async function submit() {
   finally { submitting.value = false }
 }
 
-const platforms = ['抖音', '小红书', 'B站', '微博', '雪球', '微信', '其他']
+const platforms = ['抖音', '小红书', 'B站', '微博', '雪球', '天天基金', '支付宝', '微信', '其他']
 const presetFunds = ['005827','161725','110027','510300','163406']
+const filterAuthor = ref('')
+
+const filteredViewpoints = computed(() => {
+  if (!filterAuthor.value) return viewpoints.value
+  return viewpoints.value.filter((v: any) => v.author === filterAuthor.value)
+})
+const uniqueAuthors = computed(() => {
+  const names = new Set(viewpoints.value.map((v: any) => v.author).filter(Boolean))
+  return [...names]
+})
 </script>
 
 <template>
@@ -105,17 +115,31 @@ const presetFunds = ['005827','161725','110027','510300','163406']
           class="shrink-0 text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-primary/10 hover:text-primary transition-colors">{{ c }}</button>
       </div>
 
+      <!-- Author filter -->
+      <div v-if="uniqueAuthors.length" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        <button @click="filterAuthor=''" class="shrink-0 text-xs px-3 py-1 rounded-full transition-all"
+          :class="!filterAuthor?'bg-primary text-white':'bg-gray-100 dark:bg-gray-800 text-gray-500'">全部</button>
+        <button v-for="a in uniqueAuthors" :key="a" @click="filterAuthor=a"
+          class="shrink-0 text-xs px-3 py-1 rounded-full transition-all"
+          :class="filterAuthor===a?'bg-primary text-white':'bg-gray-100 dark:bg-gray-800 text-gray-500'">{{ a }}</button>
+      </div>
+
+      <!-- Stats -->
+      <div v-if="filterAuthor" class="text-xs text-gray-400">
+        追踪 <span class="font-medium text-primary">{{ filterAuthor }}</span> · {{ filteredViewpoints.length }} 条记录
+      </div>
+
       <!-- List -->
       <div v-if="loading" class="space-y-3">
         <div v-for="i in 3" :key="i" class="skeleton h-24 rounded-xl" />
       </div>
-      <div v-else-if="!viewpoints.length" class="card p-10 text-center text-sm text-gray-400">
+      <div v-else-if="!filteredViewpoints.length" class="card p-10 text-center text-sm text-gray-400">
         <div class="text-4xl mb-3">💬</div>
         <p>还没有观点，快去录入第一个吧</p>
         <p class="text-xs mt-1">抖音/小红书/B站刷到的都行，截图也能分析</p>
       </div>
       <div v-else class="space-y-3">
-        <div v-for="v in viewpoints" :key="v.id" class="card p-4">
+        <div v-for="v in filteredViewpoints" :key="v.id" class="card p-4">
           <div class="flex items-center gap-2 mb-2 flex-wrap">
             <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">{{ v.source }}</span>
             <span v-if="v.author" class="text-xs text-gray-500 font-medium">{{ v.author }}</span>

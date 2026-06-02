@@ -10,6 +10,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 const router = useRouter()
 const activeTab = ref<'predictions' | 'ai' | 'experts'>('predictions')
 const realAnalyses = ref<any[]>([])
+const lastRefresh = ref('')
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 // Collect all predictions from all experts
@@ -28,7 +29,10 @@ const impactColors: Record<string, string> = {
 function goExpert(id: string) { router.push(`/analysis/expert/${id}`) }
 
 async function refreshAnalyses() {
-  try { realAnalyses.value = (await newsApi.getAnalyses(10)) as unknown as any[] } catch(e) {}
+  try {
+    realAnalyses.value = (await newsApi.getAnalyses(10)) as unknown as any[]
+    lastRefresh.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  } catch(e) {}
 }
 
 onMounted(() => {
@@ -90,8 +94,14 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
       <!-- ===== TAB 2: AI Analysis ===== -->
       <div v-if="activeTab === 'ai'" class="space-y-4">
         <!-- Real analyses from DeepSeek -->
-        <div v-if="realAnalyses.length" class="mb-2">
-          <div class="text-xs text-gray-400 mb-2">🤖 DeepSeek 实时分析（{{ realAnalyses.length }}条）</div>
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-gray-400">🤖 DeepSeek 实时分析（{{ realAnalyses.length }}条）{{ lastRefresh ? '· 更新于 ' + lastRefresh : '' }}</span>
+            <button @click="refreshAnalyses()" class="text-xs text-primary hover:underline">刷新</button>
+          </div>
+          <div v-if="!realAnalyses.length" class="card p-4 text-center text-xs text-gray-400">
+            {{ lastRefresh ? '暂无最新分析数据，请稍后刷新' : '正在加载...' }}
+          </div>
           <div v-for="a in realAnalyses.slice(0,6)" :key="'r'+a.id"
             @click="router.push(`/news/${a.news_id}`)"
             class="card p-4 cursor-pointer hover:shadow-md mb-3 border-l-4 border-l-primary">

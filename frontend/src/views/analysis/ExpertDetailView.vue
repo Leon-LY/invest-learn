@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { newsApi } from '@/api/news'
 
 const route = useRoute()
+const router = useRouter()
 const expert = ref<any>(null)
 const loading = ref(true)
 
@@ -21,34 +22,50 @@ onMounted(async () => {
   <AppShell showBack>
     <div class="max-w-3xl mx-auto px-4 py-5 space-y-4">
       <div v-if="loading" class="space-y-3">
-        <div v-for="i in 4" :key="i" class="skeleton h-20 rounded-xl" />
+        <div v-for="i in 4" :key="i" class="skeleton h-24 rounded-xl" />
       </div>
 
-      <div v-else-if="expert?.error" class="card p-6 text-center text-gray-400 text-sm">{{ expert.error }}</div>
+      <div v-else-if="!expert || expert.error" class="card p-6 text-center text-gray-400 text-sm">{{ expert?.error || '暂无数据' }}</div>
 
-      <div v-else-if="expert" class="space-y-4">
-        <!-- Header -->
+      <div v-else class="space-y-4">
+        <!-- Profile header -->
         <div class="card p-5">
-          <div class="flex items-start gap-3">
+          <div class="flex items-start gap-4">
             <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white font-bold text-xl shrink-0">{{ expert.name?.[0] }}</div>
             <div>
               <h1 class="text-lg font-bold dark:text-white">{{ expert.name }}</h1>
-              <p class="text-sm text-gray-400 mt-0.5">{{ expert.type || '基金经理' }} · {{ expert.bio }}</p>
-              <p v-if="expert.fund_code" class="text-xs text-gray-400 mt-1">管理基金：{{ expert.fund_name }}（{{ expert.fund_code }}）</p>
-              <p v-if="expert.note" class="text-xs text-gray-400 mt-1">⚠️ {{ expert.note }}</p>
+              <p class="text-sm text-gray-400">{{ expert.title }}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{{ expert.type }}</span>
+                <span v-if="expert.fund_code" class="text-xs text-gray-400">{{ expert.fund_code }}</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">{{ expert.bio }}</p>
             </div>
           </div>
         </div>
 
-        <!-- NAV Chart (fund managers only) -->
+        <!-- Predictive view from DeepSeek -->
+        <div v-if="expert.predictive_view?.predictions?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">🔮 DeepSeek 预测观点（{{ expert.predictive_view.predictions.length }}条）</h3>
+          <div class="space-y-2">
+            <div v-for="(p, i) in expert.predictive_view.predictions" :key="i"
+              class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <p class="text-xs text-gray-400 mb-1">📰 {{ p.news_title }}</p>
+              <p class="text-sm font-medium dark:text-white">{{ p.title }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ p.content }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- NAV Chart -->
         <div v-if="expert.nav_history?.length" class="card p-4">
           <h3 class="text-sm font-semibold dark:text-white mb-3">📈 净值走势（近90日）</h3>
-          <div class="h-40 flex items-end gap-px">
+          <div class="h-32 flex items-end gap-px">
             <div v-for="(n, i) in expert.nav_history.slice(-60)" :key="i"
               class="flex-1 rounded-t-sm transition-all"
               :class="(n.daily_return||0)>=0?'bg-up/60':'bg-down/60'"
-              :style="{ height: `${30 + (n.nav - expert.nav_history[0].nav) / expert.nav_history[0].nav * 100 + 20}%` }"
-              :title="`${n.date}: ${n.nav} (${(n.daily_return||0)>=0?'+':''}${(n.daily_return||0)?.toFixed(2)}%)`" />
+              :style="{ height: n.nav && expert.nav_history[0]?.nav ? `${25 + ((n.nav - expert.nav_history[0].nav) / expert.nav_history[0].nav * 100) * 0.8 + 25}%` : '30%' }"
+              :title="`${n.date}: ${n.nav}`" />
           </div>
           <div class="flex justify-between text-[10px] text-gray-400 mt-1">
             <span>{{ expert.nav_history[0]?.date }}</span>
@@ -56,25 +73,56 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Fund Size History -->
+        <!-- Size trend -->
         <div v-if="expert.size_history?.length" class="card p-4">
           <h3 class="text-sm font-semibold dark:text-white mb-3">💰 规模变动</h3>
           <div class="space-y-2">
-            <div v-for="s in expert.size_history" :key="s.date" class="flex items-center justify-between text-sm">
+            <div v-for="s in expert.size_history" :key="s.date" class="flex justify-between text-sm">
               <span class="text-gray-400">{{ s.date }}</span>
-              <span class="font-medium dark:text-white">{{ (s.size / 1e8).toFixed(1) }}亿</span>
+              <span class="font-medium dark:text-white">{{ (s.size/1e8).toFixed(1) }}亿</span>
             </div>
           </div>
         </div>
 
-        <!-- Operations -->
+        <!-- Operations timeline -->
         <div v-if="expert.operations?.length" class="card p-4">
-          <h3 class="text-sm font-semibold dark:text-white mb-3">📋 近期动态</h3>
+          <h3 class="text-sm font-semibold dark:text-white mb-3">📋 近期动态 & 分析</h3>
           <div class="space-y-2">
-            <div v-for="(op, i) in expert.operations" :key="i" class="flex items-start gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <span class="text-xs text-gray-400 w-20 shrink-0">{{ op.date }}</span>
-              <span class="text-xs font-medium text-gray-600 dark:text-gray-300 w-16 shrink-0">{{ op.action }}</span>
-              <span class="text-xs text-gray-500 dark:text-gray-400">{{ op.detail }}</span>
+            <div v-for="(op, i) in expert.operations" :key="i" class="flex items-start gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-xs">
+              <span class="text-gray-400 w-20 shrink-0">{{ op.date }}</span>
+              <span class="font-medium text-gray-600 dark:text-gray-300 w-24 shrink-0">{{ op.action }}</span>
+              <span class="text-gray-500 dark:text-gray-400">{{ op.detail }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related AI Analyses -->
+        <div v-if="expert.related_analyses?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">🤖 AI 分析（{{ expert.related_analyses.length }}条）</h3>
+          <div class="space-y-2">
+            <div v-for="(a, i) in expert.related_analyses.slice(0,6)" :key="i"
+              class="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-xs">
+              <span class="px-1.5 py-0.5 rounded text-xs font-medium"
+                :class="a.impact_level?.includes('利好')?'bg-up-bg text-up':a.impact_level?.includes('利空')?'bg-down-bg text-down':'bg-gray-100 text-gray-500'">{{ a.impact_level }}</span>
+              <span class="text-gray-500 dark:text-gray-400 line-clamp-1">{{ a.short_term }}</span>
+              <span class="text-gray-300 dark:text-gray-600 shrink-0 ml-auto">{{ a.generated_by==='deepseek'?'🤖':'' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related news -->
+        <div v-if="expert.related_news?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">📰 相关新闻（{{ expert.related_news.length }}条）</h3>
+          <div class="space-y-2">
+            <div v-for="n in expert.related_news.slice(0,8)" :key="n.id"
+              @click="router.push(`/news/${n.id}`)"
+              class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+              <p class="text-sm dark:text-white line-clamp-2">{{ n.title }}</p>
+              <div class="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                <span>{{ n.source }}</span>
+                <span>·</span>
+                <span>{{ n.published_at?.slice(0,10) }}</span>
+              </div>
             </div>
           </div>
         </div>

@@ -338,84 +338,132 @@ class NewsService:
         return experts
 
     async def get_expert_detail(self, expert_id: str) -> dict:
-        """Get detailed expert profile with operations, performance, and holdings."""
+        """Get comprehensive expert detail with news, analyses, performance, and operations."""
         import asyncio
+        from app.core.cache import cache_get
 
-        # Map expert_id to fund code for fund managers
         manager_map = {
-            "zhangkun": ("005827", "zhangkun", "张坤", "易方达蓝筹精选"),
-            "xiezhiyu": ("163406", "xiezhiyu", "谢治宇", "兴全合润"),
-            "gelan": ("001475", "gelan", "葛兰", "中欧医疗健康"),
-            "houhao": ("161725", "houhao", "侯昊", "招商中证白酒"),
+            "zhangkun": ("005827", "zhangkun", "张坤", "易方达蓝筹精选", "价值投资·消费龙头", "公募一哥，管理规模曾超千亿。以重仓白酒和互联网平台闻名，坚持长期持有伟大企业。代表作易方达蓝筹精选5年年化超15%。"),
+            "xiezhiyu": ("163406", "xiezhiyu", "谢治宇", "兴全合润", "均衡配置·性价比", "兴全基金灵魂人物，不追热点不赌单一赛道。牛熊市中均表现稳健，注重持有体验，回撤控制出色。"),
+            "gelan": ("001475", "gelan", "葛兰", "中欧医疗健康", "医药赛道·深度研究", "美国西北大学生物医学博士，对创新药产业链有远超同行的理解。经历医药板块大幅调整仍在坚守，逆向加仓。"),
+            "houhao": ("161725", "houhao", "侯昊", "招商中证白酒", "指数增强·白酒专家", "管理国内规模最大的白酒主题基金，对白酒行业周期有独到判断。"),
         }
 
+        non_manager = {
+            "renzeping": ("renzeping","任泽平","经济学家","泽平宏观创始人","前恒大首席经济学家，国务院发展研究中心宏观部研究室副主任。以新周期理论闻名，对宏观政策和房地产周期有深度研究。"),
+            "honghao": ("honghao","洪灏","经济学家","思睿集团首席经济学家","前交银国际研究主管，CFA持证人。自主研发市场情绪和周期模型，多次精准预判A股关键转折点。"),
+            "libei": ("libei","李蓓","宏观对冲","半夏投资创始人","私募行业少有的女性掌门人，以宏观对冲策略闻名。擅长从宏观到微观的大类资产配置，判断犀利。"),
+            "linyuan": ("linyuan","林园","民间投资家","林园投资董事长","从8000元到百亿身家的投资传奇。极度看好消费和医药赛道，嘴巴经济理论提出者。"),
+            "danbin": ("danbin","但斌","价值投资家","东方港湾董事长","中国价值投资旗帜人物，时间的玫瑰理念提出者。重仓茅台腾讯十余年，穿越牛熊坚持理念。"),
+        }
+
+        # Find related news from DB
+        expert_names = {
+            "zhangkun":"张坤","xiezhiyu":"谢治宇","gelan":"葛兰","houhao":"侯昊",
+            "renzeping":"任泽平","honghao":"洪灏","libei":"李蓓","linyuan":"林园","danbin":"但斌",
+        }
+        name = expert_names.get(expert_id, "")
+
+        related_news = []
+        if name:
+            stmt = select(NewsArticle).where(
+                or_(NewsArticle.title.ilike(f"%{name}%"), NewsArticle.summary.ilike(f"%{name}%"))
+            ).order_by(desc(NewsArticle.published_at)).limit(10)
+            result = await self.db.execute(stmt)
+            related_news = [self._to_item(a) for a in result.scalars().all()]
+
+        # Related AI analyses
+        related_analyses = []
+        if related_news:
+            news_ids = [n["id"] for n in related_news[:5]]
+            ana_stmt = select(NewsAnalysis).where(NewsAnalysis.news_id.in_(news_ids)).limit(10)
+            ana_result = await self.db.execute(ana_stmt)
+            for a in ana_result.scalars().all():
+                related_analyses.append({
+                    "news_id": a.news_id,
+                    "impact_level": a.impact_level,
+                    "impact_score": a.impact_score,
+                    "short_term": a.short_term or "",
+                    "action_advice": a.action_advice or "",
+                    "generated_by": a.generated_by,
+                })
+
+        # Build base profile
         if expert_id in manager_map:
-            code, eid, name, fname = manager_map[expert_id]
-            ops = []
+            code, eid, ename, fname, style, bio = manager_map[expert_id]
+            profile = {
+                "id": expert_id, "name": ename, "type": "基金经理",
+                "title": f"{fname} · {style}", "bio": bio,
+                "fund_name": fname, "fund_code": code,
+            }
+        elif expert_id in non_manager:
+            eid, ename, etype, etitle, ebio = non_manager[expert_id]
+            profile = {
+                "id": expert_id, "name": ename, "type": etype,
+                "title": etitle, "bio": ebio,
+            }
+        else:
+            return {"id": expert_id, "error": "未找到该专家"}
+
+        # Add operations: recent AI analyses + related news + predictions
+        operations = []
+        for a in related_analyses[:5]:
+            operations.append({
+                "date": "", "action": f"AI分析: {a['impact_level']}",
+                "detail": a["short_term"][:100],
+            })
+        for n in related_news[:3]:
+            operations.append({
+                "date": (n.get("published_at") or "")[:10],
+                "action": "相关新闻",
+                "detail": n.get("title", "")[:100],
+            })
+
+        # Get predictive views from cache
+        pred_view = None
+        cached_preds = await cache_get("analysis:expert_predictions")
+        if cached_preds:
+            for p in cached_preds:
+                if p.get("id") == expert_id:
+                    pred_view = p
+                    break
+
+        result = {
+            **profile,
+            "related_news": related_news[:8],
+            "related_analyses": related_analyses[:8],
+            "operations": operations[:10],
+            "predictive_view": pred_view,
+            "nav_history": [],
+            "size_history": [],
+        }
+
+        # Try to add fund performance data
+        if expert_id in manager_map:
+            code = manager_map[expert_id][0]
             try:
                 import akshare as ak
-                # Fund NAV history for chart
                 nav_df = await asyncio.to_thread(ak.fund_open_fund_info_em, symbol=code, indicator="单位净值走势")
-                nav_history = []
                 if nav_df is not None and not nav_df.empty:
                     nav_df = nav_df.sort_values("净值日期")
                     for _, row in nav_df.tail(90).iterrows():
-                        nav_history.append({
+                        result["nav_history"].append({
                             "date": str(row.get("净值日期", ""))[:10],
                             "nav": float(row.get("单位净值", 0)),
                             "daily_return": float(row.get("日增长率", 0)) if row.get("日增长率") else None,
                         })
 
-                # Fund size history
                 size_df = await asyncio.to_thread(ak.fund_open_fund_info_em, symbol=code, indicator="季度规模变动")
-                size_history = []
                 if size_df is not None and not size_df.empty:
-                    for _, row in size_df.tail(4).iterrows():
-                        size_history.append({
+                    for _, row in size_df.tail(6).iterrows():
+                        result["size_history"].append({
                             "date": str(row.get("报告期", ""))[:10],
                             "size": float(row.get("资产规模", row.get("期末总份额", 0)) or 0),
                         })
-
-                # Simulated recent operations from NAV changes
-                if nav_df is not None and not nav_df.empty:
-                    nav_df = nav_df.tail(60)
-                    rets = nav_df["日增长率"].dropna().values
-                    if len(rets) > 10:
-                        best_idx = rets.argmax()
-                        worst_idx = rets.argmin()
-                        ops = [
-                            {"date": str(nav_df.iloc[best_idx].get("净值日期", ""))[:10], "action": "收益亮点",
-                             "detail": f"单日涨幅 {float(rets[best_idx]):.2f}%，近60日最佳表现日"},
-                            {"date": str(nav_df.iloc[worst_idx].get("净值日期", ""))[:10], "action": "波动回撤",
-                             "detail": f"单日跌幅 {float(rets[worst_idx]):.2f}%，近60日最大回撤日"},
-                        ]
-
-                return {
-                    "id": expert_id,
-                    "name": name,
-                    "fund_name": fname,
-                    "fund_code": code,
-                    "nav_history": nav_history,
-                    "size_history": size_history,
-                    "operations": ops,
-                }
             except Exception as e:
-                logger.warning(f"Expert detail failed for {expert_id}: {e}")
-                return {"id": expert_id, "name": name, "error": str(e)}
+                logger.warning(f"Fund data failed for {expert_id}: {e}")
 
-        # Non-fund-manager experts
-        non_manager = {
-            "renzeping": {"name":"任泽平","type":"经济学家","bio":"前恒大首席经济学家，国务院发展研究中心出身"},
-            "honghao": {"name":"洪灏","type":"经济学家","bio":"前交银国际研究主管，CFA持证人"},
-            "libei": {"name":"李蓓","type":"宏观对冲","bio":"半夏投资创始人，宏观对冲策略"},
-            "linyuan": {"name":"林园","type":"民间投资家","bio":"从8000元到百亿身家的投资传奇"},
-            "danbin": {"name":"但斌","type":"价值投资家","bio":"东方港湾董事长，时间的玫瑰"},
-        }
-        if expert_id in non_manager:
-            info = non_manager[expert_id]
-            return {"id": expert_id, **info, "nav_history": [], "operations": [], "note": "该大佬非公募基金经理，无公开持仓数据"}
-
-        return {"id": expert_id, "name": expert_id, "error": "未找到该专家"}
+        return result
 
     async def get_recent_analyses(self, limit: int = 10) -> list[dict]:
         """Get recent AI analyses with article info."""

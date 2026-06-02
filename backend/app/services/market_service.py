@@ -335,31 +335,28 @@ class MarketService:
                     "close": _to_float(dp.close), "change_pct": _to_float(dp.change_pct),
                 })
 
-        # Fallback: if DB has no indices at all, fetch live from East Money
+        # Fallback: fetch live from Sina API (most reliable inside China)
         if not indices:
             try:
-                import httpx, json
-                codes = {"000001": "上证指数", "399001": "深证成指", "399006": "创业板指", "000300": "沪深300"}
-                for code, name in codes.items():
-                    try:
-                        url = f"http://push2.eastmoney.com/api/qt/stock/get?secid=1.{code}&fields=f43,f170"
-                        resp = httpx.get(url, timeout=(3, 6))
-                        if resp.status_code == 200:
-                            data = resp.json().get("data", {}) or {}
-                            close = data.get("f43")
-                            change_pct = data.get("f170")
-                            if close:
-                                indices.append({
-                                    "code": code, "name": name, "market": "A",
-                                    "close": close / 100 if isinstance(close, (int, float)) and close > 100 else close,
-                                    "change_pct": change_pct / 100 if isinstance(change_pct, (int, float)) and change_pct and abs(change_pct) > 100 else (change_pct if change_pct else None),
-                                })
-                    except Exception:
-                        continue
+                import httpx, re
+                resp = httpx.get("http://hq.sinajs.cn/list=sh000001,sz399001,sz399006,sh000300",
+                    headers={"Referer": "https://finance.sina.com.cn"},
+                    timeout=(5, 8))
+                if resp.status_code == 200:
+                    for line in resp.text.strip().split("\n"):
+                        parts = line.split('"')[1].split(",") if '"' in line else []
+                        if len(parts) < 4: continue
+                        name = parts[0]
+                        close = float(parts[1]) if parts[1] else None
+                        prev = float(parts[2]) if parts[2] else None
+                        change_pct = round((close/prev-1)*100, 2) if close and prev else None
+                        code_map = {"上证指数":"000001","深证成指":"399001","创业板指":"399006","沪深300":"000300"}
+                        code = code_map.get(name, name)
+                        indices.append({"code":code, "name":name, "market":"A", "close":close, "change_pct":change_pct})
             except Exception as e:
-                logger.warning(f"Live index fetch failed: {e}")
+                logger.warning(f"Sina index fetch failed: {e}")
 
-        # Last resort: provide placeholder data so frontend doesn't show "waiting"
+        # Last resort: hardcoded placeholder
         if not indices:
             indices = [
                 {"code": "000001", "name": "上证指数", "market": "A", "close": None, "change_pct": None},

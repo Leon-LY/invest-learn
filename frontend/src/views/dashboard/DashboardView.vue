@@ -71,8 +71,12 @@ const indexNames: Record<string,string> = {
         </div>
 
         <!-- Index row -->
-        <div v-if="summary.indices?.length" class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mb-2">
-          <div v-for="idx in summary.indices.slice(0,6)" :key="idx.code"
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mb-2">
+          <div v-for="idx in (summary.indices?.length ? summary.indices.slice(0,6) : [
+            {code:'000001',name:'上证',close:null,change_pct:null},
+            {code:'399001',name:'深证',close:null,change_pct:null},
+            {code:'000300',name:'沪深300',close:null,change_pct:null}
+          ])" :key="idx.code"
             class="text-center py-1.5 px-1 rounded-md bg-gray-50 dark:bg-gray-800/50">
             <div class="text-[10px] text-gray-400 truncate">{{ indexNames[idx.code] || idx.name?.slice(0,4) || '-' }}</div>
             <div class="text-xs font-bold text-gray-800 dark:text-gray-200 tabular-nums mt-0.5">{{ idx.close ?? '--' }}</div>
@@ -82,7 +86,6 @@ const indexNames: Record<string,string> = {
             <div v-else class="text-[10px] text-gray-400">--</div>
           </div>
         </div>
-        <div v-else class="text-center text-xs text-gray-400 mb-2">📡 正在获取行情数据...（每3分钟刷新）</div>
 
         <!-- One-liner: hot sectors + advice -->
         <div class="flex items-center gap-2 text-[11px] flex-wrap">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { experts, aiAnalyses } from '@/mock/experts'
@@ -10,6 +10,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 const router = useRouter()
 const activeTab = ref<'predictions' | 'ai' | 'experts'>('predictions')
 const realAnalyses = ref<any[]>([])
+let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 // Collect all predictions from all experts
 const allPredictions = experts.flatMap(e => e.predictions.map(p => ({ ...p, expertName: e.name, expertId: e.id, expertTitle: e.title })))
@@ -26,9 +27,15 @@ const impactColors: Record<string, string> = {
 
 function goExpert(id: string) { router.push(`/analysis/expert/${id}`) }
 
-onMounted(async () => {
+async function refreshAnalyses() {
   try { realAnalyses.value = (await newsApi.getAnalyses(10)) as unknown as any[] } catch(e) {}
+}
+
+onMounted(() => {
+  refreshAnalyses()
+  refreshTimer = setInterval(refreshAnalyses, 300000) // every 5 min
 })
+onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
 </script>
 
 <template>

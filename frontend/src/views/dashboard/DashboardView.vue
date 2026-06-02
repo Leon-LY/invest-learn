@@ -63,26 +63,27 @@ const indexNames: Record<string,string> = {
       </div>
 
       <!-- Market Overview — compact live data -->
-      <div v-if="summary" class="card p-3 bg-gradient-to-r from-primary/5 to-cyan-500/5 dark:from-primary/10 dark:to-transparent border-primary/10">
-        <!-- Header row: date + direction + advice -->
+      <div v-if="summary" class="card p-3 tech-border">
+        <!-- Header row -->
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold dark:text-white">{{ summary.date }} 周{{ summary.weekday }}</span>
+          <span class="text-xs font-bold text-gray-800 dark:text-gray-200">{{ summary.date }} 周{{ summary.weekday }}</span>
           <span class="px-2 py-0.5 text-[11px] font-medium rounded-full" :class="dirColors[summary.direction]">{{ summary.direction }}</span>
         </div>
 
-        <!-- Index row — compact -->
-        <div class="grid grid-cols-6 gap-1.5 mb-2">
-          <div v-for="idx in (summary.indices?.length ? summary.indices.slice(0,6) : [])" :key="idx.code" class="text-center p-1.5 rounded-md bg-white/60 dark:bg-white/5">
-            <div class="text-[10px] text-gray-400 leading-tight">{{ indexNames[idx.code] || idx.name?.slice(0,4) || '-' }}</div>
-            <div class="text-xs font-bold dark:text-white tabular-nums">{{ idx.close ?? '--' }}</div>
+        <!-- Index row — 3 columns on mobile, 6 on desktop -->
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mb-2">
+          <div v-for="idx in (summary.indices?.length ? summary.indices.slice(0,6) : [])" :key="idx.code"
+            class="text-center py-1.5 px-1 rounded-md bg-gray-50 dark:bg-gray-800/50">
+            <div class="text-[10px] text-gray-400 truncate">{{ indexNames[idx.code] || idx.name?.slice(0,4) || '-' }}</div>
+            <div class="text-xs font-bold text-gray-800 dark:text-gray-200 tabular-nums mt-0.5">{{ idx.close ?? '--' }}</div>
             <div v-if="idx.change_pct != null" :class="idx.change_pct>=0?'text-up':'text-down'" class="text-[10px] font-medium tabular-nums">
               {{ idx.change_pct>=0?'+':'' }}{{ idx.change_pct.toFixed(1) }}%
             </div>
-            <div v-else class="text-[10px] text-gray-300">--</div>
+            <div v-else class="text-[10px] text-gray-400">--</div>
           </div>
         </div>
 
-        <!-- One-liner analysis + hot sectors -->
+        <!-- One-liner: hot sectors + advice -->
         <div class="flex items-center gap-2 text-[11px] flex-wrap">
           <span class="text-gray-500 shrink-0">🔥</span>
           <span v-if="summary.sectors?.length" class="flex gap-1 overflow-x-auto no-scrollbar">

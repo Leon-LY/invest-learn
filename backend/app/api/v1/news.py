@@ -93,7 +93,12 @@ async def create_viewpoint(data: dict, service: NewsService = Depends(get_news_s
             from app.services.vision_service import analyze_image
             vision_result = await analyze_image(img_bytes)
             if vision_result:
-                content = vision_result.get("content", "") or vision_result.get("data_points", "")
+                content = vision_result.get("content", "")
+                # Append key points and numbers if available
+                if vision_result.get("key_points"):
+                    content += "\n\n要点: " + "; ".join(vision_result["key_points"])
+                if vision_result.get("numbers_extracted"):
+                    content += "\n\n数据: " + vision_result["numbers_extracted"]
                 if vision_result.get("data_points"):
                     content += "\n\n提取数据: " + vision_result["data_points"]
         except Exception as e:

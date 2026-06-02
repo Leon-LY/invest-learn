@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { watchlistApi } from '@/api/watchlist'
@@ -13,6 +13,7 @@ const watchlist = ref<any[]>([])
 const news = ref<NewsArticle[]>([])
 const summary = ref<any>(null)
 const greeting = ref('')
+let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 function formatTime(iso: string | undefined | null): string {
   if (!iso) return ''
@@ -25,12 +26,15 @@ function formatTime(iso: string | undefined | null): string {
   return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
+async function refreshSummary() { try { summary.value = await marketApi.getSummary() } catch(e){} }
+
 onMounted(async () => {
   const hour = new Date().getHours()
   greeting.value = hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好'
-  try { summary.value = await marketApi.getSummary() } catch(e){}
-  await Promise.all([fetchWatchlist(), fetchNews()])
+  await Promise.all([refreshSummary(), fetchWatchlist(), fetchNews()])
+  refreshTimer = setInterval(refreshSummary, 180000) // every 3 min
 })
+onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
 
 async function fetchWatchlist() { try { watchlist.value = ((await watchlistApi.getList()) as unknown as any[]) } catch(e){} }
 async function fetchNews() { try { news.value = ((await newsApi.getList({ page:1, size:4 })) as any).items || [] } catch(e){} }
@@ -58,51 +62,43 @@ const indexNames: Record<string,string> = {
         </p>
       </div>
 
-      <!-- Market Overview — real data -->
-      <div v-if="summary" class="card p-4 bg-gradient-to-br from-primary/5 to-cyan-500/5 dark:from-primary/10 dark:to-cyan-500/5 border-primary/10">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-bold dark:text-white">{{ summary.date }} 周{{ summary.weekday }}</span>
-          <span class="px-2 py-0.5 text-xs font-medium rounded-full" :class="dirColors[summary.direction]">{{ summary.direction }}</span>
+      <!-- Market Overview — compact live data -->
+      <div v-if="summary" class="card p-3 bg-gradient-to-r from-primary/5 to-cyan-500/5 dark:from-primary/10 dark:to-transparent border-primary/10">
+        <!-- Header row: date + direction + advice -->
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold dark:text-white">{{ summary.date }} 周{{ summary.weekday }}</span>
+          <span class="px-2 py-0.5 text-[11px] font-medium rounded-full" :class="dirColors[summary.direction]">{{ summary.direction }}</span>
         </div>
-        <!-- Index cards -->
-        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
-          <div v-for="idx in summary.indices?.slice(0,6)" :key="idx.code" class="text-center p-2 rounded-lg bg-white/60 dark:bg-white/5">
-            <div class="text-[10px] text-gray-400 truncate">{{ indexNames[idx.code] || idx.name.slice(0,4) }}</div>
-            <div class="text-sm font-bold dark:text-white tabular-nums mt-0.5">{{ idx.close }}</div>
-            <div :class="(idx.change_pct||0)>=0?'text-up':'text-down'" class="text-xs font-medium tabular-nums">
-              {{ (idx.change_pct||0)>=0?'+':'' }}{{ idx.change_pct?.toFixed(2) }}%
+
+        <!-- Index row — compact -->
+        <div class="grid grid-cols-6 gap-1.5 mb-2">
+          <div v-for="idx in (summary.indices?.length ? summary.indices.slice(0,6) : [])" :key="idx.code" class="text-center p-1.5 rounded-md bg-white/60 dark:bg-white/5">
+            <div class="text-[10px] text-gray-400 leading-tight">{{ indexNames[idx.code] || idx.name?.slice(0,4) || '-' }}</div>
+            <div class="text-xs font-bold dark:text-white tabular-nums">{{ idx.close ?? '--' }}</div>
+            <div v-if="idx.change_pct != null" :class="idx.change_pct>=0?'text-up':'text-down'" class="text-[10px] font-medium tabular-nums">
+              {{ idx.change_pct>=0?'+':'' }}{{ idx.change_pct.toFixed(1) }}%
             </div>
+            <div v-else class="text-[10px] text-gray-300">--</div>
           </div>
         </div>
-        <!-- Hot sectors -->
-        <div class="flex items-center gap-2 text-xs">
-          <span class="text-gray-400 shrink-0">🔥 热点</span>
-          <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
-            <span v-for="s in summary.sectors?.slice(0,4)" :key="s.name"
-              class="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium"
+
+        <!-- One-liner analysis + hot sectors -->
+        <div class="flex items-center gap-2 text-[11px] flex-wrap">
+          <span class="text-gray-500 shrink-0">🔥</span>
+          <span v-if="summary.sectors?.length" class="flex gap-1 overflow-x-auto no-scrollbar">
+            <span v-for="s in summary.sectors.slice(0,4)" :key="s.name"
+              class="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium"
               :class="(s.change_pct||0)>=0?'bg-up-bg text-up':'bg-down-bg text-down'"
-            >{{ s.name }} {{ (s.change_pct||0)>=0?'+':'' }}{{ s.change_pct?.toFixed(1) }}%</span>
-          </div>
+            >{{ s.name.slice(0,4) }} {{ (s.change_pct||0)>=0?'+':'' }}{{ s.change_pct?.toFixed(1) }}%</span>
+          </span>
+          <span v-else class="text-gray-400">等待行情数据...</span>
+          <span class="text-gray-300">·</span>
+          <span class="text-gray-500">💡 {{ summary.advice?.slice(0, 40) }}{{ summary.advice?.length > 40 ? '...' : '' }}</span>
         </div>
-        <!-- Beginner-friendly market analysis -->
-        <div class="mt-3 pt-3 border-t border-primary/10 space-y-2 text-xs">
-          <div class="flex items-start gap-2">
-            <span class="shrink-0 mt-0.5">🤖</span>
-            <div class="text-gray-600 dark:text-gray-400 leading-relaxed">
-              <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">AI 市场解读</p>
-              <p>今天市场整体<span class="font-medium" :class="summary.direction==='强势'||summary.direction==='偏强'?'text-up':'text-down'">{{ summary.direction }}</span>，{{ summary.indices?.filter((i:any)=>(i.change_pct||0)>0).length || 0 }}个主要指数上涨。{{ (summary.sentiment?.positive||0) > (summary.sentiment?.negative||0) ? '最近财经新闻中好消息更多，市场情绪比较积极。' : '近期市场消息偏负面，投资需更加谨慎。' }}</p>
-              <p class="mt-1">{{ summary.sectors?.filter((s:any)=>(s.change_pct||0)>0).slice(0,3).map((s:any)=>s.name).join('、') || '各大板块' }}{{ (summary.sectors?.filter((s:any)=>(s.change_pct||0)>0).length||0) > 0 ? ' 今天表现较好，资金在向这些方向集中。' : ' 今天整体平淡，没有明显的热点方向。' }}<span class="text-gray-400 ml-1">（注：板块轮动是正常现象，不要追涨杀跌）</span></p>
-            </div>
-          </div>
-          <div class="flex items-start gap-2 mt-1">
-            <span class="shrink-0 mt-0.5">💡</span>
-            <p class="text-gray-600 dark:text-gray-400 leading-relaxed">{{ summary.advice }}</p>
-          </div>
-          <div class="flex items-start gap-2 mt-1">
-            <span class="shrink-0 mt-0.5">📚</span>
-            <p class="text-gray-400 leading-relaxed">投资小知识：基金净值每天只有一个（T日15:00前买入按当日净值计算），不要像盯股票一样时刻盯着。定投的核心是"坚持"而不是"择时"。</p>
-          </div>
-        </div>
+      </div>
+      <!-- No data fallback -->
+      <div v-else class="card p-3 text-center text-xs text-gray-400">
+        📡 市场数据加载中，请稍后...（每3分钟自动刷新）
       </div>
 
       <!-- Tools -->

@@ -61,10 +61,10 @@ const presetFunds = ['005827','161725','110027','510300','163406']
       <div class="card p-5 space-y-4">
         <!-- Row 1: Platform + Author + Link -->
         <div class="flex gap-3">
-          <select v-model="source" class="w-24 px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white">
+          <select v-model="source" class="w-20 px-2 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white shrink-0">
             <option v-for="p in platforms" :key="p" :value="p">{{ p }}</option>
           </select>
-          <input v-model="author" placeholder="UP主 / 作者名称（选填）" class="flex-1 px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white" />
+          <input v-model="author" placeholder="UP主名称" class="w-32 px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white shrink-0" />
         </div>
 
         <!-- Row 2: Link -->
@@ -124,14 +124,14 @@ const presetFunds = ['005827','161725','110027','510300','163406']
             <span v-if="v.confidence" class="text-xs text-gray-400">🤖 {{ v.confidence }}%</span>
           </div>
           <h3 class="font-medium text-sm dark:text-white mb-1.5">{{ v.ai_title || '观点分析' }}</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{{ v.ai_summary || v.content.slice(0,100) }}</p>
-          <div class="flex items-center gap-2 flex-wrap">
+          <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-2 leading-relaxed">{{ v.ai_summary || v.content.slice(0,150) }}</p>
+          <div class="flex items-center gap-2 flex-wrap mb-2">
             <span v-for="t in v.tags" :key="t" class="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{{ t }}</span>
             <span v-for="f in (v.related_funds||[])" :key="typeof f==='string'?f:f.code" class="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-mono">{{ typeof f==='string'?f:f.code }}</span>
           </div>
-          <details class="mt-2">
-            <summary class="text-xs text-gray-400 cursor-pointer">查看原文</summary>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 p-2 rounded bg-gray-50 dark:bg-gray-800/50 whitespace-pre-wrap">{{ v.content }}</p>
+          <details class="mt-1">
+            <summary class="text-xs text-primary cursor-pointer hover:underline">查看完整内容</summary>
+            <div class="mt-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">{{ v.content }}</div>
           </details>
         </div>
       </div>

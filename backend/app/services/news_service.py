@@ -299,7 +299,7 @@ class NewsService:
             ("gelan", "葛兰", "001475", "中欧医疗健康", "医药赛道·深度研究", "美国西北大学生物医学博士，对创新药产业链有远超同行的理解。经历医药板块大幅调整仍在坚守，逆向加仓。"),
             ("houhao", "侯昊", "161725", "招商中证白酒", "指数增强·白酒专家", "管理国内规模最大的白酒主题基金，对白酒行业周期有独到判断。擅长在行业低迷时逆向布局。"),
         ]
-        for name, code, fname, style, bio in fund_managers:
+        for eid, name, code, fname, style, bio in fund_managers:
             try:
                 import akshare as ak
                 nav_df = await asyncio.to_thread(ak.fund_open_fund_info_em, symbol=code, indicator='单位净值走势')
@@ -313,7 +313,7 @@ class NewsService:
                         latest = float(vals[-1])
                         perf['year1'] = round((latest/float(vals[-250])-1)*100, 1) if len(vals)>250 else None
                         perf['year3'] = round((latest/float(vals[0])-1)*100, 1) if len(vals)>750 else None
-                experts.append({'name':name, 'title':style, 'fund_name':fname, 'fund_code':code, 'bio':bio, 'performance':perf, 'type':'基金经理', 'source':'AKShare/天天基金(实时净值)'})
+                experts.append({'id':eid, 'name':name, 'title':style, 'fund_name':fname, 'fund_code':code, 'bio':bio, 'performance':perf, 'type':'基金经理', 'source':'AKShare/天天基金(实时净值)'})
             except Exception as e:
                 logger.warning(f'Tracker failed for {name}: {e}')
 

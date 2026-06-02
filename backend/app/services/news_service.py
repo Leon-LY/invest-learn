@@ -680,12 +680,12 @@ class NewsService:
         # DeepSeek analysis
         ai_result = None
         try:
-            prompt = f"""分析以下投资观点，提取关键信息。来源：{source}，作者：{author or '未知'}
+            prompt = f"""分析以下投资观点，提取关键信息并判断对基金的影响。来源：{source}，作者：{author or '未知'}
 
 内容：{content}
 
-返回JSON：
-{{"title":"15字以内的标题","summary":"50-80字摘要","direction":"看多/看空/中性","confidence":50-90,"tags":["标签1","标签2"],"relatedFunds":["基金代码1","基金代码2"]}}"""
+请给出专业分析，返回JSON：
+{{"title":"15字以内的标题","summary":"100-150字分析：先总结观点，再说明哪些基金可能受到影响、为什么","direction":"看多/看空/中性","confidence":50-90,"tags":["标签1","标签2","标签3"],"relatedFunds":[{{"code":"基金代码","name":"基金简称","impact":"具体影响说明"}}]}}"""
             ai_result = await llm_service.analyze_news(prompt, None, None)
         except Exception as e:
             logger.warning(f"Viewpoint AI analysis failed: {e}")

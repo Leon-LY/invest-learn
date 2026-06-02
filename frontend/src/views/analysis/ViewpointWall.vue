@@ -130,8 +130,34 @@ const presetFunds = ['005827','161725','110027','510300','163406']
             <span v-for="f in (v.related_funds||[])" :key="typeof f==='string'?f:f.code" class="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-mono">{{ typeof f==='string'?f:f.code }}</span>
           </div>
           <details class="mt-1">
-            <summary class="text-xs text-primary cursor-pointer hover:underline">查看完整内容</summary>
-            <div class="mt-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">{{ v.content }}</div>
+            <summary class="text-xs text-primary cursor-pointer hover:underline">查看完整分析</summary>
+            <div class="mt-3 space-y-3">
+              <!-- AI Analysis -->
+              <div v-if="v.ai_summary" class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
+                <div class="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">🤖 AI 分析</div>
+                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ v.ai_summary }}</p>
+              </div>
+              <!-- Affected funds -->
+              <div v-if="v.related_funds?.length" class="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
+                <div class="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">📊 相关影响</div>
+                <div class="space-y-1.5">
+                  <div v-for="f in v.related_funds" :key="typeof f==='string'?f:f.code" class="text-sm">
+                    <span class="font-mono font-medium text-gray-800 dark:text-gray-200">{{ typeof f==='string'?f:f.code }}</span>
+                    <span v-if="typeof f!=='string' && f.name" class="text-gray-500 ml-1">- {{ f.name }}</span>
+                    <span v-if="typeof f!=='string' && f.impact" class="text-xs text-gray-400 block mt-0.5">{{ f.impact }}</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Tags -->
+              <div v-if="v.tags?.length" class="flex flex-wrap gap-1.5">
+                <span v-for="t in v.tags" :key="t" class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">{{ t }}</span>
+              </div>
+              <!-- Original content -->
+              <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <div class="text-xs font-medium text-gray-400 mb-1">📝 原文 / 提取内容</div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">{{ v.content }}</p>
+              </div>
+            </div>
           </details>
         </div>
       </div>

@@ -67,38 +67,34 @@ const indexNames: Record<string,string> = {
         </p>
       </div>
 
-      <!-- Market Overview — always shown -->
-      <div class="card p-3 tech-border">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold text-gray-800 dark:text-gray-200">{{ summary?.date || '加载中...' }} {{ summary?.weekday ? '周'+summary.weekday : '' }}</span>
-          <span v-if="summary?.direction" class="px-2 py-0.5 text-[11px] font-medium rounded-full" :class="dirColors[summary.direction]">{{ summary.direction }}</span>
+      <!-- Market Overview -->
+      <div class="card overflow-hidden">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/20 border-b border-blue-100/50 dark:border-blue-900/20">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-100">{{ summary?.date || '--' }}</span>
+            <span class="text-xs text-gray-400">{{ summary?.weekday ? '周' + summary.weekday : '' }}</span>
+          </div>
+          <span v-if="summary?.direction" class="px-2.5 py-1 text-xs font-semibold rounded-full" :class="dirColors[summary.direction]">{{ summary.direction }}</span>
         </div>
 
-        <!-- Index row — always shown with fallback -->
-        <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mb-2">
+        <!-- Index cards -->
+        <div class="grid grid-cols-3 sm:grid-cols-6 divide-x divide-gray-100 dark:divide-gray-800/30">
           <div v-for="idx in (summary?.indices?.length ? summary.indices.slice(0,6) : [])" :key="idx.code"
-            class="text-center py-1.5 px-1 rounded-md bg-gray-50 dark:bg-gray-800/50">
-            <div class="text-[10px] text-gray-400 truncate">{{ indexNames[idx.code] || idx.name?.slice(0,4) || '-' }}</div>
-            <div class="text-xs font-bold text-gray-800 dark:text-gray-200 tabular-nums mt-0.5">{{ idx.close ?? '--' }}</div>
-            <div v-if="idx.change_pct != null" :class="idx.change_pct>=0?'text-up':'text-down'" class="text-[10px] font-medium tabular-nums">
+            class="text-center py-3 px-2">
+            <div class="text-[11px] text-gray-400 mb-1 truncate">{{ indexNames[idx.code] || idx.name?.slice(0,4) || '-' }}</div>
+            <div class="text-base font-bold text-gray-900 dark:text-gray-100 tabular-nums">{{ idx.close ?? '--' }}</div>
+            <div v-if="idx.change_pct != null" :class="idx.change_pct>=0?'text-up':'text-down'" class="text-xs font-semibold tabular-nums mt-0.5">
               {{ idx.change_pct>=0?'+':'' }}{{ idx.change_pct.toFixed(1) }}%
             </div>
-            <div v-else class="text-[10px] text-gray-400">--</div>
+            <div v-else class="text-xs text-gray-300 mt-0.5">--</div>
           </div>
         </div>
 
-        <!-- Sectors + advice -->
-        <div class="flex items-center gap-2 text-[11px] flex-wrap">
-          <span class="text-gray-500 shrink-0">🔥</span>
-          <span v-if="summary?.sectors?.length" class="flex gap-1 overflow-x-auto no-scrollbar">
-            <span v-for="s in summary.sectors.slice(0,4)" :key="s.name"
-              class="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium"
-              :class="(s.change_pct||0)>=0?'bg-up-bg text-up':'bg-down-bg text-down'"
-            >{{ s.name.slice(0,4) }} {{ (s.change_pct||0)>=0?'+':'' }}{{ s.change_pct?.toFixed(1) }}%</span>
-          </span>
-          <span v-else-if="!summary" class="text-gray-400">正在获取行情...</span>
-          <span class="text-gray-300">·</span>
-          <span class="text-gray-500">💡 {{ summary?.advice?.slice(0, 40) || '数据加载中...' }}</span>
+        <!-- Bottom bar: advice -->
+        <div class="flex items-center gap-2 px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/30 text-xs">
+          <span class="shrink-0">💡</span>
+          <span class="text-gray-600 dark:text-gray-400 truncate">{{ summary?.advice || '数据加载中，请稍后...' }}</span>
         </div>
       </div>
 

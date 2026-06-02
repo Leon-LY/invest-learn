@@ -28,11 +28,11 @@ function formatTime(iso: string | undefined | null): string {
 
 async function refreshSummary() { try { summary.value = await marketApi.getSummary() } catch(e){} }
 
-onMounted(async () => {
+onMounted(() => {
   const hour = new Date().getHours()
   greeting.value = hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好'
-  await Promise.all([refreshSummary(), fetchWatchlist(), fetchNews()])
-  refreshTimer = setInterval(refreshSummary, 180000) // every 3 min
+  refreshSummary(); fetchWatchlist(); fetchNews()
+  refreshTimer = setInterval(refreshSummary, 180000)
 })
 onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
 

@@ -295,8 +295,14 @@ class MarketService:
         return None
 
     async def get_market_summary(self) -> dict:
-        """Get real-time market overview from latest index/stock data."""
+        """Get real-time market overview (cached 60s)."""
         from datetime import date as dt_date
+
+        # Return cached version if available
+        cached = await cache_get("market:summary")
+        if cached:
+            return cached
+
         today = dt_date.today()
 
         # Latest index prices
@@ -399,7 +405,7 @@ class MarketService:
         }
         advice = advice_map.get(direction, "按原计划执行定投，保持耐心。")
 
-        return {
+        result = {
             "date": today.strftime("%m月%d日"),
             "weekday": ["一","二","三","四","五","六","日"][today.weekday()],
             "indices": indices[:6],
@@ -409,6 +415,8 @@ class MarketService:
             "advice": advice,
             "hot_news_count": sum(sentiment_counts.values()),
         }
+        await cache_set("market:summary", result, ttl=60)
+        return result
 
     # ─── Funds ──────────────────────────────────────────
 

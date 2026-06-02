@@ -67,12 +67,18 @@ onMounted(async () => {
               <div class="text-[10px] text-gray-400 mt-0.5">{{ expert.fund_code }}</div>
             </div>
           </div>
-          <!-- NAV mini chart with hover tooltips -->
-          <div v-if="expert.nav_history?.length" class="mt-3 h-24 flex items-end gap-px group">
-            <div v-for="(n, i) in expert.nav_history.slice(-60)" :key="i" class="flex-1 rounded-t-sm cursor-pointer transition-all hover:opacity-80"
-              :class="(n.daily_return||0)>=0?'bg-up/50 hover:bg-up/80':'bg-down/50 hover:bg-down/80'"
-              :style="{height: expert.nav_history[0]?.nav ? `${15 + ((n.nav - expert.nav_history[0].nav) / expert.nav_history[0].nav * 100) * 0.5 + 20}%` : '30%'}"
-              :title="`${n.date}: ${n.nav} (${(n.daily_return||0)>=0?'+':''}${(n.daily_return||0)?.toFixed(2)}%)`" />
+          <!-- NAV mini chart -->
+          <div v-if="expert.nav_history?.length" class="mt-3">
+            <div class="h-24 flex items-end gap-px">
+              <div v-for="(n, i) in expert.nav_history.slice(-60)" :key="i" class="flex-1 rounded-t-sm"
+                :class="(n.daily_return||0)>=0?'bg-up/50':'bg-down/50'"
+                :style="{height: expert.nav_history[0]?.nav ? `${15 + ((n.nav - expert.nav_history[0].nav) / expert.nav_history[0].nav * 100) * 0.5 + 20}%` : '30%'}" />
+            </div>
+            <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+              <span>{{ expert.nav_history[0]?.date }}</span>
+              <span class="text-xs">净值区间 {{ expert.nav_history[0]?.nav?.toFixed(4) }} → {{ expert.nav_history[expert.nav_history.length-1]?.nav?.toFixed(4) }}</span>
+              <span>{{ expert.nav_history[expert.nav_history.length-1]?.date }}</span>
+            </div>
           </div>
         </div>
 

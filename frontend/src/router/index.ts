@@ -110,6 +110,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '大佬详情', layout: 'default' },
   },
   {
+    path: '/portfolio-analysis',
+    name: 'PortfolioAnalysis',
+    component: () => import('@/views/analysis/PortfolioAnalysis.vue'),
+    meta: { title: '组合分析', layout: 'default' },
+  },
+  {
     path: '/analysis/expert-prediction/:id',
     name: 'ExpertPredictionDetail',
     component: () => import('@/views/analysis/ExpertPredictionDetail.vue'),

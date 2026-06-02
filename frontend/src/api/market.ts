@@ -12,4 +12,5 @@ export const marketApi = {
   getCapitalFlow(days = 30) { return client.get('/market/capital-flow', { params: { days } }) },
   getMarketBreadth() { return client.get('/market/breadth') },
   screenStocks(params: Record<string, any>) { return client.get('/market/screener', { params }) },
+  portfolioSummary(funds: Array<{code:string,amount:number}>) { return client.post('/market/portfolio/summary', { funds }) },
 }

@@ -35,19 +35,24 @@ const showBottomNav = computed(() => navItems.some(item =>
 </template>
 
 <style>
-/* Fast page transitions — no more flicker */
+/* Premium page transitions */
 .page-enter-active {
-  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.2s ease-out;
 }
 .page-leave-active {
-  transition: opacity 0.1s ease-in, transform 0.1s ease-in;
+  transition: opacity 0.12s ease-in,
+              transform 0.15s ease-in;
+  position: absolute;
 }
 .page-enter-from {
   opacity: 0;
-  transform: translateY(4px);
+  transform: translateY(6px);
+  filter: blur(1px);
 }
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(0.99);
 }
 </style>

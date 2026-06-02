@@ -28,25 +28,32 @@ function navigate(path: string) {
 </script>
 
 <template>
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/85 dark:bg-gray-900/85 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 z-40 safe-area-bottom">
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl border-t border-gray-200/30 dark:border-gray-800/30 z-40 safe-area-bottom shadow-[0_-8px_32px_rgba(0,0,0,0.04)]">
     <div class="flex justify-around h-14 relative">
-      <!-- Active indicator glow bar -->
-      <div class="absolute top-0 h-0.5 rounded-full bg-gradient-to-r from-primary via-purple-400 to-cyan-400 transition-all duration-300 ease-out"
+      <!-- Animated gradient indicator pill -->
+      <div class="absolute top-1.5 h-1 rounded-full bg-gradient-to-r from-primary via-purple-400 to-cyan-400 transition-all duration-400 ease-out shadow-[0_0_8px_rgba(91,108,240,0.5)]"
         :style="{
-          width: `${100 / items.length}%`,
-          left: `${(100 / items.length) * items.findIndex(i => isActive(i.path))}%`,
+          width: `${88 / items.length}%`,
+          left: `calc(${(100 / items.length) * items.findIndex(i => isActive(i.path))}% + ${44 / items.length}%)`,
+          transform: 'translateX(-50%)',
           opacity: items.some(i => isActive(i.path)) ? 1 : 0
         }" />
       <button
         v-for="item in items" :key="item.path"
         @click="navigate(item.path)"
-        class="flex flex-col items-center justify-center flex-1 min-w-0 text-xs transition-all duration-200 relative"
-        :class="isActive(item.path) ? 'text-primary dark:text-indigo-400 scale-105' : 'text-gray-400 dark:text-gray-500'"
+        class="flex flex-col items-center justify-center flex-1 min-w-0 text-xs transition-all duration-300 relative group"
+        :class="isActive(item.path) ? 'text-primary dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'"
       >
-        <svg class="w-5 h-5 mb-0.5 transition-transform duration-200" :class="{ 'drop-shadow-[0_0_6px_rgba(91,108,240,0.4)]': isActive(item.path) }" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" :d="iconMap[item.icon]"/>
-        </svg>
-        <span>{{ item.label }}</span>
+        <div class="relative">
+          <svg class="w-5 h-5 mb-0.5 transition-all duration-300"
+            :class="isActive(item.path) ? 'scale-110 drop-shadow-[0_0_8px_rgba(91,108,240,0.4)]' : 'group-hover:scale-105'"
+            fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" :d="iconMap[item.icon]"/>
+          </svg>
+          <!-- Active ring pulse -->
+          <span v-if="isActive(item.path)" class="absolute inset-0 rounded-full animate-ping bg-primary/20" style="animation-duration:1.5s" />
+        </div>
+        <span :class="isActive(item.path) ? 'font-semibold' : ''">{{ item.label }}</span>
       </button>
     </div>
   </nav>

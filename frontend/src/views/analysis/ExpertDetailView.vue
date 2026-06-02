@@ -115,8 +115,8 @@ onMounted(async () => {
 
         <!-- ===== 3.5 POSITION CHANGES (QUARTERLY) ===== -->
         <div v-if="expert.position_changes?.length" class="card p-4">
-          <h3 class="text-sm font-semibold dark:text-white mb-3">🔄 季度调仓记录</h3>
-          <p class="text-xs text-gray-400 mb-2">基金经理实际增减持操作（来自季报披露）</p>
+          <h3 class="text-sm font-semibold dark:text-white mb-3">🔄 季度交易记录</h3>
+          <p class="text-xs text-gray-400 mb-2">基金经理实际买卖操作（来自季报披露的累计买入/卖出金额）</p>
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
               <thead>
@@ -124,8 +124,9 @@ onMounted(async () => {
                   <th class="text-left py-2">股票</th>
                   <th class="text-left py-2">代码</th>
                   <th class="text-left py-2">操作</th>
-                  <th class="text-left py-2">变动比例</th>
-                  <th class="text-left py-2">报告期</th>
+                  <th class="text-right py-2">金额</th>
+                  <th class="text-right py-2">占比</th>
+                  <th class="text-left py-2">季度</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,9 +135,10 @@ onMounted(async () => {
                   <td class="py-2 text-gray-400 font-mono">{{ c.code }}</td>
                   <td class="py-2">
                     <span class="px-1.5 py-0.5 rounded text-xs font-medium"
-                      :class="c.change_type?.includes('增')||c.change_type?.includes('新')?'bg-up-bg text-up':'bg-down-bg text-down'">{{ c.change_type }}</span>
+                      :class="c.action==='买入'?'bg-up-bg text-up':'bg-down-bg text-down'">{{ c.action }}</span>
                   </td>
-                  <td class="py-2 text-gray-400">{{ c.change_ratio }}</td>
+                  <td class="py-2 text-right text-gray-600 dark:text-gray-300">{{ c.amount }}</td>
+                  <td class="py-2 text-right text-gray-400">{{ c.ratio }}</td>
                   <td class="py-2 text-gray-400">{{ c.quarter }}</td>
                 </tr>
               </tbody>

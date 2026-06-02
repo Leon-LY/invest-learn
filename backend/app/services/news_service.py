@@ -536,18 +536,25 @@ class NewsService:
                 except Exception:
                     pass
 
-                # Quarterly position CHANGES (增持/减持/新增/剔除)
+                # Quarterly position CHANGES (累计买入+卖出)
                 try:
-                    change_df = await asyncio.to_thread(ak.fund_portfolio_change_em, symbol=code, date="2025")
-                    if change_df is not None and not change_df.empty:
+                    buy_df = await asyncio.to_thread(ak.fund_portfolio_change_em, symbol=code, date="2025")
+                    if buy_df is not None and not buy_df.empty:
                         changes = []
-                        for _, row in change_df.head(15).iterrows():
+                        for _, row in buy_df.head(12).iterrows():
+                            q = str(row.get("季度", ""))
+                            # Parse: "2025年4季度累计买入股票明细" -> "买入"
+                            is_buy = "买入" in q
+                            action = "买入" if is_buy else "卖出"
+                            amount = float(row.get("本期累计买入金额", row.get("本期累计卖出金额", 0)) or 0)
+                            ratio = float(row.get("占期初基金资产净值比例", 0) or 0)
                             changes.append({
                                 "stock": str(row.get("股票名称", "")),
                                 "code": str(row.get("股票代码", "")),
-                                "change_type": str(row.get("变动类型", row.get("操作", ""))),
-                                "change_ratio": str(row.get("变动比例", row.get("占净值比例", ""))),
-                                "quarter": str(row.get("季度", "")),
+                                "action": action,
+                                "amount": f"{amount:.0f}万" if amount > 0 else "",
+                                "ratio": f"{ratio:.1f}%" if ratio > 0 else "",
+                                "quarter": q.replace("累计买入股票明细","").replace("累计卖出股票明细","").replace("股票投资明细",""),
                             })
                         result["position_changes"] = changes
                 except Exception:

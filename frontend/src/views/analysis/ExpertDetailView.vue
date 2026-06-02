@@ -93,6 +93,57 @@ onMounted(async () => {
           </div>
         </div>
 
+        <!-- ===== 3.3 DAILY OPERATIONS ===== -->
+        <div v-if="expert.daily_operations?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">📅 每日净值异动（近90日）</h3>
+          <div class="space-y-2">
+            <div v-for="(op, i) in expert.daily_operations" :key="'d'+i"
+              class="flex items-start gap-3 p-3 rounded-lg text-sm"
+              :class="op.action==='大涨'?'bg-red-50 dark:bg-red-950/10':op.action==='大跌'?'bg-green-50 dark:bg-green-950/10':op.action.includes('连涨')?'bg-red-50 dark:bg-red-950/10':'bg-gray-50 dark:bg-gray-800/50'">
+              <span class="shrink-0 text-lg">{{ op.action==='大涨'?'📈':op.action==='大跌'?'📉':op.action.includes('连涨')?'🔥':'❄️' }}</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-gray-400">{{ op.date }}</span>
+                  <span class="text-xs font-medium" :class="op.action==='大涨'||op.action.includes('连涨')?'text-up':'text-down'">{{ op.action }}</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ op.detail }}</p>
+                <p v-if="op.amount" class="text-xs text-gray-400">{{ op.amount }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 3.5 POSITION CHANGES (QUARTERLY) ===== -->
+        <div v-if="expert.position_changes?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">🔄 季度调仓记录</h3>
+          <p class="text-xs text-gray-400 mb-2">基金经理实际增减持操作（来自季报披露）</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="text-gray-400 border-b border-gray-100 dark:border-gray-800">
+                  <th class="text-left py-2">股票</th>
+                  <th class="text-left py-2">代码</th>
+                  <th class="text-left py-2">操作</th>
+                  <th class="text-left py-2">变动比例</th>
+                  <th class="text-left py-2">报告期</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="c in expert.position_changes.slice(0,12)" :key="c.code+c.quarter" class="border-b border-gray-50 dark:border-gray-800/30">
+                  <td class="py-2 dark:text-white">{{ c.stock }}</td>
+                  <td class="py-2 text-gray-400 font-mono">{{ c.code }}</td>
+                  <td class="py-2">
+                    <span class="px-1.5 py-0.5 rounded text-xs font-medium"
+                      :class="c.change_type?.includes('增')||c.change_type?.includes('新')?'bg-up-bg text-up':'bg-down-bg text-down'">{{ c.change_type }}</span>
+                  </td>
+                  <td class="py-2 text-gray-400">{{ c.change_ratio }}</td>
+                  <td class="py-2 text-gray-400">{{ c.quarter }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- ===== 3.5 HOLDINGS ===== -->
         <div v-if="expert.holdings?.length" class="card p-4">
           <h3 class="text-sm font-semibold dark:text-white mb-3">📋 {{ expert.fund_name || '基金' }} 前十大重仓股</h3>

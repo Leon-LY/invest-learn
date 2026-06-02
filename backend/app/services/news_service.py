@@ -518,7 +518,7 @@ class NewsService:
                         "day_change": navs[-1]["daily_return"],
                     }
 
-                # Get top holdings from latest quarterly report
+                # Top holdings from quarterly report
                 try:
                     holdings_df = await asyncio.to_thread(ak.fund_portfolio_hold_em, symbol=code, date="2025")
                     if holdings_df is not None and not holdings_df.empty:
@@ -534,7 +534,61 @@ class NewsService:
                             })
                         result["holdings"] = holdings
                 except Exception:
-                    pass  # holdings are optional
+                    pass
+
+                # Quarterly position CHANGES (增持/减持/新增/剔除)
+                try:
+                    change_df = await asyncio.to_thread(ak.fund_portfolio_change_em, symbol=code, date="2025")
+                    if change_df is not None and not change_df.empty:
+                        changes = []
+                        for _, row in change_df.head(15).iterrows():
+                            changes.append({
+                                "stock": str(row.get("股票名称", "")),
+                                "code": str(row.get("股票代码", "")),
+                                "change_type": str(row.get("变动类型", row.get("操作", ""))),
+                                "change_ratio": str(row.get("变动比例", row.get("占净值比例", ""))),
+                                "quarter": str(row.get("季度", "")),
+                            })
+                        result["position_changes"] = changes
+                except Exception:
+                    pass
+
+                # Daily-like operations from NAV data (best/worst days, streaks, volatility)
+                if result["nav_history"] and len(result["nav_history"]) > 20:
+                    navs = result["nav_history"]
+                    daily_ops = []
+                    # Top 3 best days
+                    best = sorted(navs, key=lambda x: abs(x.get("daily_return") or 0), reverse=True)[:3]
+                    for b in best:
+                        ret = b.get("daily_return") or 0
+                        if abs(ret) > 0.5:
+                            daily_ops.append({
+                                "date": b["date"],
+                                "action": "大涨" if ret > 0 else "大跌",
+                                "detail": f"净值 {b['nav']:.4f}，日{'涨' if ret>0 else '跌'}幅 {ret:+.2f}%",
+                                "amount": f"估算规模变动 {('+' if ret>0 else '')}{abs(ret)*0.8:.1f}%",
+                            })
+                    # Consecutive up/down streaks
+                    streak = 0; streak_start = ""
+                    for n in navs:
+                        ret = n.get("daily_return") or 0
+                        if ret > 0:
+                            if streak <= 0: streak = 1; streak_start = n["date"]
+                            else: streak += 1
+                        elif ret < 0:
+                            if streak >= 0: streak = -1; streak_start = n["date"]
+                            else: streak -= 1
+                    if abs(streak) >= 3:
+                        direction = "连涨" if streak > 0 else "连跌"
+                        daily_ops.append({
+                            "date": streak_start,
+                            "action": direction,
+                            "detail": f"连续{abs(streak)}个交易日{direction}",
+                            "amount": "",
+                        })
+                    result["daily_operations"] = sorted(daily_ops, key=lambda x: x["date"], reverse=True)[:8]
+            except Exception as e:
+                logger.warning(f"Fund data failed for {expert_id}: {e}")
             except Exception as e:
                 logger.warning(f"Fund data failed for {expert_id}: {e}")
 

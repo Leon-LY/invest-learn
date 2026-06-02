@@ -323,7 +323,7 @@ class MarketService:
                 "close": _to_float(dp.close), "change_pct": change,
             })
 
-        # If no today data, get most recent
+        # If no today data, get most recent from DB
         if not indices:
             idx_stmt2 = select(IndexDailyPrice, Index).join(Index).order_by(
                 desc(IndexDailyPrice.trade_date)
@@ -334,6 +334,31 @@ class MarketService:
                     "code": idx.code, "name": idx.name, "market": idx.market,
                     "close": _to_float(dp.close), "change_pct": _to_float(dp.change_pct),
                 })
+
+        # Fallback: if DB has no indices at all, fetch live from TianTian API
+        if not indices:
+            try:
+                import httpx, json, re, asyncio
+                # Fetch Shanghai Composite and CSI 300 from East Money
+                codes = {"000001": "上证指数", "399001": "深证成指", "399006": "创业板指", "000300": "沪深300"}
+                for code, name in codes.items():
+                    try:
+                        url = f"http://push2.eastmoney.com/api/qt/stock/get?secid=1.{code}&fields=f43,f44,f45,f46,f60,f170"
+                        resp = httpx.get(url, timeout=(3, 6))
+                        if resp.status_code == 200:
+                            data = resp.json().get("data", {})
+                            close = data.get("f43")  # current price
+                            change_pct = data.get("f170")  # change percent
+                            if close:
+                                indices.append({
+                                    "code": code, "name": name, "market": "A",
+                                    "close": close / 100 if close > 1000 else close,
+                                    "change_pct": change_pct / 100 if change_pct and abs(change_pct) > 100 else change_pct,
+                                })
+                    except Exception:
+                        continue
+            except Exception as e:
+                logger.warning(f"Live index fetch fallback failed: {e}")
 
         # Latest news sentiment stats
         from app.models.news import NewsArticle as NA

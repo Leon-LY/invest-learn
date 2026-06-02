@@ -26,7 +26,12 @@ function formatTime(iso: string | undefined | null): string {
   return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
-async function refreshSummary() { try { summary.value = await marketApi.getSummary() } catch(e){} }
+async function refreshSummary() {
+  try {
+    const data = await marketApi.getSummary()
+    if (data) summary.value = data
+  } catch(e) { console.error('Summary load failed:', e) }
+}
 
 onMounted(() => {
   const hour = new Date().getHours()
@@ -62,21 +67,16 @@ const indexNames: Record<string,string> = {
         </p>
       </div>
 
-      <!-- Market Overview — compact live data -->
-      <div v-if="summary" class="card p-3 tech-border">
-        <!-- Header row -->
+      <!-- Market Overview — always shown -->
+      <div class="card p-3 tech-border">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold text-gray-800 dark:text-gray-200">{{ summary.date }} 周{{ summary.weekday }}</span>
-          <span class="px-2 py-0.5 text-[11px] font-medium rounded-full" :class="dirColors[summary.direction]">{{ summary.direction }}</span>
+          <span class="text-xs font-bold text-gray-800 dark:text-gray-200">{{ summary?.date || '加载中...' }} {{ summary?.weekday ? '周'+summary.weekday : '' }}</span>
+          <span v-if="summary?.direction" class="px-2 py-0.5 text-[11px] font-medium rounded-full" :class="dirColors[summary.direction]">{{ summary.direction }}</span>
         </div>
 
-        <!-- Index row -->
+        <!-- Index row — always shown with fallback -->
         <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mb-2">
-          <div v-for="idx in (summary.indices?.length ? summary.indices.slice(0,6) : [
-            {code:'000001',name:'上证',close:null,change_pct:null},
-            {code:'399001',name:'深证',close:null,change_pct:null},
-            {code:'000300',name:'沪深300',close:null,change_pct:null}
-          ])" :key="idx.code"
+          <div v-for="idx in (summary?.indices?.length ? summary.indices.slice(0,6) : [])" :key="idx.code"
             class="text-center py-1.5 px-1 rounded-md bg-gray-50 dark:bg-gray-800/50">
             <div class="text-[10px] text-gray-400 truncate">{{ indexNames[idx.code] || idx.name?.slice(0,4) || '-' }}</div>
             <div class="text-xs font-bold text-gray-800 dark:text-gray-200 tabular-nums mt-0.5">{{ idx.close ?? '--' }}</div>
@@ -87,23 +87,19 @@ const indexNames: Record<string,string> = {
           </div>
         </div>
 
-        <!-- One-liner: hot sectors + advice -->
+        <!-- Sectors + advice -->
         <div class="flex items-center gap-2 text-[11px] flex-wrap">
           <span class="text-gray-500 shrink-0">🔥</span>
-          <span v-if="summary.sectors?.length" class="flex gap-1 overflow-x-auto no-scrollbar">
+          <span v-if="summary?.sectors?.length" class="flex gap-1 overflow-x-auto no-scrollbar">
             <span v-for="s in summary.sectors.slice(0,4)" :key="s.name"
               class="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium"
               :class="(s.change_pct||0)>=0?'bg-up-bg text-up':'bg-down-bg text-down'"
             >{{ s.name.slice(0,4) }} {{ (s.change_pct||0)>=0?'+':'' }}{{ s.change_pct?.toFixed(1) }}%</span>
           </span>
-          <span v-else class="text-gray-400">等待行情数据...</span>
+          <span v-else-if="!summary" class="text-gray-400">正在获取行情...</span>
           <span class="text-gray-300">·</span>
-          <span class="text-gray-500">💡 {{ summary.advice?.slice(0, 40) }}{{ summary.advice?.length > 40 ? '...' : '' }}</span>
+          <span class="text-gray-500">💡 {{ summary?.advice?.slice(0, 40) || '数据加载中...' }}</span>
         </div>
-      </div>
-      <!-- No data fallback -->
-      <div v-else class="card p-3 text-center text-xs text-gray-400">
-        📡 市场数据加载中，请稍后...（每3分钟自动刷新）
       </div>
 
       <!-- Tools -->

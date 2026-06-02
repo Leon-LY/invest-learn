@@ -1,6 +1,7 @@
 import client from './client'
 
 export const marketApi = {
+  getSummary() { return client.get('/market/summary') },
   getIndices() { return client.get('/market/indices') },
   getIndexDetail(code: string, days = 90) { return client.get(`/market/indices/${code}`, { params: { days } }) },
   getStockDetail(code: string, klineDays = 250) { return client.get(`/market/stocks/${code}`, { params: { kline_days: klineDays } }) },

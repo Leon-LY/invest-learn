@@ -294,6 +294,81 @@ class MarketService:
         log.error(f"Fund {code}: ALL sources failed")
         return None
 
+    async def get_market_summary(self) -> dict:
+        """Get real-time market overview from latest index/stock data."""
+        from datetime import date as dt_date
+        today = dt_date.today()
+
+        # Latest index prices
+        idx_stmt = select(IndexDailyPrice, Index).join(Index).where(
+            IndexDailyPrice.trade_date == today
+        ).order_by(desc(IndexDailyPrice.trade_date)).limit(10)
+        idx_result = await self.db.execute(idx_stmt)
+        indices = []
+        for dp, idx in idx_result.all():
+            indices.append({
+                "code": idx.code, "name": idx.name, "market": idx.market,
+                "close": _to_float(dp.close), "change_pct": _to_float(dp.change_pct),
+            })
+
+        # If no today data, get most recent
+        if not indices:
+            idx_stmt2 = select(IndexDailyPrice, Index).join(Index).order_by(
+                desc(IndexDailyPrice.trade_date)
+            ).limit(10)
+            idx_result2 = await self.db.execute(idx_stmt2)
+            for dp, idx in idx_result2.all():
+                indices.append({
+                    "code": idx.code, "name": idx.name, "market": idx.market,
+                    "close": _to_float(dp.close), "change_pct": _to_float(dp.change_pct),
+                })
+
+        # Latest news sentiment stats
+        from app.models.news import NewsArticle as NA
+        from sqlalchemy import func as sqlfunc
+        sent_stmt = select(NA.sentiment, sqlfunc.count()).group_by(NA.sentiment)
+        sent_result = await self.db.execute(sent_stmt)
+        sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
+        for s, c in sent_result.all():
+            if s in sentiment_counts:
+                sentiment_counts[s] = c
+
+        # Latest sectors
+        sector_stmt = select(SectorPerformance).order_by(
+            desc(SectorPerformance.trade_date)
+        ).limit(6)
+        sector_result = await self.db.execute(sector_stmt)
+        sectors = [{
+            "name": s.sector_name,
+            "change_pct": _to_float(s.change_pct),
+            "net_inflow": _to_float(s.net_inflow),
+        } for s in sector_result.scalars().all()]
+
+        # Market direction from index performance
+        up_count = sum(1 for i in indices if (i["change_pct"] or 0) > 0)
+        down_count = sum(1 for i in indices if (i["change_pct"] or 0) < 0)
+        direction = "强势" if up_count >= 4 else "偏强" if up_count > down_count else "偏弱" if down_count > up_count else "震荡"
+
+        # Generate advice based on direction
+        advice_map = {
+            "强势": "市场情绪积极，持仓者可继续持有但不宜追高。定投按计划执行。",
+            "偏强": "市场稳步向好，逢回调可适当加仓优质基金。",
+            "震荡": "市场方向不明，建议保持仓位灵活，等待趋势明朗。",
+            "偏弱": "市场承压，定投者可逢低积累份额，不必恐慌。",
+        }
+        advice = advice_map.get(direction, "按原计划执行定投，保持耐心。")
+
+        return {
+            "date": today.strftime("%m月%d日"),
+            "weekday": ["一","二","三","四","五","六","日"][today.weekday()],
+            "indices": indices[:6],
+            "sectors": sectors,
+            "sentiment": sentiment_counts,
+            "direction": direction,
+            "advice": advice,
+            "hot_news_count": sum(sentiment_counts.values()),
+        }
+
     # ─── Funds ──────────────────────────────────────────
 
     async def get_fund_detail(self, code: str) -> Optional[dict]:

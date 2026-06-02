@@ -12,10 +12,13 @@ const loading = ref(true)
 const selectedCategory = ref('')
 
 const difficultyLabels: Record<string, string> = { beginner: '入门', intermediate: '进阶', advanced: '高级' }
+const iconMap: Record<string, string> = {
+  rocket: '🚀', 'chart-bar': '📊', 'trending-up': '📈', wallet: '💰', shield: '🛡️', heart: '❤️',
+}
 
 const filteredArticles = computed(() => {
   if (!selectedCategory.value) return articles.value
-  return articles.value.filter(a => a.category_id === selectedCategory.value || a.tags?.some((t: string) => categories.value.find(c => c.id === selectedCategory.value)?.name === t))
+  return articles.value.filter(a => a.category === selectedCategory.value)
 })
 
 onMounted(async () => {
@@ -24,34 +27,33 @@ onMounted(async () => {
       learnApi.getCategories(),
       learnApi.getArticles({ size: 50 }),
     ])
-    categories.value = cats as unknown as any[]
-    articles.value = (arts as any).items || []
+    categories.value = (cats as unknown as any[]) || []
+    articles.value = (arts as any)?.items || []
   } catch (e) { console.error(e) }
   finally { loading.value = false }
 })
+
+function selectCategory(slug: string) {
+  selectedCategory.value = selectedCategory.value === slug ? '' : slug
+}
 </script>
 
 <template>
   <AppShell>
     <div class="max-w-4xl mx-auto px-4 py-4 space-y-5">
+      <!-- Header -->
       <div>
-        <h1 class="text-xl font-bold dark:text-white">投资知识库</h1>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">📚 投资知识库</h1>
         <p class="text-sm text-gray-400 mt-1">从零开始学习投资，建立自己的投资体系</p>
       </div>
 
-      <!-- Categories -->
+      <!-- Category cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div
-          v-for="cat in categories" :key="cat.id"
-          @click="selectedCategory = selectedCategory === cat.slug ? '' : cat.slug"
-          class="rounded-xl p-4 border transition-all cursor-pointer"
-          :class="selectedCategory === cat.slug
-            ? 'bg-primary/5 border-primary/30 shadow-sm dark:bg-primary/10 dark:border-primary/40'
-            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:shadow-md'"
-        >
-          <div class="text-2xl mb-2">
-            {{ cat.icon === 'rocket' ? '🚀' : cat.icon === 'chart-bar' ? '📊' : cat.icon === 'trending-up' ? '📈' : cat.icon === 'wallet' ? '💰' : cat.icon === 'shield' ? '🛡️' : cat.icon === 'heart' ? '❤️' : '📚' }}
-          </div>
+        <div v-for="cat in categories" :key="cat.id"
+          @click="selectCategory(cat.slug)"
+          class="card p-4 cursor-pointer transition-all"
+          :class="selectedCategory === cat.slug ? 'ring-2 ring-primary/40 shadow-md' : ''">
+          <div class="text-2xl mb-2">{{ iconMap[cat.icon] || '📚' }}</div>
           <div class="font-medium text-sm dark:text-white">{{ cat.name }}</div>
           <div class="text-xs text-gray-400 mt-1 line-clamp-2">{{ cat.description }}</div>
         </div>
@@ -59,35 +61,44 @@ onMounted(async () => {
 
       <!-- Quick links -->
       <div class="flex gap-3">
-        <button @click="router.push('/learn/glossary')" class="flex-1 bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 hover:shadow-sm transition-shadow text-center">
+        <button @click="router.push('/learn/glossary')" class="flex-1 card p-3.5 text-center hover:shadow-md transition-shadow cursor-pointer">
           <div class="text-xl mb-1">📖</div>
           <div class="text-xs font-medium dark:text-white">术语百科</div>
+          <div class="text-[10px] text-gray-400 mt-0.5">40+ 金融术语</div>
         </button>
-        <button @click="router.push('/learn/strategies')" class="flex-1 bg-white dark:bg-gray-900 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 hover:shadow-sm transition-shadow text-center">
+        <button @click="router.push('/learn/strategies')" class="flex-1 card p-3.5 text-center hover:shadow-md transition-shadow cursor-pointer">
           <div class="text-xl mb-1">🎯</div>
           <div class="text-xs font-medium dark:text-white">投资策略</div>
+          <div class="text-[10px] text-gray-400 mt-0.5">10 套实战框架</div>
         </button>
       </div>
 
-      <!-- Recent articles -->
+      <!-- Articles -->
       <section>
-        <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">全部文章</h2>
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+          {{ selectedCategory ? '筛选结果' : '全部文章' }}
+          <span class="text-xs font-normal text-gray-400">({{ filteredArticles.length }} 篇)</span>
+        </h2>
         <div v-if="loading" class="space-y-2">
-          <div v-for="i in 5" :key="i" class="animate-pulse h-20 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+          <div v-for="i in 4" :key="i" class="skeleton h-20 rounded-xl" />
         </div>
-        <EmptyState v-else-if="!filteredArticles.length" message="暂无文章" />
-        <div v-else class="space-y-2">
-          <div
-            v-for="a in filteredArticles" :key="a.id"
+        <EmptyState v-else-if="!filteredArticles.length" message="该分类暂无文章" />
+        <div v-else class="space-y-2 animate-in">
+          <div v-for="a in filteredArticles" :key="a.id"
             @click="router.push(`/learn/${a.slug}`)"
-            class="bg-white dark:bg-gray-900 rounded-xl px-4 py-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer hover:shadow-sm transition-shadow"
-          >
-            <div class="flex items-center gap-2 mb-1">
-              <span class="px-1.5 py-0.5 text-xs rounded bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">{{ difficultyLabels[a.level] || a.level }}</span>
-              <span v-if="a.estimated_read" class="text-xs text-gray-400">阅读 {{ a.estimated_read }} 分钟</span>
+            class="card p-4 cursor-pointer">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="px-1.5 py-0.5 text-xs rounded-full"
+                :class="a.level==='beginner'?'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400':
+                       a.level==='intermediate'?'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400':
+                       'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'">
+                {{ difficultyLabels[a.level] || a.level }}
+              </span>
+              <span class="text-xs text-gray-400">阅读 {{ a.estimated_read || 10 }} 分钟</span>
+              <span v-if="a.tags?.length" class="text-xs text-gray-300 dark:text-gray-600 ml-auto">{{ a.tags.slice(0,2).join(' · ') }}</span>
             </div>
             <div class="font-medium text-sm dark:text-white">{{ a.title }}</div>
-            <p class="text-xs text-gray-400 mt-1 line-clamp-2">{{ a.summary }}</p>
+            <p class="text-xs text-gray-400 mt-1.5 line-clamp-2">{{ a.summary }}</p>
           </div>
         </div>
       </section>

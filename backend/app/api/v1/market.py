@@ -84,6 +84,12 @@ async def get_market_breadth(service: MarketService = Depends(get_market_service
     return await service.get_market_breadth()
 
 
+@router.get("/summary")
+async def get_market_summary(service: MarketService = Depends(get_market_service)):
+    """Get today's market overview: indices, hot sectors, sentiment."""
+    return await service.get_market_summary()
+
+
 @router.get("/search")
 async def search_stocks(
     q: str = Query(..., min_length=1),

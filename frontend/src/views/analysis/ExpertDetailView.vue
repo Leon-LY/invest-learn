@@ -93,6 +93,32 @@ onMounted(async () => {
           </div>
         </div>
 
+        <!-- ===== 3.5 HOLDINGS ===== -->
+        <div v-if="expert.holdings?.length" class="card p-4">
+          <h3 class="text-sm font-semibold dark:text-white mb-3">📋 最新季报持仓（前10大重仓）</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="text-gray-400 border-b border-gray-100 dark:border-gray-800">
+                  <th class="text-left py-2 font-medium">股票</th>
+                  <th class="text-right py-2 font-medium">代码</th>
+                  <th class="text-right py-2 font-medium">占净值比</th>
+                  <th class="text-right py-2 font-medium">持仓市值</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="h in expert.holdings" :key="h.code" class="border-b border-gray-50 dark:border-gray-800/30">
+                  <td class="py-2 dark:text-white">{{ h.stock }}</td>
+                  <td class="py-2 text-right text-gray-400 font-mono">{{ h.code }}</td>
+                  <td class="py-2 text-right font-medium dark:text-white">{{ h.ratio?.toFixed(2) }}%</td>
+                  <td class="py-2 text-right text-gray-400">{{ h.market_value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-2">数据来源：基金定期报告（AKShare），每季度更新</p>
+        </div>
+
         <!-- ===== 4. SCALE TREND ===== -->
         <div v-if="expert.size_history?.length" class="card p-4">
           <h3 class="text-sm font-semibold dark:text-white mb-3">💰 规模变动（亿元）</h3>

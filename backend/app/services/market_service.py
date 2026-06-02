@@ -419,6 +419,79 @@ class MarketService:
         await cache_set("market:summary", result, ttl=60)
         return result
 
+    async def get_portfolio_summary(self, funds: list) -> dict:
+        """Analyze user's fund portfolio with real data + AI insights."""
+        import httpx, json, re
+        holdings = []
+        total_risk = 0
+        type_dist = {}
+
+        for item in funds:
+            code = str(item.get("code", ""))
+            amount = float(item.get("amount", 0))
+            if not code or len(code) != 6:
+                continue
+
+            info = {"code": code, "amount": amount}
+            try:
+                async with httpx.AsyncClient(timeout=6) as client:
+                    resp = await client.get(f"http://fundgz.1234567.com.cn/js/{code}.js")
+                    if resp.status_code == 200:
+                        m = re.search(r'jsonpgz\((.+)\)', resp.text)
+                        if m:
+                            d = json.loads(m.group(1))
+                            info["name"] = d.get("name", "")
+                            info["nav"] = float(d.get("dwjz", 0))
+                            info["est_return"] = float(d.get("gszzl", 0))
+            except Exception:
+                pass
+
+            # Classify type from DB
+            stmt = select(Fund).where(Fund.code == code)
+            r = await self.db.execute(stmt)
+            fund = r.scalar_one_or_none()
+            if fund:
+                info["type"] = fund.fund_type or "混合型"
+                type_dist[info["type"]] = type_dist.get(info["type"], 0) + amount
+            else:
+                info["type"] = "未知"
+                type_dist["未知"] = type_dist.get("未知", 0) + amount
+
+            holdings.append(info)
+
+        total_amount = sum(h["amount"] for h in holdings)
+        if total_amount == 0:
+            return {"holdings": holdings, "error": "无法获取基金数据"}
+
+        # Allocation analysis
+        allocation = []
+        for t, amt in type_dist.items():
+            allocation.append({"type": t, "ratio": round(amt / total_amount * 100, 1)})
+
+        # Risk assessment
+        scores = {"股票型": 8, "混合型": 6, "指数型": 5, "债券型": 2, "货币型": 1}
+        risk_score = sum(scores.get(h.get("type",""), 5) * h["amount"] / total_amount for h in holdings)
+        risk_level = "高" if risk_score > 7 else "中高" if risk_score > 5 else "中" if risk_score > 3 else "低"
+
+        # Simple advice
+        advice_parts = []
+        if risk_score > 7:
+            advice_parts.append("组合整体风险偏高，建议增加债券或货币基金比例到20-30%")
+        if len(holdings) < 3:
+            advice_parts.append("持仓基金较少（<3只），建议分散到3-5只不同类型基金")
+        if any(h.get("type") == "混合型" for h in holdings):
+            advice_parts.append("混合型基金占比较高，注意查看基金经理是否风格漂移")
+
+        return {
+            "holdings": holdings,
+            "total_amount": round(total_amount, 2),
+            "allocation": allocation,
+            "risk_score": round(risk_score, 1),
+            "risk_level": risk_level,
+            "advice": advice_parts or ["组合配置合理，坚持定投即可"],
+            "fund_count": len(holdings),
+        }
+
     # ─── Funds ──────────────────────────────────────────
 
     async def get_fund_detail(self, code: str) -> Optional[dict]:

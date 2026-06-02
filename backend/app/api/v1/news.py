@@ -91,20 +91,25 @@ async def create_viewpoint(request: Request, service: NewsService = Depends(get_
     image_data = data.get("image", "")
     content = data.get("content", "")
 
-    # If image is provided, analyze with Qwen Vision first
-    if image_data and not content.strip():
+    # Analyze image with Qwen Vision (always if provided)
+    if image_data:
         try:
             import base64
             img_bytes = base64.b64decode(image_data)
             from app.services.vision_service import analyze_image
             vision_result = await analyze_image(img_bytes)
             if vision_result:
-                content = vision_result.get("content", "")
-                # Append key points and numbers if available
+                parts = [vision_result.get("content", "")]
                 if vision_result.get("key_points"):
-                    content += "\n\n要点: " + "; ".join(vision_result["key_points"])
+                    parts.append("要点: " + "; ".join(vision_result["key_points"]))
                 if vision_result.get("numbers_extracted"):
-                    content += "\n\n数据: " + vision_result["numbers_extracted"]
+                    parts.append("数据: " + vision_result["numbers_extracted"])
+                vision_text = "\n\n".join(filter(None, parts))
+                # Append to user text, or use as sole content
+                if content.strip():
+                    content = content.strip() + "\n\n[截图分析]: " + vision_text
+                else:
+                    content = vision_text
                 if vision_result.get("data_points"):
                     content += "\n\n提取数据: " + vision_result["data_points"]
         except Exception as e:

@@ -28,7 +28,7 @@ function navigate(path: string) {
 </script>
 
 <template>
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl border-t border-gray-200/20 dark:border-gray-800/20 z-40 safe-area-bottom shadow-[0_-8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.3)]">
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 backdrop-blur-2xl border-t z-40 safe-area-bottom bottom-nav-shadow" style="background: var(--app-nav-bg); border-color: var(--app-border); box-shadow: 0 -8px 32px rgba(0,0,0,0.04);">
     <div class="flex justify-around h-14">
       <button
         v-for="item in items" :key="item.path"

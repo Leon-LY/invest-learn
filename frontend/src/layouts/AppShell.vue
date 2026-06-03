@@ -17,7 +17,7 @@ function openSearch() { searchRef.value?.open() }
 <template>
   <div class="min-h-screen flex flex-col relative">
     <!-- Header — tech gradient accent -->
-    <header class="h-12 bg-white/80 dark:bg-[#1A1B2E]/80 backdrop-blur-xl border-b border-gray-100/50 dark:border-gray-800/50 flex items-center px-4 shrink-0 z-30 sticky top-0">
+    <header class="h-12 backdrop-blur-xl border-b flex items-center px-4 shrink-0 z-30 sticky top-0" style="background: var(--app-header-bg); border-color: var(--app-border);">
       <button v-if="showBack" @click="goBack" class="mr-2 p-1.5 -ml-1 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 rounded-lg transition-colors">
         <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
@@ -79,7 +79,7 @@ function openSearch() { searchRef.value?.open() }
       </button>
     </header>
 
-    <main class="flex-1 overflow-y-scroll pb-[4.5rem] md:pb-0">
+    <main class="flex-1 pb-[4.5rem] md:pb-0">
       <slot />
     </main>
 

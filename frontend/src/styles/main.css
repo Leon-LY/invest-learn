@@ -1,5 +1,34 @@
 @import 'tailwindcss';
 
+/* ── 显式声明 class-based 暗色模式 ── */
+@variant dark (&:where(.dark, .dark *));
+
+/* ── 暗色模式核心：CSS 自定义属性在 html.dark 下切换 ── */
+@layer base {
+  :root {
+    --app-bg: #F5F6FA;
+    --app-surface: #FFFFFF;
+    --app-surface-hover: #F8F9FA;
+    --app-border: #F0F1F3;
+    --app-text: #111827;
+    --app-text-secondary: #6B7280;
+    --app-text-muted: #9CA3AF;
+    --app-header-bg: rgba(255, 255, 255, 0.8);
+    --app-nav-bg: rgba(255, 255, 255, 0.8);
+  }
+  html.dark {
+    --app-bg: #0C0D1A;
+    --app-surface: #1A1B30;
+    --app-surface-hover: #252740;
+    --app-border: #2D2F45;
+    --app-text: #E0E0E0;
+    --app-text-secondary: #9CA3AF;
+    --app-text-muted: #6B7280;
+    --app-header-bg: rgba(26, 27, 46, 0.8);
+    --app-nav-bg: rgba(17, 24, 39, 0.8);
+  }
+}
+
 @theme {
   /* Primary palette - electric blue / violet for tech feel */
   --color-primary: #5B6CF0;
@@ -278,8 +307,12 @@ body::after {
   outline-offset: 2px;
   border-radius: 4px;
 }
-/* ── Smooth scrolling ── */
-html { scroll-behavior: smooth; }
+/* ── 防止页面切换时滚动条出现/消失导致布局横向抖动 ── */
+html {
+  scroll-behavior: smooth;
+  overflow-y: scroll; /* 始终保留滚动条空间 */
+  overflow-x: hidden;
+}
 
 /* ── Reduced motion preference ── */
 @media (prefers-reduced-motion: reduce) {
@@ -290,34 +323,32 @@ html { scroll-behavior: smooth; }
   }
 }
 
-/* ── Dark mode fallback — @layer base 确保 Tailwind 的 dark: 变体始终优先 ── */
-@layer base {
-  .dark .text-gray-300 { color: #d1d5db; }
-  .dark .text-gray-400 { color: #9ca3af; }
-  .dark .text-gray-500 { color: #a0aec0; }
-  .dark .text-gray-600 { color: #c4c9d4; }
-  .dark .text-gray-700 { color: #d1d5db; }
-  .dark .text-gray-800 { color: #e5e7eb; }
-  .dark .text-gray-900 { color: #f3f4f6; }
-  .dark .text-black { color: #e0e0e0; }
-  .dark .bg-gray-50 { background: #151628; }
-  .dark .bg-gray-100 { background: #1e1f36; }
-  .dark .bg-gray-200 { background: #252740; }
-  .dark .bg-white { background: #1a1b30; }
-  .dark .border-gray-100 { border-color: #2a2b40; }
-  .dark .border-gray-200 { border-color: #2d2f45; }
-  .dark .border-gray-300 { border-color: #3d3f55; }
-  .dark input, .dark select, .dark textarea {
-    background: #1a1b30;
-    color: #e0e0e0;
-    border-color: #3d3f55;
-  }
-  .dark input::placeholder { color: #6b6f85; }
-  .dark .hover\:bg-gray-100:hover { background: #252740; }
-  .dark .hover\:bg-gray-50:hover { background: #1c1e35; }
-  .dark body { color: #e0e0e0; }
-  .dark .animate-pulse > div { background: #2a2b40; }
+/* ── 暗色模式回退 — 针对未显式设置 dark: 变体的元素 ── */
+html.dark .text-gray-300 { color: #d1d5db; }
+html.dark .text-gray-400 { color: #9ca3af; }
+html.dark .text-gray-500 { color: #a0aec0; }
+html.dark .text-gray-600 { color: #c4c9d4; }
+html.dark .text-gray-700 { color: #d1d5db; }
+html.dark .text-gray-800 { color: #e5e7eb; }
+html.dark .text-gray-900 { color: #f3f4f6; }
+html.dark .text-black { color: #e0e0e0; }
+html.dark .bg-gray-50 { background: #151628; }
+html.dark .bg-gray-100 { background: #1e1f36; }
+html.dark .bg-gray-200 { background: #252740; }
+html.dark .bg-white { background: #1a1b30; }
+html.dark .border-gray-100 { border-color: #2a2b40; }
+html.dark .border-gray-200 { border-color: #2d2f45; }
+html.dark .border-gray-300 { border-color: #3d3f55; }
+html.dark input, html.dark select, html.dark textarea {
+  background: #1a1b30;
+  color: #e0e0e0;
+  border-color: #3d3f55;
 }
+html.dark input::placeholder { color: #6b6f85; }
+html.dark .hover\:bg-gray-100:hover { background: #252740; }
+html.dark .hover\:bg-gray-50:hover { background: #1c1e35; }
+html.dark body { color: #e0e0e0; }
+html.dark .animate-pulse > div { background: #2a2b40; }
 
 /* ── Global animations ── */
 
@@ -425,6 +456,8 @@ html { scroll-behavior: smooth; }
   background-size: 200% 100%;
 }
 
+/* Bottom nav — dark shadow */
+html.dark .bottom-nav-shadow { box-shadow: 0 -8px 32px rgba(0,0,0,0.3); }
 /* Bottom nav — prevent flicker */
 .bottom-nav-enter-active { transition: opacity 0.1s ease; }
 .bottom-nav-leave-active { transition: opacity 0.1s ease; }

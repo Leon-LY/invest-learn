@@ -62,7 +62,7 @@ const downCount = computed(() => items.value.filter(i => (i.quote?.change_pct ||
     <div class="max-w-4xl mx-auto px-4 py-4 space-y-4">
       <div class="flex items-center justify-between">
         <h1 class="text-xl font-bold dark:text-white">我的自选</h1>
-        <button @click="showSearch = !showSearch" class="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors">
+        <button @click="showSearch = !showSearch" class="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors">
           + 添加
         </button>
       </div>
@@ -74,7 +74,7 @@ const downCount = computed(() => items.value.filter(i => (i.quote?.change_pct ||
             v-model="searchQuery"
             @input="onSearch"
             placeholder="搜索股票代码或名称..."
-            class="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            class="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <button @click="showSearch = false" class="text-sm text-gray-400 hover:text-gray-600">取消</button>
         </div>
@@ -88,7 +88,7 @@ const downCount = computed(() => items.value.filter(i => (i.quote?.change_pct ||
               <span class="text-sm font-medium dark:text-white">{{ r.name }}</span>
               <span class="text-xs text-gray-400 ml-2">{{ r.code }} · {{ r.market }}</span>
             </div>
-            <span class="text-xs text-purple-500">+ 添加</span>
+            <span class="text-xs text-primary">+ 添加</span>
           </div>
         </div>
       </div>
@@ -98,7 +98,7 @@ const downCount = computed(() => items.value.filter(i => (i.quote?.change_pct ||
         <button v-for="t in [{ v: '', l: '全部' }, { v: 'stock', l: '股票' }, { v: 'fund', l: '基金' }, { v: 'index', l: '指数' }]" :key="t.v"
           @click="filterType = t.v; fetchData()"
           class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
-          :class="filterType === t.v ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
+          :class="filterType === t.v ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
         >{{ t.l }}</button>
         <div class="flex-1" />
         <span class="text-xs text-gray-400 self-center">

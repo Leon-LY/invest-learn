@@ -95,7 +95,7 @@ const impactColors: Record<string, string> = {
         <div v-else-if="analysisError" class="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 text-center">
           <span class="text-sm text-gray-400">AI 分析暂时不可用，请稍后重试</span>
         </div>
-        <div v-else-if="aiAnalysis" class="mt-6 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary-light to-purple-50 dark:from-primary/10 dark:to-purple-900/20 p-5">
+        <div v-else-if="aiAnalysis" class="mt-6 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary-light to-cyan/10 dark:from-primary/10 dark:to-cyan/10 p-5">
           <div class="flex items-center gap-2 mb-3">
             <span class="text-xl">🤖</span>
             <h3 class="font-bold text-sm text-gray-900 dark:text-white">AI 影响分析</h3>

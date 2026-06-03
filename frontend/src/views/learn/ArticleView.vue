@@ -35,7 +35,7 @@ function renderMarkdown(text: string): string {
         return trimmed.startsWith('**') ? `<th class="px-3 py-2 text-left font-semibold">${trimmed.replace(/\*\*/g, '')}</th>` : `<td class="px-3 py-2 border-t border-gray-200 dark:border-gray-700">${trimmed}</td>`
       }).join('') + '</tr>'
     })
-    .replace(/>(.+)/g, '<blockquote class="border-l-4 border-purple-400 pl-4 italic text-gray-600 dark:text-gray-400 my-3">$1</blockquote>')
+    .replace(/>(.+)/g, '<blockquote class="border-l-4 border-primary/40 pl-4 italic text-gray-600 dark:text-gray-400 my-3">$1</blockquote>')
 }
 </script>
 
@@ -49,7 +49,7 @@ function renderMarkdown(text: string): string {
       </div>
       <article v-else-if="article" class="prose dark:prose-invert max-w-none">
         <div class="mb-2">
-          <span class="px-2 py-1 text-xs rounded bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">{{ levelLabel[article.level] || article.level }}</span>
+          <span class="px-2 py-1 text-xs rounded bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary/80">{{ levelLabel[article.level] || article.level }}</span>
           <span v-if="article.estimated_read" class="ml-2 text-xs text-gray-400">阅读约 {{ article.estimated_read }} 分钟</span>
         </div>
         <h1 class="text-xl font-bold dark:text-white mb-4">{{ article.title }}</h1>

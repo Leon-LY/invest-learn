@@ -77,7 +77,7 @@ function deleteNote(id: number) {
           <h1 class="text-xl font-bold dark:text-white">投资笔记</h1>
           <p class="text-sm text-gray-400 mt-1">记录投资心得、反思与学习笔记</p>
         </div>
-        <button @click="openEditor()" class="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-1.5">
+        <button @click="openEditor()" class="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           写笔记
         </button>
@@ -90,22 +90,22 @@ function deleteNote(id: number) {
           <input
             v-model="formTitle"
             placeholder="标题..."
-            class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <textarea
             v-model="formContent"
             placeholder="写下你的投资思考、学习心得..."
             rows="6"
-            class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+            class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <input
             v-model="formTags"
             placeholder="标签（用逗号分隔，如：价值投资, 茅台）"
-            class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <div class="flex gap-2 justify-end">
             <button @click="showEditor = false" class="px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">取消</button>
-            <button @click="saveNote" class="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors">保存</button>
+            <button @click="saveNote" class="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors">保存</button>
           </div>
         </div>
       </div>
@@ -122,7 +122,7 @@ function deleteNote(id: number) {
               <h3 class="font-medium text-sm dark:text-white">{{ note.title }}</h3>
               <p class="text-xs text-gray-400 mt-1 line-clamp-3">{{ note.content }}</p>
               <div v-if="note.tags.length" class="flex gap-1 mt-2">
-                <span v-for="t in note.tags" :key="t" class="px-1.5 py-0.5 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded">{{ t }}</span>
+                <span v-for="t in note.tags" :key="t" class="px-1.5 py-0.5 text-xs bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary/80 rounded">{{ t }}</span>
               </div>
               <div class="text-xs text-gray-400 mt-2">{{ note.created_at.slice(0, 10) }}</div>
             </div>

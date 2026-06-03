@@ -85,7 +85,7 @@ const metrics = [
           @input="onSearchInput"
           placeholder="搜索股票添加到对比列表（最多 5 只）..."
           :disabled="compareList.length >= 5"
-          class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+          class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <div v-if="searchResults.length" class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-20 max-h-60 overflow-y-auto">
           <div
@@ -97,7 +97,7 @@ const metrics = [
               <span class="text-sm font-medium dark:text-white">{{ r.name }}</span>
               <span class="text-xs text-gray-400 ml-2">{{ r.code }} · {{ r.market }}</span>
             </div>
-            <span class="text-xs text-purple-500">添加</span>
+            <span class="text-xs text-primary">添加</span>
           </div>
         </div>
       </div>
@@ -106,7 +106,7 @@ const metrics = [
       <div v-if="compareList.length" class="flex flex-wrap gap-2">
         <span
           v-for="s in compareList" :key="s.code"
-          class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm"
+          class="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary/80 rounded-full text-sm"
         >
           {{ s.name || s.code }}
           <button @click="removeFromCompare(s.code)" class="ml-1 hover:text-red-500">×</button>
@@ -123,7 +123,7 @@ const metrics = [
             <tr class="border-b border-gray-100 dark:border-gray-800">
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-400">指标</th>
               <th v-for="s in compareData" :key="s.info.code" class="px-4 py-3 text-center text-xs font-medium text-gray-400">
-                <div class="cursor-pointer hover:text-purple-500" @click="router.push(`/diagnosis/${s.info.code}`)">
+                <div class="cursor-pointer hover:text-primary" @click="router.push(`/diagnosis/${s.info.code}`)">
                   {{ s.info.name }}
                 </div>
                 <div class="text-gray-500">{{ s.info.code }}</div>

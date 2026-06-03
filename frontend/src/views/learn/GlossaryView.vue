@@ -38,14 +38,14 @@ function onInput() {
         <input
           v-model="query" @input="onInput"
           placeholder="搜索术语..."
-          class="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+          class="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         <button v-for="c in categories" :key="c.v" @click="category = c.v; fetchTerms()"
           class="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors"
-          :class="category === c.v ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
+          :class="category === c.v ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
         >{{ c.l }}</button>
       </div>
 

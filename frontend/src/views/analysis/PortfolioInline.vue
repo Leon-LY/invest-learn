@@ -52,7 +52,7 @@ const presetFunds = [
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
           <div class="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/30"><div class="text-xs text-gray-400">基金数</div><div class="text-lg font-bold dark:text-white">{{ result.fund_count }}</div></div>
           <div class="p-2 rounded-xl bg-green-50 dark:bg-green-950/20"><div class="text-xs text-gray-400">总金额</div><div class="text-lg font-bold dark:text-white">{{ result.total_amount ? (result.total_amount/10000).toFixed(1)+'万' : '--' }}</div></div>
-          <div class="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/20"><div class="text-xs text-gray-400">风险评分</div><div class="text-lg font-bold dark:text-white">{{ result.risk_score }}</div></div>
+          <div class="p-2 rounded-xl bg-primary/10 dark:bg-primary/20"><div class="text-xs text-gray-400">风险评分</div><div class="text-lg font-bold dark:text-white">{{ result.risk_score }}</div></div>
           <div class="p-2 rounded-xl" :class="result.risk_level==='低'?'bg-green-50 dark:bg-green-950/20':'bg-yellow-50 dark:bg-yellow-950/20'"><div class="text-xs text-gray-400">风险等级</div><div class="text-lg font-bold dark:text-white">{{ result.risk_level }}</div></div>
         </div>
       </div>

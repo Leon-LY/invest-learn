@@ -93,7 +93,7 @@ const presetFunds = [
               <div class="text-xs text-gray-400">总金额</div>
               <div class="text-xl font-bold dark:text-white">{{ result.total_amount ? (result.total_amount/10000).toFixed(1)+'万' : '--' }}</div>
             </div>
-            <div class="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/20">
+            <div class="p-3 rounded-xl bg-primary/10 dark:bg-primary/20">
               <div class="text-xs text-gray-400">风险评分</div>
               <div class="text-xl font-bold dark:text-white">{{ result.risk_score }}</div>
             </div>

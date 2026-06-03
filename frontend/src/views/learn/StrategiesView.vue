@@ -39,7 +39,7 @@ onMounted(async () => {
         >
           <div class="flex items-center gap-2 mb-2">
             <h3 class="font-semibold text-sm dark:text-white">{{ s.name }}</h3>
-            <span class="px-1.5 py-0.5 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-600 rounded">{{ difficultyLabel[s.difficulty] || s.difficulty }}</span>
+            <span class="px-1.5 py-0.5 text-xs bg-primary/10 dark:bg-primary/20 text-primary rounded">{{ difficultyLabel[s.difficulty] || s.difficulty }}</span>
             <span :class="riskColor[s.risk_level]" class="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 rounded">{{ riskLabel[s.risk_level] || s.risk_level }}</span>
           </div>
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">{{ s.summary }}</p>

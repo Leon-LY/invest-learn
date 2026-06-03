@@ -94,7 +94,7 @@ onMounted(async () => {
               <span class="px-1.5 py-0.5 text-xs rounded-full"
                 :class="a.level==='beginner'?'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400':
                        a.level==='intermediate'?'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400':
-                       'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'">
+                       'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary/80'">
                 {{ difficultyLabels[a.level] || a.level }}
               </span>
               <span class="text-xs text-gray-400">阅读 {{ a.estimated_read || 10 }} 分钟</span>

@@ -12,7 +12,7 @@ const show = ref(false)
   <span class="relative inline-block">
     <span
       class="border-b border-dashed cursor-help"
-      :class="appStore.learningMode ? 'border-purple-400 text-purple-600 dark:text-purple-400' : 'border-gray-400'"
+      :class="appStore.learningMode ? 'border-primary text-primary dark:text-primary/80' : 'border-gray-400'"
       @mouseenter="show = true"
       @mouseleave="show = false"
       @click="show = !show"

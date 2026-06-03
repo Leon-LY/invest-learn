@@ -55,23 +55,23 @@ function resetFilters() {
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
             <label class="text-xs text-gray-400">市盈率(PE) 最小</label>
-            <input v-model.number="filters.pe_min" type="number" step="1" placeholder="0" class="w-full mt-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500" />
+            <input v-model.number="filters.pe_min" type="number" step="1" placeholder="0" class="w-full mt-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary" />
           </div>
           <div>
             <label class="text-xs text-gray-400">市盈率(PE) 最大</label>
-            <input v-model.number="filters.pe_max" type="number" step="1" placeholder="50" class="w-full mt-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500" />
+            <input v-model.number="filters.pe_max" type="number" step="1" placeholder="50" class="w-full mt-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary" />
           </div>
           <div>
             <label class="text-xs text-gray-400">市净率(PB) 最小</label>
-            <input v-model.number="filters.pb_min" type="number" step="0.1" placeholder="0" class="w-full mt-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500" />
+            <input v-model.number="filters.pb_min" type="number" step="0.1" placeholder="0" class="w-full mt-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary" />
           </div>
           <div>
             <label class="text-xs text-gray-400">市净率(PB) 最大</label>
-            <input v-model.number="filters.pb_max" type="number" step="0.1" placeholder="10" class="w-full mt-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500" />
+            <input v-model.number="filters.pb_max" type="number" step="0.1" placeholder="10" class="w-full mt-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary" />
           </div>
         </div>
         <div class="flex gap-2">
-          <button @click="search" class="flex-1 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors">筛选</button>
+          <button @click="search" class="flex-1 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors">筛选</button>
           <button @click="resetFilters" class="px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">重置</button>
         </div>
       </div>

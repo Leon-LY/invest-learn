@@ -100,7 +100,7 @@ function changeDays(d: number) {
         <button v-for="d in [7, 30, 90]" :key="d"
           @click="changeDays(d)"
           class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
-          :class="days === d ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
+          :class="days === d ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
         >近 {{ d }} 天</button>
       </div>
 

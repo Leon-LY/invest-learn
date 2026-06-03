@@ -16,7 +16,7 @@ const dirColors: Record<string, string> = {
 </script>
 
 <template>
-  <div v-if="brief" class="card p-4 bg-gradient-to-br from-primary-light to-purple-50 dark:from-primary/10 dark:to-purple-900/20 border-primary/10">
+  <div v-if="brief" class="card p-4 bg-gradient-to-br from-primary-light to-cyan/10 dark:from-primary/10 dark:to-cyan/10 border-primary/10">
     <!-- Header -->
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2">

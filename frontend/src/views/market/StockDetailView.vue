@@ -78,7 +78,7 @@ function formatNum(val: number | null): string {
         <div>
           <h1 class="text-lg font-bold dark:text-white">{{ detail.info.name }}</h1>
           <span class="text-xs text-gray-400">{{ detail.info.code }} · {{ detail.info.market === 'A' ? 'A股' : detail.info.market === 'HK' ? '港股' : detail.info.market === 'US' ? '美股' : detail.info.market }}</span>
-          <span v-if="detail.info.sector" class="ml-2 text-xs px-1.5 py-0.5 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded">{{ detail.info.sector }}</span>
+          <span v-if="detail.info.sector" class="ml-2 text-xs px-1.5 py-0.5 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary/80 rounded">{{ detail.info.sector }}</span>
         </div>
         <button
           @click="toggleWatchlist"
@@ -114,7 +114,7 @@ function formatNum(val: number | null): string {
             v-for="p in [{ k: 'daily', l: '日K' }, { k: 'weekly', l: '周K' }, { k: 'monthly', l: '月K' }]" :key="p.k"
             @click="period = p.k as any"
             class="px-3 py-1 rounded text-xs font-medium transition-colors"
-            :class="period === p.k ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
+            :class="period === p.k ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
           >
             {{ p.l }}
           </button>

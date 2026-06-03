@@ -30,7 +30,7 @@ onMounted(async () => {
         <!-- Header -->
         <div class="card p-5">
           <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white font-bold text-lg shrink-0">{{ expert.expert?.[0] }}</div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-cyan flex items-center justify-center text-white font-bold text-lg shrink-0">{{ expert.expert?.[0] }}</div>
             <div>
               <h1 class="text-lg font-bold dark:text-white">{{ expert.expert }}</h1>
               <p class="text-sm text-gray-400">{{ expert.title_role }} · 专注 {{ expert.prefers }}</p>

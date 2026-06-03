@@ -31,7 +31,7 @@ onMounted(async () => {
         <!-- ===== 1. PROFILE ===== -->
         <div class="card p-5">
           <div class="flex items-start gap-4">
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white font-bold text-xl shrink-0">{{ expert.name?.[0] }}</div>
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-cyan flex items-center justify-center text-white font-bold text-xl shrink-0">{{ expert.name?.[0] }}</div>
             <div>
               <h1 class="text-lg font-bold dark:text-white">{{ expert.name }}</h1>
               <p class="text-sm text-gray-400">{{ expert.title }}</p>

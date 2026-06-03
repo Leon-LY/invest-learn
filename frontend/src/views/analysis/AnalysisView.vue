@@ -51,8 +51,10 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
         >{{ t.l }}</button>
       </div>
 
-      <!-- TAB 1: Predictions -->
-      <div v-if="activeTab === 'predictions'" class="space-y-3">
+      <!-- Tab Content with smooth transition -->
+      <Transition name="tab-fade" mode="out-in">
+        <!-- TAB 1: Predictions -->
+        <div v-if="activeTab === 'predictions'" key="predictions" class="space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs text-gray-400">🤖 6位大佬 × 多角度分析（{{ predictions.length }}位）{{ predRefresh ? '· ' + predRefresh : '' }}</span>
           <button @click="refreshPredictions()" class="text-xs text-primary hover:underline">刷新</button>
@@ -81,7 +83,7 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
       </div>
 
       <!-- TAB 2: Expert Tracker -->
-      <div v-if="activeTab === 'experts'" class="space-y-3">
+      <div v-if="activeTab === 'experts'" key="experts" class="space-y-3">
         <div class="text-xs text-gray-400">📊 实时追踪（AKShare/天天基金，每2小时更新）</div>
         <div v-if="!experts.length" class="card p-6 text-center text-xs text-gray-400">正在加载大佬数据...</div>
         <div v-for="e in experts" :key="e.name"
@@ -110,16 +112,17 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
       </div>
 
       <!-- TAB 3: Portfolio Analysis -->
-      <div v-if="activeTab === 'portfolio'" class="space-y-4">
+      <div v-if="activeTab === 'portfolio'" key="portfolio" class="space-y-4">
         <p class="text-sm text-gray-500 dark:text-gray-400">输入你的基金持仓，AI 分析配置是否合理</p>
         <PortfolioInline />
       </div>
 
       <!-- TAB 4: Market Voice -->
-      <div v-if="activeTab === 'voice'" class="space-y-4">
+      <div v-if="activeTab === 'voice'" key="voice" class="space-y-4">
         <p class="text-sm text-gray-500 dark:text-gray-400">录入手动看到的观点或截图</p>
         <VoiceInline />
       </div>
+      </Transition>
     </div>
   </AppShell>
 </template>

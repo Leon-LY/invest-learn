@@ -275,8 +275,11 @@ body::after {
   outline-offset: 2px;
   border-radius: 4px;
 }
-/* ── Smooth scrolling ── */
-html { scroll-behavior: smooth; }
+/* ── Smooth scrolling + prevent scrollbar layout shift ── */
+html {
+  scroll-behavior: smooth;
+  overflow-y: scroll; /* 始终显示滚动条，防止内容高度变化时布局抖动 */
+}
 
 /* ── Reduced motion preference ── */
 @media (prefers-reduced-motion: reduce) {
@@ -364,6 +367,12 @@ html { scroll-behavior: smooth; }
   opacity: 0.15;
   animation: floatUp linear infinite;
 }
+
+/* Tab content transition — prevents layout jump on switch */
+.tab-fade-enter-active,
+.tab-fade-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.tab-fade-enter-from { opacity: 0; transform: translateX(4px); }
+.tab-fade-leave-to { opacity: 0; transform: translateX(-4px); }
 
 /* Number counter animation */
 @keyframes countIn {

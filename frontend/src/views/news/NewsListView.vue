@@ -147,12 +147,15 @@ function changeCategory(cat: string) {
         <span class="text-xs text-gray-400 shrink-0">{{ total > 0 ? `共 ${total} 条` : '' }}</span>
       </div>
 
-      <!-- News list -->
-      <div v-if="loading" class="space-y-3">
+      <!-- Skeleton — only on first load when no cached articles -->
+      <div v-if="loading && !articles.length" class="space-y-3">
         <div v-for="i in 6" :key="i" class="animate-pulse card p-4"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2" /><div class="h-3 bg-gray-100 dark:bg-gray-800 rounded w-1/2" /></div>
       </div>
-      <EmptyState v-else-if="!articles.length" message="暂无该分类新闻" />
-      <div v-else class="space-y-2 animate-in">
+      <!-- Empty state — only when done loading and truly empty -->
+      <EmptyState v-if="!loading && !articles.length" message="暂无该分类新闻" />
+      <!-- Articles — use v-show to prevent DOM destruction on reload -->
+      <div v-show="articles.length" class="space-y-2" :class="{ 'animate-in': !loading }">
+        <div v-if="loading" class="text-center text-xs text-gray-400 py-1">刷新中...</div>
         <div
           v-for="a in articles" :key="a.id"
           @click="onCardClick(a.id)"

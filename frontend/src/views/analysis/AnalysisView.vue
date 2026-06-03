@@ -3,9 +3,11 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
 import { newsApi } from '@/api/news'
+import PortfolioInline from './PortfolioInline.vue'
+import VoiceInline from './VoiceInline.vue'
 
 const router = useRouter()
-const activeTab = ref<'predictions' | 'experts'>('predictions')
+const activeTab = ref<'predictions' | 'experts' | 'portfolio' | 'voice'>('predictions')
 const predictions = ref<any[]>([])
 const experts = ref<any[]>([])
 const predRefresh = ref('')
@@ -37,10 +39,14 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
       </div>
 
       <!-- Tab Switcher -->
-      <div class="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-        <button v-for="t in [{ k: 'predictions', l: '📈 大佬预测' }, { k: 'experts', l: '👤 大佬追踪' }]" :key="t.k"
-          @click="activeTab = t.k as any"
-          class="flex-1 py-2 text-sm font-medium rounded-lg transition-all"
+      <div class="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 overflow-x-auto">
+        <button v-for="t in [
+          { k: 'predictions', l: '📈 大佬预测' },
+          { k: 'experts', l: '👤 大佬追踪' },
+          { k: 'portfolio', l: '📊 组合分析' },
+          { k: 'voice', l: '💬 市场声音' },
+        ]" :key="t.k" @click="activeTab = t.k as any"
+          class="flex-1 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap px-2"
           :class="activeTab === t.k ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500'"
         >{{ t.l }}</button>
       </div>
@@ -101,6 +107,18 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- TAB 3: Portfolio Analysis -->
+      <div v-if="activeTab === 'portfolio'" class="space-y-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">输入你的基金持仓，AI 分析配置是否合理</p>
+        <PortfolioInline />
+      </div>
+
+      <!-- TAB 4: Market Voice -->
+      <div v-if="activeTab === 'voice'" class="space-y-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">录入手动看到的观点或截图</p>
+        <VoiceInline />
       </div>
     </div>
   </AppShell>

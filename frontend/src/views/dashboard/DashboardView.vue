@@ -115,12 +115,10 @@ const indexNames: Record<string,string> = {
       </div>
 
       <!-- Tools -->
-      <div class="grid grid-cols-5 gap-2">
+      <div class="grid grid-cols-3 gap-2">
         <button v-for="t in [
           { icon:'🔬', label:'基金诊断', to:'/diagnosis' },
-          { icon:'👤', label:'大佬分析', to:'/analysis' },
-          { icon:'📊', label:'组合分析', to:'/portfolio-analysis' },
-          { icon:'💬', label:'市场声音', to:'/viewpoints' },
+          { icon:'🤖', label:'智能分析', to:'/analysis' },
           { icon:'📚', label:'知识库', to:'/learn' },
         ]" :key="t.to" @click="router.push(t.to)"
           class="card p-3 text-center hover:shadow-md transition-shadow">

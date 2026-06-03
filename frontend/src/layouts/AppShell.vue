@@ -79,7 +79,7 @@ function openSearch() { searchRef.value?.open() }
       </button>
     </header>
 
-    <main class="flex-1 overflow-y-auto pb-[4.5rem] md:pb-0">
+    <main class="flex-1 overflow-y-scroll pb-[4.5rem] md:pb-0">
       <slot />
     </main>
 

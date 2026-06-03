@@ -83,7 +83,7 @@ function resetToDefault() {
           >
             <option value="light">☀️ 亮色</option>
             <option value="dark">🌙 暗色</option>
-            <option value="system">💻 跟随系统</option>
+            <option value="system">🕐 自动（6-18点日间 / 18-6点夜间）</option>
           </select>
         </div>
         <div class="flex items-center justify-between">

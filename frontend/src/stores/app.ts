@@ -13,9 +13,15 @@ export const useAppStore = defineStore('app', () => {
     localStorage.getItem('learning-mode') !== 'false'
   )
 
+  /** 根据当前时间判断日间(6-18点)还是夜间(18-6点) */
+  function isNightTime(): boolean {
+    const hour = new Date().getHours()
+    return hour >= 18 || hour < 6
+  }
+
   const isDark = computed(() => {
     if (theme.value === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches
+      return isNightTime()
     }
     return theme.value === 'dark'
   })

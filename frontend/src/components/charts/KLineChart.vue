@@ -105,7 +105,8 @@ function calcMA(day: number): (number | null)[] {
   return result
 }
 
-watch(() => [props.data, appStore.isDark], initChart, { deep: true })
+watch(() => props.data.length, () => { if (props.data.length) initChart() })
+watch(() => appStore.isDark, () => { if (chart) { chart.dispose(); chart = null; initChart() } })
 onMounted(() => { setTimeout(initChart, 100) })
 onUnmounted(() => {
   resizeObserver?.disconnect()

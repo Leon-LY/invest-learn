@@ -6,8 +6,8 @@ const props = defineProps<{ value: number | null }>()
 
 const appStore = useAppStore()
 
-const isUp = computed(() => (props.value || 0) > 0)
-const isDown = computed(() => (props.value || 0) < 0)
+const isUp = computed(() => props.value != null && props.value > 0)
+const isDown = computed(() => props.value != null && props.value < 0)
 
 const bgClass = computed(() => {
   if (!props.value) return 'bg-gray-100 dark:bg-gray-800 text-gray-500'

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import SearchOverlay from '@/components/market/SearchOverlay.vue'
 
 defineProps<{ showBack?: boolean }>()
 const router = useRouter()
+const route = useRoute()
 const appStore = useAppStore()
 const searchRef = ref<InstanceType<typeof SearchOverlay>>()
 
@@ -49,6 +50,22 @@ function openSearch() { searchRef.value?.open() }
         </div>
       </div>
       <div class="flex-1" />
+      <!-- Desktop nav links -->
+      <nav class="hidden md:flex items-center gap-1 mr-2">
+        <button v-for="item in [
+          { path: '/', label: '发现' },
+          { path: '/watchlist', label: '自选' },
+          { path: '/analysis', label: '分析' },
+          { path: '/news', label: '资讯' },
+          { path: '/learn', label: '学习' },
+        ]" :key="item.path"
+          @click="router.push(item.path)"
+          class="px-3 py-1.5 text-xs rounded-lg transition-colors"
+          :class="route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path))
+            ? 'bg-primary/10 text-primary font-medium'
+            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-800/50'"
+        >{{ item.label }}</button>
+      </nav>
       <button @click="openSearch" class="flex items-center gap-1.5 px-3 py-1.5 mr-1 bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-full text-xs text-gray-500 dark:text-gray-400 transition-all hover:shadow-md">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         <span class="hidden sm:inline">搜基金</span>

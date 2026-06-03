@@ -76,8 +76,8 @@ onMounted(() => {
 })
 
 // Restore scroll position + refresh when returning from detail
-watch(() => route.path, (to, from) => {
-  if (to === '/news' && from?.startsWith('/news/')) {
+watch(() => route.path, (newPath, oldPath) => {
+  if (newPath === '/news' && oldPath?.startsWith('/news/')) {
     restoreScroll()
   }
 })

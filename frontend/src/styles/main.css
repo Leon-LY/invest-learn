@@ -269,6 +269,24 @@ body::after {
 /* Smooth tap highlight */
 * { -webkit-tap-highlight-color: transparent; }
 
+/* ── Accessibility: visible focus ring ── */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* ── Smooth scrolling ── */
+html { scroll-behavior: smooth; }
+
+/* ── Reduced motion preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ── Dark mode contrast fixes ── */
 .dark .text-gray-400 { color: #9ca3af !important; }
 .dark .text-gray-500 { color: #a0aec0 !important; }

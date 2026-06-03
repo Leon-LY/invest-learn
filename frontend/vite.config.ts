@@ -12,6 +12,15 @@ export default defineConfig({
   },
   build: {
     target: 'es2020',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'echarts': ['echarts'],
+          'vue-vendor': ['vue', 'vue-router', 'pinia'],
+          'ui-utils': ['@vueuse/core', 'axios', 'marked'],
+        },
+      },
+    },
   },
   server: {
     port: 3000,

@@ -9,6 +9,23 @@ from app.services.llm_service import llm_service
 
 logger = logging.getLogger(__name__)
 
+# Category keyword map — defined once, shared across all methods
+CATEGORY_KW_MAP: dict[str, list[str]] = {
+    "基金": ["基金", "ETF", "QDII", "FOF", "REIT", "定投", "净值", "基金经理", "公募", "私募", "指数", "联接", "LOF"],
+    "行业": ["行业", "板块", "赛道", "科技", "消费", "医药", "新能源", "半导体", "白酒", "银行", "地产", "光伏", "锂电", "芯片", "AI", "基建", "煤炭", "钢铁", "保险", "证券"],
+    "宏观": ["央行", "利率", "通胀", "GDP", "PMI", "CPI", "降息", "加息", "货币政策", "财政", "汇率", "人民币", "美元", "宏观", "经济数据", "美联储"],
+    "策略": ["策略", "定投", "配置", "仓位", "止损", "止盈", "轮动", "红利", "价值投资", "平衡", "回撤", "收益", "风险", "复利", "组合"],
+    "海外": ["美股", "港股", "QDII", "纳斯达克", "标普", "恒生", "全球", "海外", "美元", "日元", "欧股"],
+    "大佬": ["zhangkun", "张坤", "xiezhiyu", "谢治宇", "gelan", "葛兰", "houhao", "侯昊", "刘格菘", "经理", "大佬", "牛散", "朱少醒", "任泽平", "李蓓", "林园", "但斌", "洪灏"],
+}
+
+
+def _apply_category_filter(query, category: str):
+    """Apply ILIKE-based category filter to a query."""
+    keywords = CATEGORY_KW_MAP.get(category, [category])
+    conditions = [NewsArticle.title.ilike(f"%{kw}%") for kw in keywords]
+    return query.where(or_(*conditions))
+
 
 class NewsService:
     """Service for news queries."""
@@ -24,20 +41,7 @@ class NewsService:
         count_query = select(func.count()).select_from(NewsArticle)
 
         if category:
-            kw_map = {
-                "基金": ["基金", "ETF", "QDII", "FOF", "REIT", "定投", "净值", "基金经理", "公募", "私募", "指数", "联接", "LOF"],
-                "行业": ["行业", "板块", "赛道", "科技", "消费", "医药", "新能源", "半导体", "白酒", "银行", "地产", "光伏", "锂电", "芯片", "AI", "基建", "煤炭", "钢铁", "保险", "证券"],
-                "宏观": ["央行", "利率", "通胀", "GDP", "PMI", "CPI", "降息", "加息", "货币政策", "财政", "汇率", "人民币", "美元", "宏观", "经济数据", "美联储"],
-                "策略": ["策略", "定投", "配置", "仓位", "止损", "止盈", "轮动", "红利", "价值投资", "平衡", "回撤", "收益", "风险", "复利", "组合"],
-                "海外": ["美股", "港股", "QDII", "纳斯达克", "标普", "恒生", "全球", "海外", "美元", "日元", "欧股"],
-                "大佬": ["zhangkun", "张坤", "xiezhiyu", "谢治宇", "gelan", "葛兰", "houhao", "侯昊", "刘格菘", "经理", "大佬", "牛散", "朱少醒", "任泽平", "李蓓", "林园", "但斌", "洪灏"],
-            }
-            keywords = kw_map.get(category, [category])
-            conditions = []
-            for kw in keywords:
-                conditions.append(NewsArticle.title.ilike(f"%{kw}%"))
-            count_query = count_query.where(or_(*conditions))
-
+            count_query = _apply_category_filter(count_query, category)
         if source_id:
             count_query = count_query.where(NewsArticle.source_id == source_id)
         if sentiment:
@@ -45,23 +49,12 @@ class NewsService:
 
         total = await self.db.scalar(count_query) or 0
 
-        # Items query
-        query = select(NewsArticle)
+        # Items query with eager-loaded source names via subquery
+        query = select(NewsArticle, NewsSource.name.label("source_name")).outerjoin(
+            NewsSource, NewsArticle.source_id == NewsSource.id
+        )
         if category:
-            kw_map = {
-                "基金": ["基金", "ETF", "QDII", "FOF", "REIT", "定投", "净值", "基金经理", "公募", "私募", "指数", "联接", "LOF"],
-                "行业": ["行业", "板块", "赛道", "科技", "消费", "医药", "新能源", "半导体", "白酒", "银行", "地产", "光伏", "锂电", "芯片", "AI", "基建", "煤炭", "钢铁", "保险", "证券"],
-                "宏观": ["央行", "利率", "通胀", "GDP", "PMI", "CPI", "降息", "加息", "货币政策", "财政", "汇率", "人民币", "美元", "宏观", "经济数据", "美联储"],
-                "策略": ["策略", "定投", "配置", "仓位", "止损", "止盈", "轮动", "红利", "价值投资", "平衡", "回撤", "收益", "风险", "复利", "组合"],
-                "海外": ["美股", "港股", "QDII", "纳斯达克", "标普", "恒生", "全球", "海外", "美元", "日元", "欧股"],
-                "大佬": ["zhangkun", "张坤", "xiezhiyu", "谢治宇", "gelan", "葛兰", "houhao", "侯昊", "刘格菘", "经理", "大佬", "牛散", "朱少醒", "任泽平", "李蓓", "林园", "但斌", "洪灏"],
-            }
-            keywords = kw_map.get(category, [category])
-            conditions = []
-            for kw in keywords:
-                conditions.append(NewsArticle.title.ilike(f"%{kw}%"))
-            query = query.where(or_(*conditions))
-
+            query = _apply_category_filter(query, category)
         if source_id:
             query = query.where(NewsArticle.source_id == source_id)
         if sentiment:
@@ -69,16 +62,9 @@ class NewsService:
 
         query = query.order_by(desc(NewsArticle.published_at)).offset((page - 1) * size).limit(size)
         result = await self.db.execute(query)
-        articles = result.scalars().all()
+        rows = result.all()
 
-        items = []
-        for a in articles:
-            src_name = None
-            if a.source_id:
-                src_stmt = select(NewsSource.name).where(NewsSource.id == a.source_id)
-                src_result = await self.db.execute(src_stmt)
-                src_name = src_result.scalar()
-            items.append(self._to_item(a, src_name))
+        items = [self._to_item(row[0], row[1]) for row in rows]
 
         return {"items": items, "total": total, "page": page, "size": size}
 
@@ -90,17 +76,15 @@ class NewsService:
 
     async def get_article_detail(self, article_id: int, include_analysis: bool = True) -> Optional[dict]:
         """Get full article detail with source name. AI analysis loaded separately."""
-        stmt = select(NewsArticle).where(NewsArticle.id == article_id)
+        stmt = select(NewsArticle, NewsSource.name.label("source_name")).outerjoin(
+            NewsSource, NewsArticle.source_id == NewsSource.id
+        ).where(NewsArticle.id == article_id)
         result = await self.db.execute(stmt)
-        article = result.scalar_one_or_none()
-        if not article:
+        row = result.one_or_none()
+        if not row:
             return None
 
-        src_name = None
-        if article.source_id:
-            src_stmt = select(NewsSource.name).where(NewsSource.id == article.source_id)
-            src_result = await self.db.execute(src_stmt)
-            src_name = src_result.scalar()
+        article, src_name = row[0], row[1]
 
         # Use summary as content if no full text
         content = article.content

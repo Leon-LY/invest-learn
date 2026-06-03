@@ -35,7 +35,8 @@ function init() {
   }, true)
 }
 
-watch(() => props.data, init, { deep: true })
+watch(() => props.data.length, () => { if (props.data.length) init() })
+watch(() => props.color, () => { if (chart) { chart.dispose(); chart = null; init() } })
 onMounted(() => setTimeout(init, 50))
 onUnmounted(() => chart?.dispose())
 </script>

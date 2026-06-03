@@ -51,7 +51,10 @@ function goTo(code: string) {
 }
 
 onMounted(() => { window.addEventListener('keydown', onKeydown) })
-onUnmounted(() => { window.removeEventListener('keydown', onKeydown) })
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  clearTimeout(debounceTimer)
+})
 
 defineExpose({ open, close })
 </script>

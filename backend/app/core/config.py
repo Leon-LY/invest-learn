@@ -5,8 +5,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    ENV: str = "development"
-    DEBUG: bool = True
+    ENV: str = "production"
+    DEBUG: bool = False
     SECRET_KEY: str = "change-me-in-production"
     API_V1_PREFIX: str = "/api/v1"
 

@@ -12,10 +12,10 @@ const props = defineProps<{
 const appStore = useAppStore()
 
 const colorClass = computed(() => {
-  if (!props.value) return 'text-flat'
+  if (props.value === null || props.value === undefined) return 'text-flat'
   const v = props.value
-  const isUp = v > 0
-  return isUp ? 'text-up' : 'text-down'
+  if (v === 0) return 'text-flat'
+  return v > 0 ? 'text-up' : 'text-down'
 })
 
 const displayValue = computed(() => {
@@ -36,7 +36,7 @@ const sizeClass = computed(() => ({
 </script>
 
 <template>
-  <span :class="[colorClass, sizeClass, props.value && props.value > 0 ? 'price-up' : props.value && props.value < 0 ? 'price-down' : '']" class="tabular-nums font-mono">
+  <span :class="[colorClass, sizeClass, props.value != null && props.value > 0 ? 'price-up' : props.value != null && props.value < 0 ? 'price-down' : '']" class="tabular-nums font-mono">
     {{ displayValue }}
   </span>
 </template>

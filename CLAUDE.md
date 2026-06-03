@@ -95,6 +95,8 @@ curl -X POST http://localhost:8080/api/v1/crawl/trigger/news
 
 ## 底部导航
 
+移动端 5 Tab 底部导航（`md:hidden`），桌面端在 AppShell 头部显示内嵌导航链接。
+
 | Tab | 内容 |
 |------|------|
 | 发现 | 市场摘要 + 自选快照 + 新闻快照 |
@@ -134,12 +136,17 @@ curl -X POST http://localhost:8080/api/v1/crawl/trigger/news
 
 - **Mock 默认关闭**：生产环境 API 无数据时显示"暂无"，不回退假数据
 - **所有慢操作预生成 + Redis 缓存**：摘要60s、大佬预测30min、大佬追踪2h、AI分析5min
-- **`redis_up_green_down` 配色**：中国投资习惯，涨红跌绿
+- **`red_up_green_down` 配色**：中国投资习惯，涨红跌绿（可在设置切换）
 - **`<keep-alive :max="5">`**：Tab切换不重复请求
 - **BottomNav 全局化**：在 App.vue 层渲染，路由切换不销毁
 - **基金懒加载**：6位代码自动从天天基金API抓取
 - **截图视觉分析**：通义千问VL，支持小红书/备忘录/持仓截图
-- **htts同步调用已消除**：全部改用 `asyncio.to_thread` 或 `AsyncClient`
+- **httpx 同步调用已消除**：全部改用 `asyncio.to_thread` 或 `AsyncClient`
+- **N+1 查询已修复**：News 列表和详情使用 JOIN 加载 source name
+- **DEBUG 默认关闭**：生产环境 `DEBUG=False`，避免 SQL echo 性能损耗
+- **Vite 分包**：echarts / vue-vendor / ui-utils 独立 chunk，优化加载
+- **Deep watcher 优化**：图表组件监听 `data.length` 替代 `deep: true`
+- **桌面导航**：AppShell 头部内嵌桌面端导航链接，替代仅移动端的 BottomNav
 
 ---
 

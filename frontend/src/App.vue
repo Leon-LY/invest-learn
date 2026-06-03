@@ -39,22 +39,28 @@ const showBottomNav = computed(() => navItems.some(item =>
 <style>
 /* Premium page transitions */
 .page-enter-active {
-  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.2s ease-out;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.25s ease-out;
 }
 .page-leave-active {
-  transition: opacity 0.12s ease-in,
-              transform 0.15s ease-in;
+  transition: opacity 0.15s ease-in,
+              transform 0.18s ease-in;
   position: absolute;
 }
 .page-enter-from {
   opacity: 0;
-  transform: translateY(6px);
-  filter: blur(1px);
+  transform: translateY(8px);
+  filter: blur(2px);
 }
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-4px) scale(0.99);
+  transform: translateY(-6px) scale(0.98);
 }
+
+/* Bottom nav slide animation */
+.bottom-nav-enter-active { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+.bottom-nav-leave-active { transition: transform 0.2s ease-in; }
+.bottom-nav-enter-from { transform: translateY(100%); }
+.bottom-nav-leave-to { transform: translateY(100%); }
 </style>

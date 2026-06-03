@@ -14,10 +14,10 @@ export default defineConfig({
     target: 'es2020',
     rollupOptions: {
       output: {
-        manualChunks: {
-          'echarts': ['echarts'],
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          'ui-utils': ['@vueuse/core', 'axios', 'marked'],
+        manualChunks(id: string) {
+          if (id.includes('node_modules/echarts')) return 'echarts'
+          if (id.includes('node_modules/vue') || id.includes('node_modules/vue-router') || id.includes('node_modules/pinia')) return 'vue-vendor'
+          if (id.includes('node_modules/@vueuse') || id.includes('node_modules/axios') || id.includes('node_modules/marked')) return 'ui-utils'
         },
       },
     },

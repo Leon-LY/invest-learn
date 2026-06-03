@@ -121,6 +121,9 @@ body::after {
 .dark .gradient-text { -webkit-text-fill-color: #818cf8; }
 /* Dark mode: scan lines subtle */
 .dark .scan-lines::after { background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(91,108,240,0.02) 2px, rgba(91,108,240,0.02) 4px); }
+/* Dark mode: up/down badge backgrounds use translucent instead of light pastel */
+.dark .bg-up-bg { background: rgba(224, 49, 49, 0.15); }
+.dark .bg-down-bg { background: rgba(9, 146, 104, 0.15); }
 /* Dark mode: price text glow stronger */
 .dark .price-up { text-shadow: 0 0 12px rgba(239,68,68,0.3); }
 .dark .price-down { text-shadow: 0 0 12px rgba(34,197,94,0.3); }
@@ -289,6 +292,7 @@ html { scroll-behavior: smooth; }
 
 /* ── Dark mode fallback — @layer base 确保 Tailwind 的 dark: 变体始终优先 ── */
 @layer base {
+  .dark .text-gray-300 { color: #d1d5db; }
   .dark .text-gray-400 { color: #9ca3af; }
   .dark .text-gray-500 { color: #a0aec0; }
   .dark .text-gray-600 { color: #c4c9d4; }

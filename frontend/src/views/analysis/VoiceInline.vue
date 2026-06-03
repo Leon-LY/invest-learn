@@ -93,7 +93,7 @@ const platforms = ['抖音','小红书','B站','微博','雪球','天天基金',
       <div class="flex items-center gap-2 mb-1 flex-wrap">
         <span class="text-xs text-gray-400">{{ v.source }}</span>
         <span v-if="v.author" class="text-xs font-medium text-gray-500">{{ v.author }}</span>
-        <span v-if="v.direction" class="text-xs px-1.5 py-0.5 rounded-full ml-auto font-medium" :class="v.direction==='看多'?'bg-up-bg text-up':v.direction==='看空'?'bg-down-bg text-down':'bg-gray-100 text-gray-500'">{{ v.direction }}</span>
+        <span v-if="v.direction" class="text-xs px-1.5 py-0.5 rounded-full ml-auto font-medium" :class="v.direction==='看多'?'bg-up-bg text-up':v.direction==='看空'?'bg-down-bg text-down':'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'">{{ v.direction }}</span>
         <span v-if="v.created_at" class="text-xs text-gray-400">{{ v.created_at?.slice(0,16)?.replace('T',' ') }}</span>
       </div>
       <h3 class="font-medium text-sm dark:text-white mb-1">{{ v.ai_title || '观点' }}</h3>

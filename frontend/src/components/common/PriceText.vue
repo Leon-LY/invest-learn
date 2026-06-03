@@ -12,13 +12,10 @@ const props = defineProps<{
 const appStore = useAppStore()
 
 const colorClass = computed(() => {
-  if (!props.value) return 'text-market-flat'
+  if (!props.value) return 'text-flat'
   const v = props.value
   const isUp = v > 0
-  if (appStore.colorScheme === 'red_up_green_down') {
-    return isUp ? 'text-market-up' : 'text-market-down'
-  }
-  return isUp ? 'text-market-down' : 'text-market-up'
+  return isUp ? 'text-up' : 'text-down'
 })
 
 const displayValue = computed(() => {

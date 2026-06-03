@@ -12,9 +12,9 @@ const isDown = computed(() => (props.value || 0) < 0)
 const bgClass = computed(() => {
   if (!props.value) return 'bg-gray-100 dark:bg-gray-800 text-gray-500'
   if (appStore.colorScheme === 'red_up_green_down') {
-    return isUp.value ? 'bg-market-up-bg text-market-up' : 'bg-market-down-bg text-market-down'
+    return isUp.value ? 'bg-up-bg text-up' : 'bg-down-bg text-down'
   }
-  return isUp.value ? 'bg-market-down-bg text-market-down' : 'bg-market-up-bg text-market-up'
+  return isUp.value ? 'bg-down-bg text-down' : 'bg-up-bg text-up'
 })
 
 const display = computed(() => {

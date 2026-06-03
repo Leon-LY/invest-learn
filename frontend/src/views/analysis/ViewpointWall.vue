@@ -135,7 +135,7 @@ const uniqueAuthors = computed(() => [...new Set(viewpoints.value.map((v: any) =
             <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">{{ v.source }}</span>
             <span v-if="v.author" class="text-xs text-gray-500 font-medium">{{ v.author }}</span>
             <span v-if="v.direction" class="text-xs px-2 py-0.5 rounded-full font-medium ml-auto"
-              :class="v.direction==='看多'?'bg-up-bg text-up':v.direction==='看空'?'bg-down-bg text-down':'bg-gray-100 text-gray-500'">{{ v.direction }}</span>
+              :class="v.direction==='看多'?'bg-up-bg text-up':v.direction==='看空'?'bg-down-bg text-down':'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'">{{ v.direction }}</span>
             <span v-if="v.confidence" class="text-xs text-gray-400">🤖 {{ v.confidence }}%</span>
             <span v-if="v.created_at" class="text-xs text-gray-400">{{ v.created_at?.slice(0,16)?.replace('T',' ') }}</span>
           </div>

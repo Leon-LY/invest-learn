@@ -27,10 +27,8 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function toggleTheme() {
-    const next: Record<string, 'light' | 'dark' | 'system'> = {
-      light: 'dark', dark: 'system', system: 'light',
-    }
-    setTheme(next[theme.value])
+    // Direct toggle: light ↔ dark, skip system in quick switch
+    setTheme(theme.value === 'dark' ? 'light' : 'dark')
   }
 
   function applyTheme() {
